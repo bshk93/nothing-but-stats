@@ -18,7 +18,9 @@ dfs <- list(
   mutate(DATE = mdy(DATE),
          FG = str_c(FGM, "-", FGA),
          `3P` = str_c(`3PM`, "-", `3PA`),
-         FT = str_c(FTM, "-", FTA)) %>% 
+         FT = str_c(FTM, "-", FTA),
+         GMSC = P + (0.4 * FGM) - (0.7 * FGA) - (0.4 * (FTA - FTM)) + (0.7 * OR) + 
+           (0.3 * DR) + S + (0.7 * A) + (0.7 * B) - (0.4 * PF) - TO) %>% 
   arrange(PLAYER, DATE)
 
 bios <- read_csv("player-bio-database.csv", skip = 1) %>% 
@@ -64,7 +66,7 @@ function(input, output, session) {
     myPlayerData() %>% 
       select(
         DATE, TEAM, OPP, M, P, R, A, S, B, TO, 
-        FG, `3P`, FT, PF, WL
+        FG, `3P`, FT, PF, GMSC, WL
       ) %>% 
       arrange(desc(DATE))
   })
