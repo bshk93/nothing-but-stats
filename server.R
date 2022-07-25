@@ -1,5 +1,5 @@
 # setwd("C:/Users/bshk9/OneDrive/home/projects/nbn/nothing-but-stats")
-# googledrive::drive_download("https://docs.google.com/spreadsheets/d/1i3vuaoJOxKrynLZsjV8VGv3eslunMPbrGsrax-xCyVk/", "player-bio-database.csv", "csv")
+# googledrive::drive_download("https://docs.google.com/spreadsheets/d/1i3vuaoJOxKrynLZsjV8VGv3eslunMPbrGsrax-xCyVk/", "player-bio-database.csv", "csv", overwrite = TRUE)
 
 library(shiny)
 library(ggplot2)
@@ -52,9 +52,12 @@ function(input, output, session) {
     )
   })
   
-  output$headshot <- renderUI({
-    tags$img(src = "https://cdn.nba.com/headshots/nba/latest/1040x760/1630322.png", #myBiosData() %>% pull(`Img URL`), 
-             width = 250, height = 200)
+  # output$headshot <- renderUI({
+  #   tags$img(src = myBiosData() %>% pull(`Img URL`), 
+  #            width = 250, height = 200)
+  # })
+  output$headshot <- renderText({
+    c('<img src="', myBiosData() %>% pull(`Img URL`), '">')
   })
   
   output$tbl <- renderDT({
