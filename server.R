@@ -71,15 +71,18 @@ function(input, output, session) {
   
   output$tbl_season <- renderDT({
     myPlayerData() %>% 
-      group_by(SEASON) %>% 
+      group_by(SEASON, TEAM) %>% 
       summarize(
-        G = n(),
-        M = mean(M) %>% round(2),
-        P = mean(P) %>% round(2),
-        R = mean(R) %>% round(2),
-        A = mean(A) %>% round(2),
-        S = mean(S) %>% round(2),
-        B = mean(B) %>% round(2)
+        G    = n(),
+        MPG  = mean(M) %>% round(2) %>% format(nsmall = 2),
+        PPG  = mean(P) %>% round(2) %>% format(nsmall = 2),
+        RPG  = mean(R) %>% round(2) %>% format(nsmall = 2),
+        APG  = mean(A) %>% round(2) %>% format(nsmall = 2),
+        SPG  = mean(S) %>% round(2) %>% format(nsmall = 2),
+        BPG  = mean(B) %>% round(2) %>% format(nsmall = 2),
+        FG   = (sum(FGM) / sum(FGA)) %>% round(3) %>% format(nsmall = 3),
+        `3P` = (sum(`3PM`) / sum(`3PA`)) %>% round(3) %>% format(nsmall = 3),
+        FT   = (sum(FTM) / sum(FTA)) %>% round(3) %>% format(nsmall = 3)
       )
   })
   
