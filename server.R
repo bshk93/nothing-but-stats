@@ -42,7 +42,8 @@ function(input, output, session) {
   
   output$player_summary <- renderText({
     glue(
-      "{input$name}:\n",
+      "{input$name} ({myBiosData() %>% pull(`Combo Pos.`)}):\n",
+      "Current Team: {myBiosData() %>% pull(Team)}\n",
       "DOB: {myBiosData() %>% pull(DOB)}\n",
       "Age: {round(time_length(interval(myBiosData() %>% pull(DOB), today()), 'years'), 2)}\n",
       "Height: {myBiosData() %>% pull(Height)}\n",

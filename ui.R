@@ -34,8 +34,8 @@ fluidPage(
   mainPanel(
     tabsetPanel(
       type = "tabs",
-      tabPanel("Gamelog", DTOutput("tbl")),
-      tabPanel("Season-by-Season", DTOutput("tbl_season"))
+      tabPanel("Season-by-Season", DTOutput("tbl_season")),
+      tabPanel("Gamelog", DTOutput("tbl"))
     )
   )
 )
