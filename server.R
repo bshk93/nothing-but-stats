@@ -1,4 +1,5 @@
 # setwd("C:/Users/bshk9/OneDrive/home/projects/nbn/nothing-but-stats")
+# googledrive::drive_download("https://docs.google.com/spreadsheets/d/1i3vuaoJOxKrynLZsjV8VGv3eslunMPbrGsrax-xCyVk/", "player-bio-database.csv", "csv")
 
 library(shiny)
 library(ggplot2)
@@ -29,25 +30,34 @@ function(input, output, session) {
   
   updateSelectizeInput(session, 'foo', choices = sort(unique(dfs$PLAYER)), server = TRUE)
   
+  myPlayerData <- reactive({
+    dfs %>% 
+      filter(PLAYER == input$name)
+  })
+  
+  myBiosData <- reactive({
+    bios %>% 
+      filter(Name == input$name)
+  })
+  
   output$player_summary <- renderText({
     glue(
       "{input$name}:\n",
-      "DOB: {bios %>% filter(Name == input$name) %>% pull(DOB)}\n",
-      "Age: {round(time_length(interval(bios %>% filter(Name == input$name) %>% pull(DOB), today()), 'years'), 2)}\n",
-      "Height: {bios %>% filter(Name == input$name) %>% pull(Height)}\n",
-      "Weight: {bios %>% filter(Name == input$name) %>% pull(Weight)}\n",
-      "From: {bios %>% filter(Name == input$name) %>% pull(COLLEGE)}"
+      "DOB: {myBiosData() %>% pull(DOB)}\n",
+      "Age: {round(time_length(interval(myBiosData() %>% pull(DOB), today()), 'years'), 2)}\n",
+      "Height: {myBiosData() %>% pull(Height)}\n",
+      "Weight: {myBiosData() %>% pull(Weight)}\n",
+      "From: {myBiosData() %>% pull(COLLEGE)}"
     )
   })
   
   output$headshot <- renderUI({
-    tags$img(src = "https://cdn.nba.com/headshots/nba/latest/1040x760/1630322.png",
-             width = 200, height = 200)
+    tags$img(src = "https://cdn.nba.com/headshots/nba/latest/1040x760/1630322.png", #myBiosData() %>% pull(`Img URL`), 
+             width = 250, height = 200)
   })
   
   output$tbl <- renderDT({
-    dfs %>% 
-      filter(PLAYER == input$name) %>% 
+    myPlayerData() %>% 
       select(
         DATE, TEAM, OPP, M, P, R, A, S, B, TO, 
         FG, `3P`, FT, PF, WL
@@ -56,8 +66,7 @@ function(input, output, session) {
   })
   
   output$tbl_season <- renderDT({
-    dfs %>% 
-      filter(PLAYER == input$name) %>% 
+    myPlayerData() %>% 
       group_by(SEASON) %>% 
       summarize(
         G = n(),

@@ -14,9 +14,9 @@ fluidPage(
   
   titlePanel("Gamelog Explorer"),
   
-  htmlOutput("headshot"),
-  
   sidebarPanel(
+    
+    htmlOutput("headshot"),
     
     selectizeInput(
       'name',
