@@ -1,0 +1,13 @@
+name: nothing-but-stats
+title:
+username:
+account: seho
+server: shinyapps.io
+hostUrl: https://api.shinyapps.io/v1
+appId: 6690581
+bundleId: 6131583
+url: https://seho.shinyapps.io/nothing-but-stats/
+when: 1658773778.34179
+lastSyncTime: 1658773778.34179
+asMultiple: FALSE
+asStatic: FALSE
