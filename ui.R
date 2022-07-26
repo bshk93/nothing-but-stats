@@ -35,7 +35,8 @@ fluidPage(
     tabsetPanel(
       type = "tabs",
       tabPanel("Season-by-Season", DTOutput("tbl_season")),
-      tabPanel("Gamelog", DTOutput("tbl"))
+      tabPanel("Gamelog", DTOutput("tbl")),
+      tabPanel("Trailing 10-game Gamescore", plotOutput("gmsc_plot"))
     )
   )
 )

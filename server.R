@@ -9,6 +9,7 @@ library(stringr)
 library(lubridate)
 library(glue)
 library(DT)
+library(zoo)
 
 dfs <- list(
   read_csv("allstats-20-21.csv") %>% mutate(SEASON = "20-21"),
@@ -54,10 +55,6 @@ function(input, output, session) {
     )
   })
   
-  # output$headshot <- renderUI({
-  #   tags$img(src = myBiosData() %>% pull(`Img URL`), 
-  #            width = 250, height = 200)
-  # })
   output$headshot <- renderText({
     c('<img src="', myBiosData() %>% pull(`Img URL`), '">')
   })
@@ -70,6 +67,10 @@ function(input, output, session) {
       ) %>% 
       arrange(desc(DATE))
   })
+  
+  options = list(
+    pageLength = 25
+  )
   
   output$tbl_season <- renderDT({
     myPlayerData() %>% 
@@ -88,8 +89,13 @@ function(input, output, session) {
       )
   })
   
-  options = list(
-    pageLength = 25
-  )
+  output$gmsc_plot <- renderPlot({
+    myPlayerData() %>% 
+      mutate(trailing_gmsc_10 = rollmean(GMSC, 10, fill = NA, align = "right")) %>% 
+      ggplot(aes(x = DATE, y = trailing_gmsc_10)) +
+      geom_line(color="#69b3a2") +
+      scale_x_date(date_breaks = "1 month") +
+      theme(axis.text.x=element_text(angle=60, hjust=1)) 
+  })
   
 }
