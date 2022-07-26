@@ -24,6 +24,19 @@ dfs <- list(
            (0.3 * DR) + S + (0.7 * A) + (0.7 * B) - (0.4 * PF) - TO) %>% 
   arrange(PLAYER, DATE)
 
+dfs_playoffs <- list(
+  read_csv("allstats-playoffs-21.csv") %>% mutate(SEASON = "20-21-Playoffs"),
+  read_csv("allstats-playoffs-22.csv") %>% mutate(SEASON = "21-22-Playoffs")
+) %>% 
+  bind_rows() %>% 
+  mutate(DATE = mdy(DATE),
+         FG = str_c(FGM, "-", FGA),
+         `3P` = str_c(`3PM`, "-", `3PA`),
+         FT = str_c(FTM, "-", FTA),
+         GMSC = P + (0.4 * FGM) - (0.7 * FGA) - (0.4 * (FTA - FTM)) + (0.7 * OR) + 
+           (0.3 * DR) + S + (0.7 * A) + (0.7 * B) - (0.4 * PF) - TO) %>% 
+  arrange(PLAYER, DATE)
+
 bios <- read_csv("player-bio-database.csv", skip = 1) %>% 
   select(-Name...1) %>% 
   rename(Name = Name...2) %>% 
@@ -35,6 +48,11 @@ function(input, output, session) {
   
   myPlayerData <- reactive({
     dfs %>% 
+      filter(PLAYER == input$name)
+  })
+  
+  myPlayerPlayoffData <- reactive({
+    dfs_playoffs %>% 
       filter(PLAYER == input$name)
   })
   
@@ -60,7 +78,7 @@ function(input, output, session) {
   })
   
   output$tbl <- renderDT({
-    myPlayerData() %>% 
+    bind_rows(myPlayerData(), myPlayerPlayoffData()) %>% 
       select(
         DATE, TEAM, OPP, M, P, R, A, S, B, TO, 
         FG, `3P`, FT, PF, GMSC, WL
@@ -73,8 +91,10 @@ function(input, output, session) {
   )
   
   output$tbl_season <- renderDT({
-    myPlayerData() %>% 
+    bind_rows(myPlayerData(), myPlayerPlayoffData()) %>% 
       group_by(SEASON, TEAM) %>% 
+      mutate(first_date = min(DATE)) %>% 
+      group_by(SEASON, first_date, TEAM) %>% 
       summarize(
         G    = n(),
         MPG  = mean(M) %>% round(2) %>% format(nsmall = 2),
@@ -86,14 +106,16 @@ function(input, output, session) {
         FG   = (sum(FGM) / sum(FGA)) %>% round(3) %>% format(nsmall = 3),
         `3P` = (sum(`3PM`) / sum(`3PA`)) %>% round(3) %>% format(nsmall = 3),
         FT   = (sum(FTM) / sum(FTA)) %>% round(3) %>% format(nsmall = 3)
-      )
+      ) %>% 
+      ungroup() %>% 
+      select(-first_date)
   })
   
   output$gmsc_plot <- renderPlot({
     myPlayerData() %>% 
       mutate(trailing_gmsc_10 = rollmean(GMSC, 10, fill = NA, align = "right")) %>% 
       ggplot(aes(x = DATE, y = trailing_gmsc_10)) +
-      geom_line(color="#69b3a2") +
+      geom_step(color="#69b3a2") +
       scale_x_date(date_breaks = "1 month") +
       theme(axis.text.x=element_text(angle=60, hjust=1)) 
   })
