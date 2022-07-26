@@ -2,6 +2,7 @@ library(shiny)
 library(ggplot2)
 library(dplyr)
 library(readr)
+library(purrr)
 library(DT)
 
 dfs <- list(
@@ -9,6 +10,14 @@ dfs <- list(
   read_csv("allstats-21-22.csv") %>% mutate(SEASON = "21-22")
 ) %>% 
   bind_rows()
+
+player_teams <- read_csv("player-bio-database.csv", skip = 1) %>% 
+  select(-Name...1) %>% 
+  rename(Name = Name...2) %>% 
+  distinct(Name, Team)
+
+named_names <- player_teams$Name %>% 
+  set_names(str_c(player_teams$Name, " (", coalesce(player_teams$Team, "NONE"), ")"))
 
 fluidPage(
   
@@ -21,7 +30,7 @@ fluidPage(
     selectizeInput(
       'name',
       'Name',
-      sort(unique(dfs$PLAYER)),
+      named_names,
       selected = NULL,
       multiple = FALSE,
       options = NULL

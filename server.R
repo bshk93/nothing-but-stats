@@ -44,7 +44,12 @@ bios <- read_csv("player-bio-database.csv", skip = 1) %>%
 
 function(input, output, session) {
   
-  updateSelectizeInput(session, 'foo', choices = sort(unique(dfs$PLAYER)), server = TRUE)
+  updateSelectizeInput(
+    session, 
+    'foo', 
+    choices = sort(unique(dfs$PLAYER)), 
+    server = TRUE
+  )
   
   myPlayerData <- reactive({
     dfs %>% 
