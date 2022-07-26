@@ -114,12 +114,18 @@ function(input, output, session) {
   })
   
   output$gmsc_plot <- renderPlot({
-    myPlayerData() %>% 
+    bind_rows(myPlayerData(), myPlayerPlayoffData()) %>% 
       mutate(trailing_gmsc_10 = rollmean(GMSC, 10, fill = NA, align = "right")) %>% 
       ggplot(aes(x = DATE, y = trailing_gmsc_10)) +
-      geom_step(color="#69b3a2") +
+      geom_step(color = "#69b3a2") +
       scale_x_date(date_breaks = "1 month") +
       theme(axis.text.x=element_text(angle=60, hjust=1)) 
+  })
+  
+  output$gmsc_histogram <- renderPlot({
+    bind_rows(myPlayerData(), myPlayerPlayoffData()) %>% 
+      ggplot(aes(x = GMSC)) +
+      geom_histogram(binwidth = 5, fill = "#751e1c")
   })
   
 }

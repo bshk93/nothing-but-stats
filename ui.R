@@ -46,7 +46,8 @@ fluidPage(
       type = "tabs",
       tabPanel("Season-by-Season", DTOutput("tbl_season")),
       tabPanel("Gamelog", DTOutput("tbl")),
-      tabPanel("Trailing 10-game Gamescore", plotOutput("gmsc_plot"))
+      tabPanel("Trailing 10-game GMSC", plotOutput("gmsc_plot")),
+      tabPanel("All-Time GMSC Freq", plotOutput("gmsc_histogram"))
     )
   )
 )
