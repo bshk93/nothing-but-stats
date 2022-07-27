@@ -60,6 +60,10 @@ function(input, output, session) {
       filter(PLAYER == input$name)
   })
   
+  myCombinedData <- reactive({
+    bind_rows(myPlayerData(), myPlayerPlayoffData())
+  })
+  
   myBiosData <- reactive({
     bios %>% 
       filter(Name == input$name)
@@ -115,13 +119,34 @@ function(input, output, session) {
       select(-first_date)
   })
   
+  output$records <- renderDT({
+    bind_rows(
+      myCombinedData() %>% 
+        mutate(CATEGORY = "POINTS", MAX = max(P)),
+      myCombinedData() %>% 
+        mutate(CATEGORY = "REBOUNDS", MAX = max(R)),
+      myCombinedData() %>% 
+        mutate(CATEGORY = "ASSISTS", MAX = max(A)),
+      myCombinedData() %>% 
+        mutate(CATEGORY = "STEALS", MAX = max(S)),
+      myCombinedData() %>% 
+        mutate(CATEGORY = "BLOCKS", MAX = max(B)),
+      myCombinedData() %>% 
+        mutate(CATEGORY = "3PM", MAX = max(`3PM`)),
+      myCombinedData() %>% 
+        mutate(CATEGORY = "GMSC", MAX = max(GMSC))
+    ) %>% 
+      select(CATEGORY, MAX) %>% 
+      distinct()
+  })
+  
   output$gmsc_plot <- renderPlot({
     bind_rows(myPlayerData(), myPlayerPlayoffData()) %>% 
       mutate(trailing_gmsc_10 = rollmean(GMSC, 10, fill = NA, align = "right")) %>% 
       ggplot(aes(x = DATE, y = trailing_gmsc_10)) +
       geom_step(color = "#69b3a2") +
       scale_x_date(date_breaks = "1 month") +
-      ylim(c(-10, 50)) + 
+      ylim(c(-10, 30)) + 
       theme(axis.text.x=element_text(angle=60, hjust=1)) 
   })
   
