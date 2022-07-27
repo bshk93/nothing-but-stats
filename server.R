@@ -86,7 +86,7 @@ function(input, output, session) {
   })
   
   output$tbl <- renderDT({
-    bind_rows(myPlayerData(), myPlayerPlayoffData()) %>% 
+    myCombinedData() %>% 
       select(
         DATE, TEAM, OPP, M, P, R, A, S, B, TO, 
         FG, `3P`, FT, PF, GMSC, WL
@@ -99,7 +99,7 @@ function(input, output, session) {
   )
   
   output$tbl_season <- renderDT({
-    bind_rows(myPlayerData(), myPlayerPlayoffData()) %>% 
+    myCombinedData() %>% 
       group_by(SEASON, TEAM) %>% 
       mutate(first_date = min(DATE)) %>% 
       group_by(SEASON, first_date, TEAM) %>% 
@@ -141,7 +141,7 @@ function(input, output, session) {
   })
   
   output$gmsc_plot <- renderPlot({
-    bind_rows(myPlayerData(), myPlayerPlayoffData()) %>% 
+    myCombinedData() %>% 
       mutate(trailing_gmsc_10 = rollmean(GMSC, 10, fill = NA, align = "right")) %>% 
       ggplot(aes(x = DATE, y = trailing_gmsc_10)) +
       geom_step(color = "#69b3a2") +
@@ -151,7 +151,7 @@ function(input, output, session) {
   })
   
   output$gmsc_histogram <- renderPlot({
-    bind_rows(myPlayerData(), myPlayerPlayoffData()) %>% 
+    myCombinedData() %>% 
       ggplot(aes(x = GMSC, fill = TEAM)) +
       geom_histogram(binwidth = 1) +
       xlim(c(-20, 80))
