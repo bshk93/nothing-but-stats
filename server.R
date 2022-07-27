@@ -19,6 +19,7 @@ dfs <- list(
          FT = str_c(FTM, "-", FTA),
          GMSC = P + (0.4 * FGM) - (0.7 * FGA) - (0.4 * (FTA - FTM)) + (0.7 * OR) + 
            (0.3 * DR) + S + (0.7 * A) + (0.7 * B) - (0.4 * PF) - TO) %>% 
+  mutate(GMSC = round(GMSC, 2)) %>% 
   arrange(PLAYER, DATE)
 
 dfs_playoffs <- list(
@@ -32,6 +33,7 @@ dfs_playoffs <- list(
          FT = str_c(FTM, "-", FTA),
          GMSC = P + (0.4 * FGM) - (0.7 * FGA) - (0.4 * (FTA - FTM)) + (0.7 * OR) + 
            (0.3 * DR) + S + (0.7 * A) + (0.7 * B) - (0.4 * PF) - TO) %>% 
+  mutate(GMSC = round(GMSC, 2)) %>% 
   arrange(PLAYER, DATE)
 
 bios <- read_csv("player-bio-database.csv", skip = 1, show_col_types = F) %>% 
@@ -119,13 +121,15 @@ function(input, output, session) {
       ggplot(aes(x = DATE, y = trailing_gmsc_10)) +
       geom_step(color = "#69b3a2") +
       scale_x_date(date_breaks = "1 month") +
+      ylim(c(-10, 50)) + 
       theme(axis.text.x=element_text(angle=60, hjust=1)) 
   })
   
   output$gmsc_histogram <- renderPlot({
     bind_rows(myPlayerData(), myPlayerPlayoffData()) %>% 
       ggplot(aes(x = GMSC, fill = TEAM)) +
-      geom_histogram(binwidth = 1) 
+      geom_histogram(binwidth = 1) +
+      xlim(c(-20, 80))
   })
   
 }
