@@ -92,11 +92,7 @@ function(input, output, session) {
         FG, `3P`, FT, PF, GMSC, WL
       ) %>% 
       arrange(desc(DATE))
-  })
-  
-  options = list(
-    pageLength = 25
-  )
+  }, server = TRUE)
   
   output$tbl_season <- renderDT({
     myCombinedData() %>% 
