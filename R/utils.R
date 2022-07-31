@@ -1,3 +1,18 @@
+clean_allstats <- function(df) {
+  df %>% 
+    bind_rows() %>% 
+    mutate(DATE = mdy(DATE),
+           FG = str_c(FGM, "-", FGA),
+           `3P` = str_c(`3PM`, "-", `3PA`),
+           FT = str_c(FTM, "-", FTA),
+           GMSC = P + (0.4 * FGM) - (0.7 * FGA) - (0.4 * (FTA - FTM)) + (0.7 * OR) + 
+             (0.3 * DR) + S + (0.7 * A) + (0.7 * B) - (0.4 * PF) - TO) %>% 
+    mutate(GMSC = round(GMSC, 2)) %>% 
+    arrange(PLAYER, DATE)
+}
+
+
+
 get_team_color <- function(team) {
   switch(team,
          "MIL" = "#00471B",

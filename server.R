@@ -12,29 +12,13 @@ dfs <- list(
   read_csv("allstats-20-21.csv", show_col_types = F) %>% mutate(SEASON = "20-21"),
   read_csv("allstats-21-22.csv", show_col_types = F) %>% mutate(SEASON = "21-22")
 ) %>% 
-  bind_rows() %>% 
-  mutate(DATE = mdy(DATE),
-         FG = str_c(FGM, "-", FGA),
-         `3P` = str_c(`3PM`, "-", `3PA`),
-         FT = str_c(FTM, "-", FTA),
-         GMSC = P + (0.4 * FGM) - (0.7 * FGA) - (0.4 * (FTA - FTM)) + (0.7 * OR) + 
-           (0.3 * DR) + S + (0.7 * A) + (0.7 * B) - (0.4 * PF) - TO) %>% 
-  mutate(GMSC = round(GMSC, 2)) %>% 
-  arrange(PLAYER, DATE)
+  clean_allstats()
 
 dfs_playoffs <- list(
   read_csv("allstats-playoffs-21.csv", show_col_types = F) %>% mutate(SEASON = "20-21-Playoffs"),
   read_csv("allstats-playoffs-22.csv", show_col_types = F) %>% mutate(SEASON = "21-22-Playoffs")
 ) %>% 
-  bind_rows() %>% 
-  mutate(DATE = mdy(DATE),
-         FG = str_c(FGM, "-", FGA),
-         `3P` = str_c(`3PM`, "-", `3PA`),
-         FT = str_c(FTM, "-", FTA),
-         GMSC = P + (0.4 * FGM) - (0.7 * FGA) - (0.4 * (FTA - FTM)) + (0.7 * OR) + 
-           (0.3 * DR) + S + (0.7 * A) + (0.7 * B) - (0.4 * PF) - TO) %>% 
-  mutate(GMSC = round(GMSC, 2)) %>% 
-  arrange(PLAYER, DATE)
+  clean_allstats()
 
 bios <- read_csv("player-bio-database.csv", skip = 1, show_col_types = F) %>% 
   select(-Name...1) %>% 
