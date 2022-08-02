@@ -31,10 +31,7 @@ fluidPage(
     selectizeInput(
       'name',
       'Name',
-      named_names,
-      selected = NULL,
-      multiple = FALSE,
-      options = NULL
+      named_names
     ),
     
     verbatimTextOutput("player_summary")
@@ -48,7 +45,12 @@ fluidPage(
       tabPanel("Gamelog",               DTOutput("tbl")),
       tabPanel("Personal Records",      DTOutput("records")),
       tabPanel("Trailing 10-game GMSC", plotOutput("gmsc_plot")),
-      tabPanel("All-Time GMSC Freq",    plotOutput("gmsc_histogram"))
+      tabPanel(
+        "All-Time GMSC Freq",
+        plotOutput("gmsc_histogram"),
+        selectizeInput("comp", "Compare", named_names), 
+        plotOutput("gmsc_histogram_comp")
+      )
     )
   )
 )
