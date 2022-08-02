@@ -1,9 +1,6 @@
 library(shiny)
 library(ggplot2)
-library(dplyr)
-library(readr)
-library(stringr)
-library(purrr)
+library(tidyverse)
 library(DT)
 
 dfs <- list(
