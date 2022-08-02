@@ -4,12 +4,12 @@ library(tidyverse)
 library(DT)
 
 dfs <- list(
-  read_csv("allstats-20-21.csv", show_col_types = F) %>% mutate(SEASON = "20-21"),
-  read_csv("allstats-21-22.csv", show_col_types = F) %>% mutate(SEASON = "21-22")
+  read_csv("../allstats-20-21.csv", show_col_types = F) %>% mutate(SEASON = "20-21"),
+  read_csv("../allstats-21-22.csv", show_col_types = F) %>% mutate(SEASON = "21-22")
 ) %>% 
   bind_rows()
 
-player_teams <- read_csv("player-bio-database.csv", skip = 1, show_col_types = F) %>% 
+player_teams <- read_csv("../player-bio-database.csv", skip = 1, show_col_types = F) %>% 
   select(-Name...1) %>% 
   rename(Name = Name...2) %>% 
   distinct(Name, Team)
