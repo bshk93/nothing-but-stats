@@ -7,8 +7,8 @@ library(DT)
 library(zoo)
 
 dfs <- list(
-  read_csv("../allstats-20-21.csv", show_col_types = F) %>% mutate(SEASON = "20-21"),
-  read_csv("../allstats-21-22.csv", show_col_types = F) %>% mutate(SEASON = "21-22")
+  read_csv("allstats-20-21.csv", show_col_types = F) %>% mutate(SEASON = "20-21"),
+  read_csv("allstats-21-22.csv", show_col_types = F) %>% mutate(SEASON = "21-22")
 ) %>% 
   bind_rows() %>% 
   mutate(DATE = mdy(DATE),
@@ -21,8 +21,8 @@ dfs <- list(
   arrange(PLAYER, DATE)
 
 dfs_playoffs <- list(
-  read_csv("../allstats-playoffs-21.csv", show_col_types = F) %>% mutate(SEASON = "20-21-Playoffs"),
-  read_csv("../allstats-playoffs-22.csv", show_col_types = F) %>% mutate(SEASON = "21-22-Playoffs")
+  read_csv("allstats-playoffs-21.csv", show_col_types = F) %>% mutate(SEASON = "20-21-Playoffs"),
+  read_csv("allstats-playoffs-22.csv", show_col_types = F) %>% mutate(SEASON = "21-22-Playoffs")
 ) %>% 
   bind_rows() %>% 
   mutate(DATE = mdy(DATE),
@@ -34,7 +34,7 @@ dfs_playoffs <- list(
   mutate(GMSC = round(GMSC, 2)) %>% 
   arrange(PLAYER, DATE)
 
-bios <- read_csv("../player-bio-database.csv", skip = 1, show_col_types = F) %>% 
+bios <- read_csv("player-bio-database.csv", skip = 1, show_col_types = F) %>% 
   select(-Name...1) %>% 
   rename(Name = Name...2) %>% 
   mutate(DOB = mdy(DOB))
