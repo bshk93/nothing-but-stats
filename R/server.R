@@ -90,7 +90,7 @@ function(input, output, session) {
         FG, `3P`, FT, PF, GMSC, WL
       ) %>% 
       arrange(desc(DATE))
-  }, server = TRUE)
+  }, server = TRUE, options = list(pageLength = 25))
   
   output$tbl_season <- renderDT({
     myCombinedData() %>% 
@@ -160,5 +160,29 @@ function(input, output, session) {
       geom_histogram(binwidth = 1) +
       xlim(c(-20, 80))
   })
+  
+  
+  output$franchise_records <- renderDT({
+    
+    if (input$team != "NBA") {
+      x <- dfs %>% filter(TEAM == input$team)
+    } else {
+      x <- dfs
+    }
+    
+    x %>% 
+      group_by(PLAYER) %>% 
+      summarize(
+        G = n(),
+        M = sum(M),
+        P = sum(P),
+        R = sum(R),
+        A = sum(A),
+        S = sum(S),
+        B = sum(B),
+        `3PM` = sum(`3PM`)
+      )
+    
+  }, options = list(pageLength = 25))
   
 }
