@@ -1,0 +1,61 @@
+
+calculate_power_rankings <- function(dfs) {
+  
+  x <- dfs %>% 
+    #filter(SEASON == input$pr_season) %>% 
+    mutate(OPP_RAW = str_replace(OPP, "@", "")) %>%
+    group_by(SEASON, TEAM, OPP, OPP_RAW, DATE) %>% 
+    summarize(P = sum(P)) %>% 
+    ungroup()
+  
+  z <- x %>%
+    inner_join(
+      x %>% select(OPP_RAW = TEAM, DATE, OPP_P = P),
+      by = c('OPP_RAW', 'DATE')
+    ) %>%
+    mutate(DIFF = P - OPP_P) %>%
+    group_by(TEAM, SEASON) %>%
+    arrange(TEAM, DATE) %>%
+    mutate(CUM_DIFF = cumsum(DIFF),
+           LAG_CUM_DIFF = lag(CUM_DIFF),
+           G = row_number()) %>%
+    ungroup
+  
+  diffs <- z %>%
+    inner_join(
+      z %>% select(OPP_RAW = TEAM, DATE, OPP_LAG_CUM_DIFF = LAG_CUM_DIFF, OPP_G = G),
+      by = c('OPP_RAW', 'DATE')
+    ) %>%
+    mutate(OPP_AVG_DIFF = OPP_LAG_CUM_DIFF / (OPP_G - 1),
+           DIFF_DIFF = DIFF + OPP_AVG_DIFF) %>%
+    
+    group_by(TEAM, SEASON) %>%
+    
+    mutate(
+      CUM_DIFF_DIFF = cumsum(coalesce(DIFF_DIFF, 0))
+    ) %>%
+    ungroup()
+  
+  daily_diffs <- diffs %>%
+    distinct(SEASON, DATE) %>%
+    full_join(distinct(diffs, TEAM), by = character()) %>%
+    left_join(
+      diffs %>% select(DATE, TEAM, CUM_DIFF_DIFF),
+      by = c('DATE', 'TEAM')
+    ) %>%
+    
+    group_by(SEASON, TEAM) %>%
+    arrange(SEASON, TEAM, DATE) %>%
+    fill(CUM_DIFF_DIFF) %>%
+    ungroup()
+  
+  daily_diffs %>%
+    filter(!is.na(CUM_DIFF_DIFF)) %>%
+    group_by(SEASON, DATE) %>%
+    filter(n() == 30) %>%
+    
+    mutate(TEAM_PR = rank(desc(CUM_DIFF_DIFF), ties.method = "min"),
+           COLOR = vget_team_color(TEAM)) %>%
+    ungroup()
+  
+}
