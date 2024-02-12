@@ -1692,7 +1692,10 @@ function(input, output, session) {
   
   output$changelog <- renderText({glue(
     "<br><b>Version 2.0.1</b> (1/29/2024)<br>",
-    " * Added Hall-of-Fame points tracker to NBN/Franchise Records tab.", "<br>",
+    " * Added retired jerseys to Franchise Profiles.", "<br>",
+    " * Some pre-processing of data now occurs to hopefully help load times.", "<br><br>",
+    "<br><b>Version 2.0.1</b> (1/29/2024)<br>",
+    " * Added Hall-of-Fame points tracker to NBN/Franchise Records tab.", "<br><br>",
     "<br><b>Version 2.0.0</b> (1/28/2024)<br>",
     " * Complete revamp of UI.", "<br>",
     " * Added team pop-ups, accessible by clicking on a team in Standings or Team Stats.", "<br><br>",
