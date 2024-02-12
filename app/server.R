@@ -4,28 +4,10 @@ log <- glue(" * [{Sys.time()}] Started instance...")
 log <- c(log, glue(" * [{Sys.time()}] Loaded packages and scripts..."))
 
 # Find all allstats files in R/ directory
-dfs <- load_allstats() %>%
-  clean_allstats() %>% 
-  mutate(gametype = 'REG',
-         GAME = NA_integer_,
-         ROUND = NA_integer_)
-
-dfs_playoffs <- load_allstats(playoffs = TRUE) %>%
-  clean_allstats() %>% 
-  mutate(gametype = 'PLAYOFF')
-
+dfs <- read_rds('data/dfs.rds')
+dfs_playoffs <- read_rds('data/dfs_playoffs.rds')
 dfs_everything <- rbind(dfs, dfs_playoffs)
-
-bios <- read_csv("data/player-bio-database.csv", skip = 1, show_col_types = F) %>% 
-  select(-Name...1) %>% 
-  rename(Name = Name...2) %>% 
-  mutate(Name = case_when(
-    Name == "KANTER, ENES" ~ "FREEDOM, ENES",
-    Name == "THOMAS, CAMERON" ~ "THOMAS, CAM",
-    Name == "REDDISH, CAMERON" ~ "REDDISH, CAM",
-    TRUE ~ Name
-  )) %>% 
-  mutate(DOB = mdy(DOB))
+bios <- read_rds('data/bios.rds')
 
 champions <- get_champions(dfs_playoffs)
 
@@ -1044,14 +1026,28 @@ function(input, output, session) {
     
   })
   
-  output$franchise_history_rings <- renderText({
+  output$franchise_history_rings <- renderUI({
     
     x <- champions %>% 
       distinct(TEAM, SEASON) %>% 
       filter(TEAM == input$team_history) %>% 
       mutate(SEASON = str_replace(SEASON, ' Playoffs', ''))
     
-    glue("Rings: {nrow(x)} ({str_c(x$SEASON, collapse = ', ')})")
+    glue("Rings: {nrow(x)} ({str_c(x$SEASON, collapse = ', ')})") %>% 
+      HTML()
+    
+  })
+  
+  output$franchise_history_retired <- renderUI({
+    
+    x <- get_retired_jerseys() %>% 
+      filter(TEAM == input$team_history) %>% 
+      mutate(TXT = str_c(NO, ': ', PLAYER)) %>% 
+      pull(TXT) %>% 
+      str_c(collapse = '<br/>')
+    
+    str_c("<br/>Retired Jerseys:<br/>", x) %>% 
+      HTML()
     
   })
   

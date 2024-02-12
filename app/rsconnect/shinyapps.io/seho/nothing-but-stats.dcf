@@ -5,10 +5,10 @@ account: seho
 server: shinyapps.io
 hostUrl: https://api.shinyapps.io/v1
 appId: 6690581
-bundleId: 8207811
+bundleId: 8247306
 url: https://seho.shinyapps.io/nothing-but-stats/
-when: 1706811336.29095
-lastSyncTime: 1706811336.29095
+when: 1707764088.06743
+lastSyncTime: 1707764088.06744
 asMultiple: FALSE
 asStatic: FALSE
 ignoredFiles: .RData|.secrets/134f22af3ae3a9f0b7f0eb57dd61916f_bshk93@gmail.com|.secrets/7a6077d23f6776ccc63f8f70bc12b214_bshk93@gmail.com|.secrets/9566fe0643cfe888fecd0b72f870afec_bshk93@gmail.com|.secrets/d67d4efb39eee449dc62932502fd8a0f_bshk93@gmail.com

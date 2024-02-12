@@ -1,13 +1,14 @@
 if (stringr::str_detect(getwd(), 'bshk9')) {
-  setwd("C:/Users/bshk9/OneDrive/home/projects/nbn/nothing-but-stats/app")
+  setwd("C:/Users/bshk9/OneDrive/home/projects/nothing-but-stats/app")
 } else {
-  setwd("C:/Users/Brian/OneDrive/home/projects/nbn/nothing-but-stats/app")
+  setwd("C:/Users/Brian/OneDrive/home/projects/nothing-but-stats/app")
 }
 
-library(tidyverse)
-library(lubridate)
+
 # Source functions ----
 source("update.R")
+source("R/read.R")
+source("R/utils.R")
 
 # Globals ----
 myseason <- "2023-24"
@@ -17,7 +18,7 @@ myplayoffdate <- "2024-04-11" # Playoff start date
 # Pull down and check allstats, extracting data from Google sheets
 allstats <- get_allstats(delete_before = "2023-07-01")
 
-mytestdate <- "2024-01-28"
+mytestdate <- "2024-02-05"
 
 allstats %>% filter(DATE == mytestdate) %>% 
   distinct(PLAYER) %>% 
@@ -32,7 +33,7 @@ allstats %>%
   View
 
 # Cleaning and building
-built_allstats <- build_allstats(allstats %>% filter(DATE <= "2024-01-28"))
+built_allstats <- build_allstats(allstats %>% filter(DATE <= "2024-02-05"))
 
 # Write/update output file
 built_allstats %>% 
@@ -48,6 +49,18 @@ built_allstats %>%
   write_csv(glue::glue("data/allstats-playoffs-{str_extract(myseason, '\\\\d{2}$')}.csv"))
 
 # Post-processing of data
+dfs <- load_allstats() %>%
+  clean_allstats() %>% 
+  mutate(gametype = 'REG',
+         GAME = NA_integer_,
+         ROUND = NA_integer_)
+
+dfs_playoffs <- load_allstats(playoffs = TRUE) %>%
+  clean_allstats() %>% 
+  mutate(gametype = 'PLAYOFF')
+
+write_rds(dfs, 'data/dfs.rds')
+write_rds(dfs_playoffs, 'data/dfs_playoffs.rds')
 
 
 # Afterwards, re-build the Shiny app
@@ -58,10 +71,23 @@ built_allstats %>%
 # Refresh player bios ----
 googledrive::drive_download(
   "https://docs.google.com/spreadsheets/d/1i3vuaoJOxKrynLZsjV8VGv3eslunMPbrGsrax-xCyVk/", 
-  "R/player-bio-database.csv", "csv", overwrite = TRUE
+  "data/player-bio-database.csv", "csv", overwrite = TRUE
 )
 
-# Refresh rosters ----
+read_csv("data/player-bio-database.csv", skip = 1, show_col_types = F) %>% 
+  select(-Name...1) %>% 
+  rename(Name = Name...2) %>% 
+  mutate(Name = case_when(
+    Name == "KANTER, ENES" ~ "FREEDOM, ENES",
+    Name == "THOMAS, CAMERON" ~ "THOMAS, CAM",
+    Name == "REDDISH, CAMERON" ~ "REDDISH, CAM",
+    TRUE ~ Name
+  )) %>% 
+  mutate(DOB = mdy(DOB)) %>% 
+  write_rds('data/bios.rds')
+
+
+# Refresh rosters (UNUSED) ----
 googlesheets4::read_sheet(
   "https://docs.google.com/spreadsheets/d/14Pwrjk4S9cgB1f2Q16S3YgfoHre8gUxjjXde8k5Nn_0/", 
   sheet = 'SAS',
