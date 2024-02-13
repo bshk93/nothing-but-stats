@@ -317,10 +317,15 @@ body <- dashboardBody(
       verbatimTextOutput("player_summary"),
       DTOutput("tbl_season"),
       plotlyOutput("gamelog_plot"),
+      h2("GAME/CAREER HIGHS"),
       DTOutput("records"),
+      h2("ALL-TIME TOTALS AND RANKINGS"),
       DTOutput("rankings"),
+      h2("ACHIEVEMENTS (SEASON)"),
       DTOutput("achievements_season"),
+      h2("ACHIEVEMENTS (GAME)"),
       DTOutput("achievements_game"),
+      h2("GAME LOG"),
       DTOutput("tbl")
     ),
     

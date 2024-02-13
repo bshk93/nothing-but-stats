@@ -217,9 +217,10 @@ function(input, output, session) {
       filter(SEASON == input$season2) %>% 
       select(-SEASON, -PLAYER) %>% 
       
-      datatable(rownames = FALSE, 
-                options = list(pageLength = 10, scrollX = TRUE), 
-                escape = FALSE)
+      format_as_datatable(
+        escape = FALSE,
+        page_length = 10
+      )
   })
   
   output$standings <- renderDT({
@@ -476,16 +477,11 @@ function(input, output, session) {
         FG, `3P`, FT, PF, GMSC, WL
       ) %>% 
       arrange(desc(DATE)) %>% 
-      datatable(
-        caption = htmltools::tags$caption(
-          style = 'caption-side: top; text-align: left; color:black; font-size:200% ;',
-          "GAMELOG"
-        ),
-        rownames = FALSE,
-        options = list(scrollX = TRUE),
+      
+      format_as_datatable(
         filter = 'top'
       )
-  }, server = TRUE)
+  })
   
   output$gamelog_plot <- renderPlotly({
     
@@ -537,14 +533,9 @@ function(input, output, session) {
       filter(PLAYER == input$name) %>% 
       select(-PLAYER) %>% 
       arrange(desc(DATE)) %>% 
-      datatable(
-        caption = htmltools::tags$caption(
-          style = 'caption-side: top; text-align: left; color:black; font-size:200% ;',
-          "IN THE NEWS"
-        ),
-        rownames = FALSE, 
-        options = list(pageLength = 10, scrollX = TRUE), 
-        escape = FALSE
+      format_as_datatable(
+        escape = FALSE,
+        page_length = 10
       )
   })
   
@@ -601,14 +592,8 @@ function(input, output, session) {
                             coalesce(medal2, ""), coalesce(medal3, ""))) %>% 
       select(SEASON, everything(), -PLAYER, -star, -ring, -crown, -hand, -six, -baby, -chart,
              -starts_with("medal")) %>% 
-      datatable(
-        caption = htmltools::tags$caption(
-          style = 'caption-side: top; text-align: left; color:black; font-size:200% ;',
-          "PER-GAME OVERVIEW"
-        ),
-        rownames = FALSE,
-        escape = FALSE,
-        options = list(scrollX = TRUE)
+      format_as_datatable(
+        escape = FALSE
       ) %>% 
       formatStyle(
         "SEASON",
@@ -639,14 +624,7 @@ function(input, output, session) {
           ) %>% 
           mutate(SEASON = "CAREER")
       ) %>% 
-      datatable(
-        caption = htmltools::tags$caption(
-          style = 'caption-side: top; text-align: left; color:black; font-size:200% ;',
-          "CAREER HIGHS"
-        ),
-        options = list(scrollX = TRUE),
-        rownames = FALSE
-      ) %>% 
+      format_as_datatable() %>% 
       formatStyle(
         "SEASON",
         target = "row",
@@ -659,9 +637,10 @@ function(input, output, session) {
     
     req(input$password == myPassword || myPassword == '')
     
-    get_achievements_season(myPlayerData(), dfs, input$name, ach_metadata)
+    get_achievements_season(myPlayerData(), dfs, input$name, ach_metadata) %>% 
+      format_as_datatable()
     
-  }, options = list(scrollX = TRUE))
+  })
   
   
   # Achievements - Game
@@ -669,9 +648,10 @@ function(input, output, session) {
     
     req(input$password == myPassword || myPassword == '')
     
-    get_achievements_game(myCombinedData(), ach_metadata)
+    get_achievements_game(myCombinedData(), ach_metadata) %>% 
+      format_as_datatable()
     
-  }, options = list(scrollX = TRUE))
+  })
   
   # NBN Rankings
   output$rankings <- renderDT({
@@ -719,14 +699,7 @@ function(input, output, session) {
           mutate(SEASON = "ALL-TIME")
       ) %>% 
       select(-PLAYER, -GMSC, -PCT, -FGPCT, -`3PPCT`, -FTPCT) %>% 
-      datatable(
-        caption = htmltools::tags$caption(
-          style = 'caption-side: top; text-align: left; color:black; font-size:200% ;',
-          "ALL-TIME TOTALS AND RANKINGS"
-        ),
-        rownames = FALSE,
-        options = list(scrollX = TRUE)
-      ) %>% 
+      format_as_datatable() %>% 
       formatRound(
         columns = c(2:15),
         digits = 0
