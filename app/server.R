@@ -1,4 +1,4 @@
-myPassword <- ""
+myPassword <- "crab"
 
 log <- glue(" * [{Sys.time()}] Started instance...")
 log <- c(log, glue(" * [{Sys.time()}] Loaded packages and scripts..."))
@@ -94,9 +94,9 @@ function(input, output, session) {
               )
             ) %>% 
             select(SEASON, G, MPG, PPG, RPG, APG, SPG, BPG, FG, `3P`, FT, GMSC)
-        }, escape = FALSE),
-        size = 'xl',
-        easyClose = TRUE,
+        }, escape = FALSE, options = list(scrollX = TRUE)),
+        #size = 'xl',
+        easyClose = T,
         footer = NULL))
     } else if (type == 'boxscores') {
       my_game <- gamelist()[input_info,]
@@ -106,8 +106,8 @@ function(input, output, session) {
         renderDataTable({
           get_box_score(dfs_everything, my_game[1], my_game[4])
         }),
-        size = 'xl',
-        easyClose = TRUE,
+        #size = 'xl',
+        easyClose = T,
         footer = NULL))
     } else if (type == 'team-season') {
       my_team <- str_extract(input_info[3], '^[A-Z]{3}')
@@ -126,9 +126,9 @@ function(input, output, session) {
             arrange(desc(G * as.numeric(MPG))) %>%
             select(PLAYER, G, MPG, PPG, RPG, APG, SPG, BPG,
                    GMSC, TS)
-        }, options = list(pageLength = 15)),
-        size = 'xl',
-        easyClose = TRUE,
+        }, options = list(pageLength = 15, scrollX = TRUE)),
+        #size = 'xl',
+        easyClose = T,
         footer = NULL
       ))
     }
@@ -217,7 +217,9 @@ function(input, output, session) {
       filter(SEASON == input$season2) %>% 
       select(-SEASON, -PLAYER) %>% 
       
-      datatable(rownames = FALSE, options = list(pageLength = 10), escape = FALSE)
+      datatable(rownames = FALSE, 
+                options = list(pageLength = 10, scrollX = TRUE), 
+                escape = FALSE)
   })
   
   output$standings <- renderDT({
@@ -251,7 +253,7 @@ function(input, output, session) {
       ungroup() %>% 
       select(SEED, TEAM, GB, W, L, PCT, PPG, OPPG, DIFF) %>% 
       mutate(TEAM = str_c(TEAM, " <img src='logo-", tolower(TEAM), ".png' height='20'></img>"))
-  }, options = list(pageLength = 30), rownames = FALSE, escape = FALSE,
+  }, options = list(pageLength = 30, scrollX = TRUE), rownames = FALSE, escape = FALSE,
   selection = list(mode = 'single', 
                    target = 'cell',
                    selectable = matrix(c(1:30, rep(1, 30)), 30, 2)))
@@ -277,7 +279,8 @@ function(input, output, session) {
     
     gamelist()
     
-  }, selection = list(mode = 'single', target = 'row'), options = list(pageLength = 30))
+  }, selection = list(mode = 'single', target = 'row'), 
+     options = list(pageLength = 30, scrollX = TRUE))
   
   output$leaders <- renderDT({
     
@@ -337,13 +340,30 @@ function(input, output, session) {
       arrange(rn) %>% 
       select(-rn)
     
-  }, escape = FALSE, selection = list(mode = 'single', target = 'cell'))
+  }, 
+    escape = FALSE, 
+    selection = list(mode = 'single', target = 'cell'),
+    options = list(scrollX = TRUE)
+  )
   
   output$season_allstars <- renderDT({
-    get_allstars() %>% 
+    
+    x <- get_allstars() %>% 
+      filter(SEASON <= input$season2) %>% 
+      group_by(PLAYER) %>% 
+      mutate(SELECTION = n()) %>% 
       filter(SEASON == input$season2) %>% 
-      select(PLAYER)
-  }, options = list(pageLength = 50), rownames = FALSE)
+      select(PLAYER, SELECTION)
+    
+    teams <- c()
+    for (i in 1:nrow(x)) {
+      teams <- c(teams, get_last_played_for(x$PLAYER[[i]], dfs))
+    }
+    
+    x$TEAM <- teams
+    
+    x
+  }, options = list(pageLength = 50, scrollX = TRUE), rownames = FALSE)
   
   team_stats <- reactive({
     mySeasonDF() %>% 
@@ -365,11 +385,10 @@ function(input, output, session) {
   output$team_stats <- renderDT({
     team_stats()
   }, 
-  options = list(pageLength = 30), 
-  #rownames = FALSE, 
-  escape = FALSE,
-  selection = list(mode = 'single', target = 'cell',
-                   selectable = matrix(c(1:30, rep(1, 30)), 30, 2))
+    options = list(pageLength = 30, scrollX = TRUE), 
+    escape = FALSE,
+    selection = list(mode = 'single', target = 'cell',
+                     selectable = matrix(c(1:30, rep(1, 30)), 30, 2))
   )
   
   output$tankathon <- renderDT({
@@ -415,7 +434,7 @@ function(input, output, session) {
       mutate_at(vars(starts_with("P")), function(x) (round(sum(x, na.rm = T)/n(), 1))) %>% 
       select(-temprank) %>% 
       mutate(TEAM = str_c(TEAM, " <img src='logo-", tolower(TEAM), ".png' height='20'></img>"))
-  }, options = list(pageLength = 20), rownames = FALSE, escape = FALSE)
+  }, options = list(pageLength = 20, scrollX = TRUE), rownames = FALSE, escape = FALSE)
   
   
   output$points_scored_allowed <- renderPlot({
@@ -463,6 +482,7 @@ function(input, output, session) {
           "GAMELOG"
         ),
         rownames = FALSE,
+        options = list(scrollX = TRUE),
         filter = 'top'
       )
   }, server = TRUE)
@@ -523,7 +543,7 @@ function(input, output, session) {
           "IN THE NEWS"
         ),
         rownames = FALSE, 
-        options = list(pageLength = 10), 
+        options = list(pageLength = 10, scrollX = TRUE), 
         escape = FALSE
       )
   })
@@ -587,7 +607,8 @@ function(input, output, session) {
           "PER-GAME OVERVIEW"
         ),
         rownames = FALSE,
-        escape = FALSE
+        escape = FALSE,
+        options = list(scrollX = TRUE)
       ) %>% 
       formatStyle(
         "SEASON",
@@ -623,6 +644,7 @@ function(input, output, session) {
           style = 'caption-side: top; text-align: left; color:black; font-size:200% ;',
           "CAREER HIGHS"
         ),
+        options = list(scrollX = TRUE),
         rownames = FALSE
       ) %>% 
       formatStyle(
@@ -639,7 +661,7 @@ function(input, output, session) {
     
     get_achievements_season(myPlayerData(), dfs, input$name, ach_metadata)
     
-  })
+  }, options = list(scrollX = TRUE))
   
   
   # Achievements - Game
@@ -649,7 +671,7 @@ function(input, output, session) {
     
     get_achievements_game(myCombinedData(), ach_metadata)
     
-  })
+  }, options = list(scrollX = TRUE))
   
   # NBN Rankings
   output$rankings <- renderDT({
@@ -702,7 +724,8 @@ function(input, output, session) {
           style = 'caption-side: top; text-align: left; color:black; font-size:200% ;',
           "ALL-TIME TOTALS AND RANKINGS"
         ),
-        rownames = FALSE
+        rownames = FALSE,
+        options = list(scrollX = TRUE)
       ) %>% 
       formatRound(
         columns = c(2:15),
@@ -853,7 +876,9 @@ function(input, output, session) {
     x_end <- ncol(x)
     
     x %>% 
-      datatable() %>% 
+      datatable(
+        options = list(scrollX = TRUE)
+      ) %>% 
       formatRound(
         columns = 2:9,
         digits = 0
@@ -869,7 +894,7 @@ function(input, output, session) {
     req(input$password == myPassword || myPassword == '')
     
     calculate_hof_points(dfs_everything, dfs_playoffs, dfs)
-  })
+  }, options = list(scrollX = TRUE))
   
   
   # Tab 5: Franchise History ----
@@ -927,6 +952,7 @@ function(input, output, session) {
           style = 'caption-side: top; text-align: left; color:black; font-size:200% ;',
           "SEASON BY SEASON RESULTS"
         ),
+        options = list(scrollX = TRUE),
         rownames = FALSE,
         escape = FALSE
       ) %>% 
@@ -945,7 +971,7 @@ function(input, output, session) {
       dfs,
       team_filter = input$team_history
     )
-  })
+  }, options = list(scrollX = TRUE))
   
   output$franchise_history_awards <- renderDT({
     
@@ -958,6 +984,7 @@ function(input, output, session) {
       filter(TEAM == input$team_history) %>% 
       arrange(SEASON) %>% 
       datatable(
+        options = list(scrollX = TRUE),
         caption = htmltools::tags$caption(
           style = 'caption-side: top; text-align: left; color:black; font-size:200% ;',
           "FRONT OFFICE AWARDS"
@@ -994,7 +1021,7 @@ function(input, output, session) {
     
     out
       
-  }, options = list(pageLength = 25), rownames = FALSE)
+  }, options = list(pageLength = 25, scrollX = TRUE), rownames = FALSE)
   
   output$franchise_history_cum_diff <- renderPlot({
     
@@ -1233,7 +1260,7 @@ function(input, output, session) {
       datatable(
         rownames = FALSE, 
         selection = list(mode = 'single', target = 'cell'),
-        options = list(pageLength = 100)
+        options = list(pageLength = 100, scrollX = TRUE)
       )
   })
   
@@ -1260,7 +1287,7 @@ function(input, output, session) {
       ungroup() %>% 
       mutate(SERIES = str_c(TEAM, " ", SERIES1, "-", SERIES2, " ", OPP_RAW)) %>% 
       select(ROUND, GAME, SCORE, WINNER, SERIES) %>% 
-      datatable(rownames = FALSE, options = list(pageLength = 100))
+      datatable(rownames = FALSE, options = list(pageLength = 100, scrollX = TRUE))
   })
   
   # Tab 9: Power Rankings ----
@@ -1575,7 +1602,7 @@ function(input, output, session) {
       
       mutate_if(is.numeric, function(x) {round(x, 2)}) %>% 
       
-      datatable(rownames = TRUE, options = list(pageLength = 100))
+      datatable(rownames = TRUE, options = list(pageLength = 100, scrollX = TRUE))
     
   })
   

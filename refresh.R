@@ -18,7 +18,7 @@ myplayoffdate <- "2024-04-11" # Playoff start date
 # Pull down and check allstats, extracting data from Google sheets
 allstats <- get_allstats(delete_before = "2023-07-01")
 
-mytestdate <- "2024-02-05"
+mytestdate <- "2024-02-08"
 
 allstats %>% filter(DATE == mytestdate) %>% 
   distinct(PLAYER) %>% 
@@ -33,7 +33,7 @@ allstats %>%
   View
 
 # Cleaning and building
-built_allstats <- build_allstats(allstats %>% filter(DATE <= "2024-02-05"))
+built_allstats <- build_allstats(allstats %>% filter(DATE <= "2024-02-08"))
 
 # Write/update output file
 built_allstats %>% 

@@ -41,6 +41,7 @@ clean_allstats <- function(dfs) {
       PLAYER == "ROBINSON, GLENNN" ~ "ROBINSON, GLENN",
       PLAYER == "WHITE, COLBY" ~ "WHITE, COBY",
       PLAYER == "BERTANS,DAVIS" ~ "BERTANS, DAVIS",
+      PLAYER == "HIGHSMITH, HAYDEN" ~ "HIGHSMITH, HAYWOOD",
       TRUE ~ PLAYER
     )) %>% 
     mutate(GMSC = round(GMSC, 2)) %>% 
