@@ -1,31 +1,13 @@
-myPassword <- ""
+myPassword <- "crab"
 
 log <- glue(" * [{Sys.time()}] Started instance...")
 log <- c(log, glue(" * [{Sys.time()}] Loaded packages and scripts..."))
 
 # Find all allstats files in R/ directory
-dfs <- load_allstats() %>%
-  clean_allstats() %>% 
-  mutate(gametype = 'REG',
-         GAME = NA_integer_,
-         ROUND = NA_integer_)
-
-dfs_playoffs <- load_allstats(playoffs = TRUE) %>%
-  clean_allstats() %>% 
-  mutate(gametype = 'PLAYOFF')
-
+dfs <- read_rds('data/dfs.rds')
+dfs_playoffs <- read_rds('data/dfs_playoffs.rds')
 dfs_everything <- rbind(dfs, dfs_playoffs)
-
-bios <- read_csv("data/player-bio-database.csv", skip = 1, show_col_types = F) %>% 
-  select(-Name...1) %>% 
-  rename(Name = Name...2) %>% 
-  mutate(Name = case_when(
-    Name == "KANTER, ENES" ~ "FREEDOM, ENES",
-    Name == "THOMAS, CAMERON" ~ "THOMAS, CAM",
-    Name == "REDDISH, CAMERON" ~ "REDDISH, CAM",
-    TRUE ~ Name
-  )) %>% 
-  mutate(DOB = mdy(DOB))
+bios <- read_rds('data/bios.rds')
 
 champions <- get_champions(dfs_playoffs)
 
@@ -112,9 +94,9 @@ function(input, output, session) {
               )
             ) %>% 
             select(SEASON, G, MPG, PPG, RPG, APG, SPG, BPG, FG, `3P`, FT, GMSC)
-        }, escape = FALSE),
-        size = 'xl',
-        easyClose = TRUE,
+        }, escape = FALSE, options = list(scrollX = TRUE)),
+        #size = 'xl',
+        easyClose = T,
         footer = NULL))
     } else if (type == 'boxscores') {
       my_game <- gamelist()[input_info,]
@@ -124,8 +106,8 @@ function(input, output, session) {
         renderDataTable({
           get_box_score(dfs_everything, my_game[1], my_game[4])
         }),
-        size = 'xl',
-        easyClose = TRUE,
+        #size = 'xl',
+        easyClose = T,
         footer = NULL))
     } else if (type == 'team-season') {
       my_team <- str_extract(input_info[3], '^[A-Z]{3}')
@@ -144,9 +126,9 @@ function(input, output, session) {
             arrange(desc(G * as.numeric(MPG))) %>%
             select(PLAYER, G, MPG, PPG, RPG, APG, SPG, BPG,
                    GMSC, TS)
-        }, options = list(pageLength = 15)),
-        size = 'xl',
-        easyClose = TRUE,
+        }, options = list(pageLength = 15, scrollX = TRUE)),
+        #size = 'xl',
+        easyClose = T,
         footer = NULL
       ))
     }
@@ -235,7 +217,10 @@ function(input, output, session) {
       filter(SEASON == input$season2) %>% 
       select(-SEASON, -PLAYER) %>% 
       
-      datatable(rownames = FALSE, options = list(pageLength = 10), escape = FALSE)
+      format_as_datatable(
+        escape = FALSE,
+        page_length = 10
+      )
   })
   
   output$standings <- renderDT({
@@ -269,7 +254,7 @@ function(input, output, session) {
       ungroup() %>% 
       select(SEED, TEAM, GB, W, L, PCT, PPG, OPPG, DIFF) %>% 
       mutate(TEAM = str_c(TEAM, " <img src='logo-", tolower(TEAM), ".png' height='20'></img>"))
-  }, options = list(pageLength = 30), rownames = FALSE, escape = FALSE,
+  }, options = list(pageLength = 30, scrollX = TRUE), rownames = FALSE, escape = FALSE,
   selection = list(mode = 'single', 
                    target = 'cell',
                    selectable = matrix(c(1:30, rep(1, 30)), 30, 2)))
@@ -295,7 +280,8 @@ function(input, output, session) {
     
     gamelist()
     
-  }, selection = list(mode = 'single', target = 'row'), options = list(pageLength = 30))
+  }, selection = list(mode = 'single', target = 'row'), 
+     options = list(pageLength = 30, scrollX = TRUE))
   
   output$leaders <- renderDT({
     
@@ -355,13 +341,30 @@ function(input, output, session) {
       arrange(rn) %>% 
       select(-rn)
     
-  }, escape = FALSE, selection = list(mode = 'single', target = 'cell'))
+  }, 
+    escape = FALSE, 
+    selection = list(mode = 'single', target = 'cell'),
+    options = list(scrollX = TRUE)
+  )
   
   output$season_allstars <- renderDT({
-    get_allstars() %>% 
+    
+    x <- get_allstars() %>% 
+      filter(SEASON <= input$season2) %>% 
+      group_by(PLAYER) %>% 
+      mutate(SELECTION = n()) %>% 
       filter(SEASON == input$season2) %>% 
-      select(PLAYER)
-  }, options = list(pageLength = 50), rownames = FALSE)
+      select(PLAYER, SELECTION)
+    
+    teams <- c()
+    for (i in 1:nrow(x)) {
+      teams <- c(teams, get_last_played_for(x$PLAYER[[i]], dfs))
+    }
+    
+    x$TEAM <- teams
+    
+    x
+  }, options = list(pageLength = 50, scrollX = TRUE), rownames = FALSE)
   
   team_stats <- reactive({
     mySeasonDF() %>% 
@@ -383,11 +386,10 @@ function(input, output, session) {
   output$team_stats <- renderDT({
     team_stats()
   }, 
-  options = list(pageLength = 30), 
-  #rownames = FALSE, 
-  escape = FALSE,
-  selection = list(mode = 'single', target = 'cell',
-                   selectable = matrix(c(1:30, rep(1, 30)), 30, 2))
+    options = list(pageLength = 30, scrollX = TRUE), 
+    escape = FALSE,
+    selection = list(mode = 'single', target = 'cell',
+                     selectable = matrix(c(1:30, rep(1, 30)), 30, 2))
   )
   
   output$tankathon <- renderDT({
@@ -433,7 +435,7 @@ function(input, output, session) {
       mutate_at(vars(starts_with("P")), function(x) (round(sum(x, na.rm = T)/n(), 1))) %>% 
       select(-temprank) %>% 
       mutate(TEAM = str_c(TEAM, " <img src='logo-", tolower(TEAM), ".png' height='20'></img>"))
-  }, options = list(pageLength = 20), rownames = FALSE, escape = FALSE)
+  }, options = list(pageLength = 20, scrollX = TRUE), rownames = FALSE, escape = FALSE)
   
   
   output$points_scored_allowed <- renderPlot({
@@ -475,15 +477,11 @@ function(input, output, session) {
         FG, `3P`, FT, PF, GMSC, WL
       ) %>% 
       arrange(desc(DATE)) %>% 
-      datatable(
-        caption = htmltools::tags$caption(
-          style = 'caption-side: top; text-align: left; color:black; font-size:200% ;',
-          "GAMELOG"
-        ),
-        rownames = FALSE,
+      
+      format_as_datatable(
         filter = 'top'
       )
-  }, server = TRUE)
+  })
   
   output$gamelog_plot <- renderPlotly({
     
@@ -535,14 +533,9 @@ function(input, output, session) {
       filter(PLAYER == input$name) %>% 
       select(-PLAYER) %>% 
       arrange(desc(DATE)) %>% 
-      datatable(
-        caption = htmltools::tags$caption(
-          style = 'caption-side: top; text-align: left; color:black; font-size:200% ;',
-          "IN THE NEWS"
-        ),
-        rownames = FALSE, 
-        options = list(pageLength = 10), 
-        escape = FALSE
+      format_as_datatable(
+        escape = FALSE,
+        page_length = 10
       )
   })
   
@@ -599,12 +592,7 @@ function(input, output, session) {
                             coalesce(medal2, ""), coalesce(medal3, ""))) %>% 
       select(SEASON, everything(), -PLAYER, -star, -ring, -crown, -hand, -six, -baby, -chart,
              -starts_with("medal")) %>% 
-      datatable(
-        caption = htmltools::tags$caption(
-          style = 'caption-side: top; text-align: left; color:black; font-size:200% ;',
-          "PER-GAME OVERVIEW"
-        ),
-        rownames = FALSE,
+      format_as_datatable(
         escape = FALSE
       ) %>% 
       formatStyle(
@@ -636,13 +624,7 @@ function(input, output, session) {
           ) %>% 
           mutate(SEASON = "CAREER")
       ) %>% 
-      datatable(
-        caption = htmltools::tags$caption(
-          style = 'caption-side: top; text-align: left; color:black; font-size:200% ;',
-          "CAREER HIGHS"
-        ),
-        rownames = FALSE
-      ) %>% 
+      format_as_datatable() %>% 
       formatStyle(
         "SEASON",
         target = "row",
@@ -655,7 +637,8 @@ function(input, output, session) {
     
     req(input$password == myPassword || myPassword == '')
     
-    get_achievements_season(myPlayerData(), dfs, input$name, ach_metadata)
+    get_achievements_season(myPlayerData(), dfs, input$name, ach_metadata) %>% 
+      format_as_datatable()
     
   })
   
@@ -665,7 +648,8 @@ function(input, output, session) {
     
     req(input$password == myPassword || myPassword == '')
     
-    get_achievements_game(myCombinedData(), ach_metadata)
+    get_achievements_game(myCombinedData(), ach_metadata) %>% 
+      format_as_datatable()
     
   })
   
@@ -715,13 +699,7 @@ function(input, output, session) {
           mutate(SEASON = "ALL-TIME")
       ) %>% 
       select(-PLAYER, -GMSC, -PCT, -FGPCT, -`3PPCT`, -FTPCT) %>% 
-      datatable(
-        caption = htmltools::tags$caption(
-          style = 'caption-side: top; text-align: left; color:black; font-size:200% ;',
-          "ALL-TIME TOTALS AND RANKINGS"
-        ),
-        rownames = FALSE
-      ) %>% 
+      format_as_datatable() %>% 
       formatRound(
         columns = c(2:15),
         digits = 0
@@ -871,7 +849,9 @@ function(input, output, session) {
     x_end <- ncol(x)
     
     x %>% 
-      datatable() %>% 
+      datatable(
+        options = list(scrollX = TRUE)
+      ) %>% 
       formatRound(
         columns = 2:9,
         digits = 0
@@ -887,7 +867,7 @@ function(input, output, session) {
     req(input$password == myPassword || myPassword == '')
     
     calculate_hof_points(dfs_everything, dfs_playoffs, dfs)
-  })
+  }, options = list(scrollX = TRUE))
   
   
   # Tab 5: Franchise History ----
@@ -945,6 +925,7 @@ function(input, output, session) {
           style = 'caption-side: top; text-align: left; color:black; font-size:200% ;',
           "SEASON BY SEASON RESULTS"
         ),
+        options = list(scrollX = TRUE),
         rownames = FALSE,
         escape = FALSE
       ) %>% 
@@ -956,6 +937,58 @@ function(input, output, session) {
     
   })
   
+  output$franchise_history_scatter <- renderPlotly({
+    
+    team_data <- calculate_team_offense_defense(dfs) %>% 
+      ungroup() %>% 
+      mutate(ids = str_c(SEASON, ' ', TEAM, '\nOFF: ', round(OFF_RTG, 2), '\nDEF: ', round(DEF_RTG, 2)),
+             color = case_when(TEAM == input$team_history ~ 'red',
+                               TRUE ~ 'blue'))
+    
+    team_data_selected <- team_data %>% 
+      filter(TEAM == input$team_history) %>% 
+      arrange(SEASON)
+    
+    team_data %>% 
+      plot_ly(
+        x = ~OFF_RTG, 
+        y = ~DEF_RTG, 
+        text = ~ids,
+        #color = ~color,
+        #colors = ~color,
+        marker = list(
+          color = ~color
+        ),
+        type = 'scatter', 
+        mode = 'markers',
+        showlegend = F
+      ) %>% 
+      
+      add_trace(text = ~ids, hoverinfo = 'text', showlegend = F) %>% 
+      
+      add_annotations(
+        ax = team_data_selected$OFF_RTG[-nrow(team_data_selected)],
+        ay = team_data_selected$DEF_RTG[-nrow(team_data_selected)],
+        x = team_data_selected$OFF_RTG[-1],
+        y = team_data_selected$DEF_RTG[-1],
+        xref = 'x',
+        yref = 'y',
+        axref = 'x',
+        ayref = 'y',
+        showarrow = T,
+        text = ''
+      ) %>% 
+      layout(
+        xaxis = list(
+          range = c(-15, 15)
+        ),
+        yaxis = list(
+          range = c(-15, 15)
+        )
+      )
+    
+  })
+  
   output$franchise_history_legends <- renderDT({
     calculate_hof_points(
       dfs_everything, 
@@ -963,7 +996,7 @@ function(input, output, session) {
       dfs,
       team_filter = input$team_history
     )
-  })
+  }, options = list(scrollX = TRUE))
   
   output$franchise_history_awards <- renderDT({
     
@@ -976,6 +1009,7 @@ function(input, output, session) {
       filter(TEAM == input$team_history) %>% 
       arrange(SEASON) %>% 
       datatable(
+        options = list(scrollX = TRUE),
         caption = htmltools::tags$caption(
           style = 'caption-side: top; text-align: left; color:black; font-size:200% ;',
           "FRONT OFFICE AWARDS"
@@ -1012,7 +1046,7 @@ function(input, output, session) {
     
     out
       
-  }, options = list(pageLength = 25), rownames = FALSE)
+  }, options = list(pageLength = 25, scrollX = TRUE), rownames = FALSE)
   
   output$franchise_history_cum_diff <- renderPlot({
     
@@ -1044,14 +1078,28 @@ function(input, output, session) {
     
   })
   
-  output$franchise_history_rings <- renderText({
+  output$franchise_history_rings <- renderUI({
     
     x <- champions %>% 
       distinct(TEAM, SEASON) %>% 
       filter(TEAM == input$team_history) %>% 
       mutate(SEASON = str_replace(SEASON, ' Playoffs', ''))
     
-    glue("Rings: {nrow(x)} ({str_c(x$SEASON, collapse = ', ')})")
+    glue("Rings: {nrow(x)} ({str_c(x$SEASON, collapse = ', ')})") %>% 
+      HTML()
+    
+  })
+  
+  output$franchise_history_retired <- renderUI({
+    
+    x <- get_retired_jerseys() %>% 
+      filter(TEAM == input$team_history) %>% 
+      mutate(TXT = str_c(NO, ': ', PLAYER)) %>% 
+      pull(TXT) %>% 
+      str_c(collapse = '<br/>')
+    
+    str_c("<br/>Retired Jerseys:<br/>", x) %>% 
+      HTML()
     
   })
   
@@ -1237,7 +1285,7 @@ function(input, output, session) {
       datatable(
         rownames = FALSE, 
         selection = list(mode = 'single', target = 'cell'),
-        options = list(pageLength = 100)
+        options = list(pageLength = 100, scrollX = TRUE)
       )
   })
   
@@ -1264,7 +1312,7 @@ function(input, output, session) {
       ungroup() %>% 
       mutate(SERIES = str_c(TEAM, " ", SERIES1, "-", SERIES2, " ", OPP_RAW)) %>% 
       select(ROUND, GAME, SCORE, WINNER, SERIES) %>% 
-      datatable(rownames = FALSE, options = list(pageLength = 100))
+      datatable(rownames = FALSE, options = list(pageLength = 100, scrollX = TRUE))
   })
   
   # Tab 9: Power Rankings ----
@@ -1579,7 +1627,7 @@ function(input, output, session) {
       
       mutate_if(is.numeric, function(x) {round(x, 2)}) %>% 
       
-      datatable(rownames = TRUE, options = list(pageLength = 100))
+      datatable(rownames = TRUE, options = list(pageLength = 100, scrollX = TRUE))
     
   })
   
@@ -1695,13 +1743,22 @@ function(input, output, session) {
   )})
   
   output$changelog <- renderText({glue(
+    "<br><b>Version 2.0.2</b> (2/21/2024)<br>",
+    " * Added offensive and defensive rating scatterplots to Franchise Profile tab.", "<br>",
+    "<br>",
+    
     "<br><b>Version 2.0.1</b> (1/29/2024)<br>",
-    " * Added Hall-of-Fame points tracker to NBN/Franchise Records tab.", "<br>",
+    " * Added retired jerseys to Franchise Profiles.", "<br>",
+    " * Some pre-processing of data now occurs to hopefully help load times.", "<br>",
+    " * Added Hall-of-Fame points tracker to NBN/Franchise Records tab.", "<br><br>",
+    
     "<br><b>Version 2.0.0</b> (1/28/2024)<br>",
     " * Complete revamp of UI.", "<br>",
     " * Added team pop-ups, accessible by clicking on a team in Standings or Team Stats.", "<br><br>",
+    
     "<br><b>Version 1.0.2</b> (1/26/2024)<br>",
     " * Added a Trade Machine tab (in beta).", "<br><br>",
+    
     "<br><b>Version 1.0.1</b> (1/23/2024)<br>",
     " * Can now click through League Leaders and Game Log tables to get more information.", "<br>",
     " * Updates to Leage Leaders panel:", "<br>",

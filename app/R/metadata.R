@@ -93,7 +93,33 @@ get_allstars <- function() {
     'EMBIID, JOEL', '22-23',
     'DAVIS, ANTHONY', '22-23',
     'GARLAND, DARIUS', '22-23',
-    'WILLIAMSON, ZION', '22-23'
+    'WILLIAMSON, ZION', '22-23',
+    
+    # 2024
+    'DONCIC, LUKA', '23-24',
+    'CURRY, STEPHEN', '23-24',
+    'GILGEOUS-ALEXANDER, SHAI', '23-24',
+    'JOKIC, NIKOLA', '23-24',
+    'MITCHELL, DONOVAN', '23-24',
+    'HARDEN, JAMES', '23-24',
+    'MORANT, JA', '23-24',
+    'BUTLER, JIMMY', '23-24',
+    'BOOKER, DEVIN', '23-24',
+    'BALL, LAMELO', '23-24',
+    'SABONIS, DOMANTAS', '23-24',
+    'FOX, DEAARON', '23-24',
+    'JAMES, LEBRON', '23-24',
+    'ANTETOKOUNMPO, GIANNIS', '23-24',
+    'TATUM, JAYSON', '23-24',
+    'DURANT, KEVIN', '23-24',
+    'IRVING, KYRIE', '23-24',
+    'EMBIID, JOEL', '23-24',
+    'DAVIS, ANTHONY', '23-24',
+    'YOUNG, TRAE', '23-24',
+    'HALIBURTON, TYRESE', '23-24',
+    'BRUNSON, JALEN', '23-24',
+    'BEAL, BRADLEY', '23-24',
+    'EDWARDS, ANTHONY', '23-24'
   ) %>% 
     mutate(star = "<img src='star.png' height='20'></img>")
 }
@@ -436,4 +462,16 @@ get_owners <- function() {
     '20-21', 'WAS', 'djgmoneyfef'
     
   )
+}
+
+
+get_retired_jerseys <- function() {
+  
+  tribble(
+    ~TEAM, ~PLAYER, ~DATE, ~NO,
+    'LAC', 'PAYNE, CAM', '2024-02-08', 15,
+    'HOU', 'HARDEN, JAMES', '2024-02-09', 13,
+    'SAC', 'POKUSEVSKI, ALEKSEJ', '2024-02-10', 17
+  )
+  
 }

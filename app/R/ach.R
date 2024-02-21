@@ -219,14 +219,7 @@ get_achievements_season <- function(player_df, dfs, playername, ach_metadata) {
         ach_senditback
       ),
       by = "ACHIEVEMENT"
-    ) %>% 
-    datatable(
-      caption = htmltools::tags$caption(
-        style = 'caption-side: top; text-align: left; color:black; font-size:200% ;',
-        "ACHIEVEMENTS (SEASON)"
-      ),
-      rownames = FALSE
-    )
+    ) 
 }
 
 
@@ -285,14 +278,7 @@ get_achievements_game <- function(combined_df, ach_metadata) {
       by = "ACHIEVEMENT"
     ) %>% 
     group_by(TYPE, ACHIEVEMENT, DESCRIPTION) %>% 
-    summarize(DATES = str_c(DATE, collapse = ", ")) %>% 
-    datatable(
-      caption = htmltools::tags$caption(
-        style = 'caption-side: top; text-align: left; color:black; font-size:200% ;',
-        "ACHIEVEMENTS (GAME)"
-      ),
-      rownames = FALSE
-    )
+    summarize(DATES = str_c(DATE, collapse = ", "))
 }
 
 build_prices <- function(dfs_everything) {

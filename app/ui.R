@@ -1,9 +1,5 @@
-# Find all allstats files in R/ directory
-dfs <- load_allstats() %>% 
-  clean_allstats()
-
-dfs_playoffs <- load_allstats(playoffs = TRUE) %>% 
-  clean_allstats()
+dfs <- read_rds('data/dfs.rds')
+dfs_playoffs <- read_rds('data/dfs_playoffs.rds')
 
 player_teams <- bind_rows(dfs, dfs_playoffs) %>% 
   arrange(PLAYER, DATE) %>% 
@@ -321,10 +317,15 @@ body <- dashboardBody(
       verbatimTextOutput("player_summary"),
       DTOutput("tbl_season"),
       plotlyOutput("gamelog_plot"),
+      h2("GAME/CAREER HIGHS"),
       DTOutput("records"),
+      h2("ALL-TIME TOTALS AND RANKINGS"),
       DTOutput("rankings"),
+      h2("ACHIEVEMENTS (SEASON)"),
       DTOutput("achievements_season"),
+      h2("ACHIEVEMENTS (GAME)"),
       DTOutput("achievements_game"),
+      h2("GAME LOG"),
       DTOutput("tbl")
     ),
     
@@ -384,8 +385,10 @@ body <- dashboardBody(
         allteams
       ),
       htmlOutput("team_history_logo"),
-      verbatimTextOutput("franchise_history_rings"),
+      htmlOutput("franchise_history_rings"),
+      htmlOutput("franchise_history_retired"),
       DTOutput("franchise_history_yoy"),
+      plotlyOutput("franchise_history_scatter"),
       DTOutput("franchise_history_awards"),
       h2("TEAM LEGENDS"),
       DTOutput("franchise_history_legends"),

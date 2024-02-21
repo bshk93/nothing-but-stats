@@ -59,3 +59,50 @@ calculate_power_rankings <- function(dfs) {
     ungroup()
   
 }
+
+calculate_team_offense_defense <- function(dfs) {
+  
+  x <- dfs %>% 
+    #filter(SEASON == input$pr_season) %>% 
+    mutate(OPP_RAW = str_replace(OPP, "@", "")) %>%
+    group_by(SEASON, TEAM, OPP, OPP_RAW, DATE) %>% 
+    summarize(P = sum(P)) %>% 
+    ungroup()
+  
+  y <- x %>% 
+    group_by(TEAM, SEASON) %>% 
+    arrange(TEAM, SEASON, DATE) %>% 
+    mutate(CUM_PPG = cumsum(P)/row_number()) %>% 
+    ungroup()
+  
+  z <- y %>%
+    inner_join(
+      y %>% select(OPP_RAW = TEAM, DATE, OPP_P = P, OPP_CUM_PPG = CUM_PPG),
+      by = c('OPP_RAW', 'DATE')
+    ) %>%
+    
+    group_by(SEASON, TEAM) %>% 
+    arrange(SEASON, TEAM, DATE) %>% 
+    mutate(CUM_ALLOWED = cumsum(OPP_P)/row_number()) %>% 
+    ungroup()
+  
+  z2 <- z %>% 
+    inner_join(
+      z %>% select(OPP_RAW = TEAM, DATE, OPP_CUM_ALLOWED = CUM_ALLOWED),
+      by = c('OPP_RAW', 'DATE')
+    ) %>% 
+    
+    mutate(
+      DIFF_OFF = P - OPP_CUM_ALLOWED,
+      DIFF_DEF = OPP_CUM_PPG - OPP_P
+    )
+  
+  z2 %>% 
+    group_by(TEAM, SEASON) %>% 
+    summarize(
+      OFF_RTG = mean(DIFF_OFF),
+      DEF_RTG = mean(DIFF_DEF),
+      TOT_RTG = OFF_RTG + DEF_RTG
+    )
+  
+}
