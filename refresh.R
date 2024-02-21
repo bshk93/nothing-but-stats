@@ -18,7 +18,7 @@ myplayoffdate <- "2024-04-11" # Playoff start date
 # Pull down and check allstats, extracting data from Google sheets
 allstats <- get_allstats(delete_before = "2023-07-01")
 
-mytestdate <- "2024-02-08"
+mytestdate <- "2024-02-12"
 
 allstats %>% filter(DATE == mytestdate) %>% 
   distinct(PLAYER) %>% 
@@ -33,7 +33,7 @@ allstats %>%
   View
 
 # Cleaning and building
-built_allstats <- build_allstats(allstats %>% filter(DATE <= "2024-02-08"))
+built_allstats <- build_allstats(allstats %>% filter(DATE <= "2024-02-12"))
 
 # Write/update output file
 built_allstats %>% 
@@ -94,3 +94,19 @@ googlesheets4::read_sheet(
   range = 'A4:J46'
 )
   
+
+
+
+
+z2 %>% 
+  group_by(TEAM, SEASON) %>% 
+  summarize(
+    OFF_RTG = mean(DIFF_OFF),
+    DEF_RTG = mean(DIFF_DEF),
+    TOT_RTG = OFF_RTG + DEF_RTG
+  ) %>% mutate(id = str_c(SEASON, '\n', TEAM)) %>% 
+  ggplot(aes(x = OFF_RTG, y = DEF_RTG)) +
+  geom_point() +
+  geom_label(aes(label = id), size = 3) + 
+  xlim(-15, 15) + 
+  ylim(-15, 15)

@@ -388,6 +388,7 @@ body <- dashboardBody(
       htmlOutput("franchise_history_rings"),
       htmlOutput("franchise_history_retired"),
       DTOutput("franchise_history_yoy"),
+      plotlyOutput("franchise_history_scatter"),
       DTOutput("franchise_history_awards"),
       h2("TEAM LEGENDS"),
       DTOutput("franchise_history_legends"),

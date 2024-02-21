@@ -72,6 +72,49 @@ summarize_per_game <- function(df) {
     ungroup()
 }
 
+
+summarize_team_season <- function(dfs) {
+  
+  dfs %>% 
+    group_by(TEAM, SEASON, DATE) %>% 
+    summarize(
+      P = sum(P),
+      R = sum(R),
+      A = sum(A),
+      S = sum(S),
+      B = sum(B),
+      FGM = sum(FGM),
+      FGA = sum(FGA),
+      `3PM` = sum(`3PM`),
+      `3PA` = sum(`3PA`),
+      FTM = sum(FTM),
+      FTA = sum(FTA),
+      GMSC = sum(GMSC),
+      TEAM_PTS = max(TEAM_PTS),
+      OPP_TEAM_PTS = max(OPP_TEAM_PTS)
+    ) %>% 
+    mutate(DIFF = TEAM_PTS - OPP_TEAM_PTS) %>% 
+    
+    group_by(TEAM, SEASON) %>% 
+    summarize(
+      P = sum(P),
+      R = sum(R),
+      A = sum(A),
+      S = sum(S),
+      B = sum(B),
+      FGM = sum(FGM),
+      FGA = sum(FGA),
+      `3PM` = sum(`3PM`),
+      `3PA` = sum(`3PA`),
+      FTM = sum(FTM),
+      FTA = sum(FTA),
+      GMSC = sum(GMSC),
+      DIFF = sum(DIFF)
+    )
+  
+}
+
+
 get_ranks <- function(dfs) {
   dfs %>% 
     group_by(PLAYER, SEASON) %>% 

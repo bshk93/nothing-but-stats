@@ -937,6 +937,58 @@ function(input, output, session) {
     
   })
   
+  output$franchise_history_scatter <- renderPlotly({
+    
+    team_data <- calculate_team_offense_defense(dfs) %>% 
+      ungroup() %>% 
+      mutate(ids = str_c(SEASON, ' ', TEAM, '\nOFF: ', round(OFF_RTG, 2), '\nDEF: ', round(DEF_RTG, 2)),
+             color = case_when(TEAM == input$team_history ~ 'red',
+                               TRUE ~ 'blue'))
+    
+    team_data_selected <- team_data %>% 
+      filter(TEAM == input$team_history) %>% 
+      arrange(SEASON)
+    
+    team_data %>% 
+      plot_ly(
+        x = ~OFF_RTG, 
+        y = ~DEF_RTG, 
+        text = ~ids,
+        #color = ~color,
+        #colors = ~color,
+        marker = list(
+          color = ~color
+        ),
+        type = 'scatter', 
+        mode = 'markers',
+        showlegend = F
+      ) %>% 
+      
+      add_trace(text = ~ids, hoverinfo = 'text', showlegend = F) %>% 
+      
+      add_annotations(
+        ax = team_data_selected$OFF_RTG[-nrow(team_data_selected)],
+        ay = team_data_selected$DEF_RTG[-nrow(team_data_selected)],
+        x = team_data_selected$OFF_RTG[-1],
+        y = team_data_selected$DEF_RTG[-1],
+        xref = 'x',
+        yref = 'y',
+        axref = 'x',
+        ayref = 'y',
+        showarrow = T,
+        text = ''
+      ) %>% 
+      layout(
+        xaxis = list(
+          range = c(-15, 15)
+        ),
+        yaxis = list(
+          range = c(-15, 15)
+        )
+      )
+    
+  })
+  
   output$franchise_history_legends <- renderDT({
     calculate_hof_points(
       dfs_everything, 
@@ -1691,16 +1743,22 @@ function(input, output, session) {
   )})
   
   output$changelog <- renderText({glue(
+    "<br><b>Version 2.0.2</b> (2/21/2024)<br>",
+    " * Added offensive and defensive rating scatterplots to Franchise Profile tab.", "<br>",
+    "<br>",
+    
     "<br><b>Version 2.0.1</b> (1/29/2024)<br>",
     " * Added retired jerseys to Franchise Profiles.", "<br>",
-    " * Some pre-processing of data now occurs to hopefully help load times.", "<br><br>",
-    "<br><b>Version 2.0.1</b> (1/29/2024)<br>",
+    " * Some pre-processing of data now occurs to hopefully help load times.", "<br>",
     " * Added Hall-of-Fame points tracker to NBN/Franchise Records tab.", "<br><br>",
+    
     "<br><b>Version 2.0.0</b> (1/28/2024)<br>",
     " * Complete revamp of UI.", "<br>",
     " * Added team pop-ups, accessible by clicking on a team in Standings or Team Stats.", "<br><br>",
+    
     "<br><b>Version 1.0.2</b> (1/26/2024)<br>",
     " * Added a Trade Machine tab (in beta).", "<br><br>",
+    
     "<br><b>Version 1.0.1</b> (1/23/2024)<br>",
     " * Can now click through League Leaders and Game Log tables to get more information.", "<br>",
     " * Updates to Leage Leaders panel:", "<br>",
