@@ -117,6 +117,34 @@ body <- dashboardBody(
 
       h2("LEAGUE LEADERS"),
       DTOutput("leaders"),
+      
+      h2("PLAYER/TEAM SCATTER"),
+      selectizeInput(
+        'scatter_x',
+        'X = ',
+        c('GMSC', 'PPG', 'RPG', 'APG', 'SPG', 'BPG', 'FG', '3P', 'FT', 'TS',
+          'FGMPG', 'FGAPG', '3PMPG', '3PAPG', 'FTMPG', 'FTAPG'),
+        selected = 'TS'
+      ),
+      selectizeInput(
+        'scatter_y',
+        'Y = ',
+        c('GMSC', 'PPG', 'RPG', 'APG', 'SPG', 'BPG', 'FG', '3P', 'FT', 'TS',
+          'FGMPG', 'FGAPG', '3PMPG', '3PAPG', 'FTMPG', 'FTAPG'),
+        selected = 'PPG'
+      ),
+      selectizeInput(
+        'scatter_group',
+        'By:',
+        c('PLAYER', 'TEAM')
+      ),
+      checkboxInput('scatter_36', 'Per 36', value = FALSE),
+      sliderInput('scatter_min_games', 'Min. Games (for players)', 
+                  min = 1, max = 82, 
+                  value = 1,
+                  step = 1,
+                  round = TRUE),
+      plotlyOutput("season_scatter"),
 
       h2("TEAM STATS"),
       DTOutput("team_stats"),
@@ -129,10 +157,10 @@ body <- dashboardBody(
       
       h2("SEASON AWARDS"),
       h3("All-Stars"),
-      DTOutput("season_allstars"),
+      DTOutput("season_allstars")
 
-      h2("POINTS SCORED VS ALLOWED"),
-      plotOutput("points_scored_allowed")
+      # h2("POINTS SCORED VS ALLOWED"),
+      # plotOutput("points_scored_allowed")
     ),
     
     tabItem(

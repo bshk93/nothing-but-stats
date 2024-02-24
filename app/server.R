@@ -36,9 +36,7 @@ function(input, output, session) {
         summarize(SEASON = str_c(SEASON, collapse = ', ')) %>% 
         arrange(SEASON) %>% 
         mutate(SEASON = str_c(' (', SEASON, ')'),
-               TEAM = str_c("<img src='logo-", 
-                            tolower(TEAM), 
-                            ".png' align='left' height='30'></img>")) %>% 
+               TEAM = get_logo(TEAM, height = 30, align = 'left')) %>% 
         mutate(TXT = str_c(TEAM, SEASON)) %>% 
         pull(TXT) %>% 
         str_c(collapse = '<br>')
@@ -207,7 +205,7 @@ function(input, output, session) {
   })
   
   output$team_history_logo <- renderText({
-    str_c("<img src='logo-", tolower(input$team_history), ".png' align='left' height='100'></img>")
+    get_logo(input$team_history, height = 100, align = 'left')
   })
   
   # Tab 1: Season Standings, etc. ----
@@ -253,7 +251,7 @@ function(input, output, session) {
       mutate(SEED = str_c(CONF, "-", row_number())) %>% 
       ungroup() %>% 
       select(SEED, TEAM, GB, W, L, PCT, PPG, OPPG, DIFF) %>% 
-      mutate(TEAM = str_c(TEAM, " <img src='logo-", tolower(TEAM), ".png' height='20'></img>"))
+      mutate(TEAM = str_c(TEAM, ' ', get_logo(TEAM, height = 20)))
   }, options = list(pageLength = 30, scrollX = TRUE), rownames = FALSE, escape = FALSE,
   selection = list(mode = 'single', 
                    target = 'cell',
@@ -315,7 +313,7 @@ function(input, output, session) {
       tmpvarname2 <- str_c('PLAYER_', category)
       
       x %>% 
-        mutate(PLAYER = str_c(PLAYER, " <img src='logo-", tolower(TEAM), ".png' height='20'></img>")) %>% 
+        mutate(PLAYER = str_c(PLAYER, ' ', get_logo(TEAM, height = 20))) %>% 
         select({{ tmpvarname2 }} := PLAYER, tmpvarname1) %>% 
         #mutate(RANK = rank(get(tmpvarname1), ties.method = "min")) %>% 
         mutate(rn = row_number()) %>% 
@@ -346,6 +344,26 @@ function(input, output, session) {
     selection = list(mode = 'single', target = 'cell'),
     options = list(scrollX = TRUE)
   )
+  
+  output$season_eff_plot <- renderPlotly({
+    
+    dfs %>% 
+      filter(SEASON == input$season2) %>% 
+      plot_efficiency_scatter()
+    
+  })
+  
+  output$season_scatter <- renderPlotly({
+    mySeasonDF() %>% 
+      plot_scatter_general(
+        var_x = input$scatter_x,
+        var_y = input$scatter_y,
+        group = input$scatter_group,
+        per_36 = input$scatter_36,
+        min_games = input$scatter_min_games
+      )
+    
+  })
   
   output$season_allstars <- renderDT({
     
@@ -380,7 +398,7 @@ function(input, output, session) {
       ) %>% 
       mutate_if(is.numeric, round, 2) %>% 
       mutate(`3PPCT` = round(`3PMPG`/`3PAPG`, 3)) %>% 
-      mutate(TEAM = str_c(TEAM, " <img src='logo-", tolower(TEAM), ".png' height='20'></img>"))
+      mutate(TEAM = str_c(TEAM, ' ', get_logo(TEAM, height = 20)))
   })
   
   output$team_stats <- renderDT({
@@ -434,35 +452,35 @@ function(input, output, session) {
       group_by(ODDS) %>% 
       mutate_at(vars(starts_with("P")), function(x) (round(sum(x, na.rm = T)/n(), 1))) %>% 
       select(-temprank) %>% 
-      mutate(TEAM = str_c(TEAM, " <img src='logo-", tolower(TEAM), ".png' height='20'></img>"))
+      mutate(TEAM = str_c(TEAM, ' ', get_logo(TEAM, height = 20)))
   }, options = list(pageLength = 20, scrollX = TRUE), rownames = FALSE, escape = FALSE)
   
   
-  output$points_scored_allowed <- renderPlot({
-    x <- mySeasonDF() %>% 
-      group_by(DATE, TEAM, OPP) %>% 
-      summarize(TEAM_PTS = sum(P)) %>% 
-      ungroup() %>% 
-      mutate(OPP = str_replace(OPP, "@", ""))
-    
-    x %>% 
-      left_join(
-        x %>% 
-          select(DATE, OPP = TEAM, OPP_PTS = TEAM_PTS)
-      ) %>% 
-      group_by(TEAM) %>% 
-      summarize(
-        POINTS = mean(TEAM_PTS),
-        POINTS_ALLOWED = mean(OPP_PTS)
-      ) %>% 
-      mutate(img_ref = str_c("www/logo-", tolower(TEAM), ".png")) %>% 
-      ggplot() +
-      geom_image(aes(x = POINTS, y = POINTS_ALLOWED, image = img_ref),
-                 size = 0.08, by = "width", asp = 1) +
-      scale_y_reverse() +
-      geom_abline(intercept = 0, slope = 1) +
-      theme(aspect.ratio = 1)
-  })
+  # output$points_scored_allowed <- renderPlot({
+  #   x <- mySeasonDF() %>% 
+  #     group_by(DATE, TEAM, OPP) %>% 
+  #     summarize(TEAM_PTS = sum(P)) %>% 
+  #     ungroup() %>% 
+  #     mutate(OPP = str_replace(OPP, "@", ""))
+  #   
+  #   x %>% 
+  #     left_join(
+  #       x %>% 
+  #         select(DATE, OPP = TEAM, OPP_PTS = TEAM_PTS)
+  #     ) %>% 
+  #     group_by(TEAM) %>% 
+  #     summarize(
+  #       POINTS = mean(TEAM_PTS),
+  #       POINTS_ALLOWED = mean(OPP_PTS)
+  #     ) %>% 
+  #     mutate(img_ref = str_c("www/logo-", tolower(TEAM), ".png")) %>% 
+  #     ggplot() +
+  #     geom_image(aes(x = POINTS, y = POINTS_ALLOWED, image = img_ref),
+  #                size = 0.08, by = "width", asp = 1) +
+  #     scale_y_reverse() +
+  #     geom_abline(intercept = 0, slope = 1) +
+  #     theme(aspect.ratio = 1)
+  # })
   
   
   # Tab 2: Player Overview ----
@@ -499,8 +517,6 @@ function(input, output, session) {
              xaxis = list(title='', visible = F),
              legend = list(orientation='h')) 
     
-    event_register(p, 'plotly_click')
-    
     p
     
   })
@@ -509,22 +525,6 @@ function(input, output, session) {
     myCombinedData() %>% 
       arrange(DATE) %>% 
       mutate(G = row_number())
-  })
-  
-  observeEvent(event_data("plotly_click"), {
-    barData <- event_data('plotly_click')
-    
-    my_info <- myGamelogPlot() %>% 
-      filter(G == barData$x) %>% 
-      distinct(DATE, TEAM, OPP) %>% 
-      mutate(boxscore_output = str_c(TEAM, '-', OPP))
-    
-    my_boxscore <- get_box_score(dfs_everything, pull(my_info, DATE), pull(my_info, boxscore_output))
-    
-    showModal(modalDialog(title = 'Box Score', 
-                          renderDataTable(my_boxscore),
-                          easyClose = TRUE,
-                          footer = NULL))
   })
   
   # News
@@ -1743,6 +1743,11 @@ function(input, output, session) {
   )})
   
   output$changelog <- renderText({glue(
+    "<br><b>Version 2.0.3</b> (2/24/2024)<br>",
+    " * Added customizable scatter plot to Season Dashboard.", "<br>",
+    " * Under the hood improvements.", "<br>",
+    "<br>",
+    
     "<br><b>Version 2.0.2</b> (2/21/2024)<br>",
     " * Added offensive and defensive rating scatterplots to Franchise Profile tab.", "<br>",
     "<br>",
