@@ -123,8 +123,8 @@ body <- dashboardBody(
         'scatter_x',
         'X = ',
         c('GMSC', 'PPG', 'RPG', 'APG', 'SPG', 'BPG', 'FG', '3P', 'FT', 'TS',
-          'FGMPG', 'FGAPG', '3PMPG', '3PAPG', 'FTMPG', 'FTAPG', 'G'),
-        selected = 'G'
+          'FGMPG', 'FGAPG', '3PMPG', '3PAPG', 'FTMPG', 'FTAPG'),
+        selected = 'TS'
       ),
       selectizeInput(
         'scatter_y',
