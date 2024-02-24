@@ -62,6 +62,8 @@ dfs_playoffs <- load_allstats(playoffs = TRUE) %>%
 write_rds(dfs, 'data/dfs.rds')
 write_rds(dfs_playoffs, 'data/dfs_playoffs.rds')
 
+dfs_everything <- rbind(dfs, dfs_playoffs)
+
 
 # Afterwards, re-build the Shiny app
 
