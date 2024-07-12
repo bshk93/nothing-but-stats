@@ -146,6 +146,26 @@ check_allstats <- function(allstats) {
   allstats
 }
 
+test_allstats <- function(allstats, check_start_date) {
+  # allstats %>% select(TEAM, DATE, OPP, PLAYER) %>% 
+  #   group_by(DATE, PLAYER) %>% mutate(date_n = n()) %>% 
+  #   filter(date_n > 1)
+  
+  for (mytestdate in ymd(check_start_date):max(allstats$DATE)) {
+    x <- allstats %>% filter(DATE == mytestdate) %>% 
+      distinct(PLAYER, TEAM) %>% 
+      anti_join(allstats %>% filter(DATE < mytestdate) %>% distinct(PLAYER),
+                by = "PLAYER")
+    
+    if (nrow(x) > 0) {
+      for (i in 1:nrow(x)) {
+        warning(x$PLAYER[i], " (", x$TEAM[i], ") appeared in the data for the first time on ", mytestdate, ".")
+      }
+    }
+  }
+  
+}
+
 # Build allstats
 build_allstats <- function(allstats) {
   player_data <- read_csv("https://docs.google.com/spreadsheets/d/e/2PACX-1vQe3Mo26VfCnIpb28_fOM_3866nb2nE2sK3WcHIf0rgR_YfxdC_NFWQBWMPc6XbkK2LHxJti9IBsjod/pub?gid=0&single=true&output=csv",

@@ -14,32 +14,32 @@ source("R/news.R")
 # Globals ----
 myseason <- "2023-24"
 myplayoffdate <- "2024-04-16" # Playoff start date
+check_start_date <- "2024-04-14" # Date to start doing checks (newly entered data)
+drop_after_date <- "2024-06-30" # Date after which to delete stats (e.g. unfinished days)
 
 # Refresh stats ----
+
 # Pull down and check allstats, extracting data from Google sheets
+# Also runs some simple tests
 allstats <- get_allstats(delete_before = "2023-07-01")
 
-# Testing
-mytestdate <- "2024-04-14"
+# Additional Testing
+test_allstats(
+  allstats,
+  check_start_date
+)
 
-allstats %>% select(TEAM, DATE, OPP, PLAYER) %>% 
-  group_by(DATE, PLAYER) %>% mutate(date_n = n()) %>% 
-  filter(date_n > 1)
-
-allstats %>% filter(DATE == mytestdate) %>% 
-  distinct(PLAYER, TEAM) %>% 
-  anti_join(allstats %>% filter(DATE < mytestdate) %>% distinct(PLAYER))
-
+# Check games
 allstats %>% 
   distinct(DATE, TEAM, OPP) %>% 
   filter(str_detect(OPP, '^@')) %>% 
   group_by(DATE) %>% 
   mutate(n_games = n()) %>% 
-  arrange(DATE) %>% 
+  arrange(desc(DATE)) %>% 
   View
 
 # Cleaning and building
-built_allstats <- build_allstats(allstats %>% filter(DATE <= "2024-06-30"))
+built_allstats <- build_allstats(allstats %>% filter(DATE <= drop_after_date))
 
 # Write/update output file
 built_allstats %>% 
@@ -77,6 +77,7 @@ write_rds(dfs_playoffs, 'data/dfs_playoffs.rds')
 dfs_everything <- rbind(dfs, dfs_playoffs)
 
 
+# STOP HERE ----
 # Afterwards, re-build the Shiny app
 
 
@@ -127,7 +128,7 @@ z2 %>%
 
 
 
-# Fix data ----
+# Fix data (example) ----
 df_to_fix <- read_csv('data/allstats-22-23.csv')
 
 df_fixed <- df_to_fix %>% 
