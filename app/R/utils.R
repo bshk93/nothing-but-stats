@@ -42,9 +42,12 @@ clean_allstats <- function(dfs) {
       PLAYER == "WHITE, COLBY" ~ "WHITE, COBY",
       PLAYER == "BERTANS,DAVIS" ~ "BERTANS, DAVIS",
       PLAYER == "HIGHSMITH, HAYDEN" ~ "HIGHSMITH, HAYWOOD",
+      PLAYER == "THOMAS, CAMERON" ~ "THOMAS, CAM",
+      PLAYER == "REDDISH, CAMERON" ~ "REDDISH, CAM",
       TRUE ~ PLAYER
     )) %>% 
     mutate(GMSC = round(GMSC, 2)) %>% 
+    
     arrange(PLAYER, DATE)
 }
 
@@ -71,7 +74,8 @@ get_ranks <- function(dfs) {
       `3PPCT` = sum(`3PM`)/sum(`3PA`),
       FTPCT = sum(FTM)/sum(FTA),
       GMSC = mean(GMSC),
-      PCT = sum(WL == "W")/n()
+      PCT = sum(WL == "W")/n(),
+      .groups = 'drop'
     ) %>% 
     group_by(SEASON) %>% 
     mutate(
@@ -185,6 +189,14 @@ get_last_played_for <- function(player, dfs) {
 }
 
 vget_last_played_for <- Vectorize(get_last_played_for)
+
+get_last_played_for_2 <- function(dfs) {
+  # Try applying to entire dfs table
+  dfs %>% 
+    group_by(PLAYER) %>% 
+    arrange(PLAYER, DATE) %>% 
+    summarize(TEAM = last(TEAM))
+}
 
 get_logo <- function(
   TEAM,

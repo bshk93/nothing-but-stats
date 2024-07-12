@@ -196,6 +196,15 @@ get_achievements_season <- function(player_df, dfs, playername, ach_metadata) {
     mutate(ACHIEVEMENT = "Send It Back") %>% 
     select(ACHIEVEMENT, SEASON)
   
+  # Free Throw Merchant
+  ach_freethrowmerchant <- player_df %>% 
+    group_by(SEASON) %>% 
+    summarize(P = sum(P), P_FT = sum(FTM)) %>% 
+    mutate(PCT = P_FT/P) %>% 
+    filter(P >= 500, PCT >= 0.25) %>% 
+    mutate(ACHIEVEMENT = "Free Throw Merchant") %>% 
+    select(ACHIEVEMENT, SEASON)
+  
   ach_metadata %>% 
     inner_join(
       bind_rows(
@@ -216,7 +225,8 @@ get_achievements_season <- function(player_df, dfs, playername, ach_metadata) {
         ach_sharing,
         ach_getdaf,
         ach_gta,
-        ach_senditback
+        ach_senditback,
+        ach_freethrowmerchant
       ),
       by = "ACHIEVEMENT"
     ) 

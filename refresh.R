@@ -9,19 +9,25 @@ if (stringr::str_detect(getwd(), 'bshk9')) {
 source("update.R")
 source("R/read.R")
 source("R/utils.R")
+source("R/news.R")
 
 # Globals ----
 myseason <- "2023-24"
-myplayoffdate <- "2024-04-11" # Playoff start date
+myplayoffdate <- "2024-04-16" # Playoff start date
 
 # Refresh stats ----
 # Pull down and check allstats, extracting data from Google sheets
 allstats <- get_allstats(delete_before = "2023-07-01")
 
-mytestdate <- "2024-02-12"
+# Testing
+mytestdate <- "2024-04-14"
+
+allstats %>% select(TEAM, DATE, OPP, PLAYER) %>% 
+  group_by(DATE, PLAYER) %>% mutate(date_n = n()) %>% 
+  filter(date_n > 1)
 
 allstats %>% filter(DATE == mytestdate) %>% 
-  distinct(PLAYER) %>% 
+  distinct(PLAYER, TEAM) %>% 
   anti_join(allstats %>% filter(DATE < mytestdate) %>% distinct(PLAYER))
 
 allstats %>% 
@@ -33,7 +39,7 @@ allstats %>%
   View
 
 # Cleaning and building
-built_allstats <- build_allstats(allstats %>% filter(DATE <= "2024-02-12"))
+built_allstats <- build_allstats(allstats %>% filter(DATE <= "2024-06-30"))
 
 # Write/update output file
 built_allstats %>% 
@@ -41,7 +47,7 @@ built_allstats %>%
   mutate(gametype = "REG") %>% 
   write_csv(glue::glue("data/allstats-{str_extract(myseason, '\\\\d{2}-\\\\d{2}')}.csv"))
 
-# Playoffs
+# Playoffs, if applicable
 built_allstats %>% 
   filter(DATE >= myplayoffdate) %>% 
   add_playoff_info() %>% 
@@ -53,13 +59,19 @@ dfs <- load_allstats() %>%
   clean_allstats() %>% 
   mutate(gametype = 'REG',
          GAME = NA_integer_,
-         ROUND = NA_integer_)
+         ROUND = NA_integer_) %>%
+  group_by(PLAYER) %>% 
+  mutate(ROOKIE = SEASON == min(SEASON)) %>% 
+  ungroup()
 
 dfs_playoffs <- load_allstats(playoffs = TRUE) %>%
   clean_allstats() %>% 
-  mutate(gametype = 'PLAYOFF')
+  mutate(gametype = 'PLAYOFF',
+         ROOKIE = NA)
 
 write_rds(dfs, 'data/dfs.rds')
+write_rds(get_newsfeed(dfs), 'data/news.rds')
+
 write_rds(dfs_playoffs, 'data/dfs_playoffs.rds')
 
 dfs_everything <- rbind(dfs, dfs_playoffs)
@@ -112,3 +124,23 @@ z2 %>%
   geom_label(aes(label = id), size = 3) + 
   xlim(-15, 15) + 
   ylim(-15, 15)
+
+
+
+# Fix data ----
+df_to_fix <- read_csv('data/allstats-22-23.csv')
+
+df_fixed <- df_to_fix %>% 
+  mutate(PLAYER = case_when(
+    PLAYER == 'LOPEZ, BROOK' & DATE == '2023-01-11' & M == 28 ~ 'PORTER, MICHAEL',
+    PLAYER == 'BARTON, WILL' & DATE == '2023-01-06' & M == 35 ~ 'BARNES, HARRISON',
+    PLAYER == 'BAZLEY, DARIUS' & DATE == '2023-01-12' & M == 16 ~ 'BRADLEY, TONY',
+    TRUE ~ PLAYER
+  ))
+
+df_fixed %>% 
+  filter(TEAM == 'SAS' & DATE == '2023-01-11')
+
+# make copy of old csv
+
+write_csv(df_fixed, 'data/allstats-22-23.csv')

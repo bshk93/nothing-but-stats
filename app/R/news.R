@@ -81,12 +81,43 @@ get_newsfeed <- function(dfs, gmsc_thresh = 35) {
         select(SEASON, PLAYER, DATE, HEADLINE)
     }
   )
+  
+  career_totals <- dfs %>% 
+    group_by(PLAYER) %>% 
+    arrange(PLAYER, DATE) %>% 
+    mutate(
+      CAREER_P = cumsum(P),
+      CAREER_R = cumsum(R),
+      CAREER_A = cumsum(A),
+      CAREER_S = cumsum(S),
+      CAREER_B = cumsum(B),
+      CAREER_3PM = cumsum(`3PM`)
+    )
+  
+  feed_milestones_career <- map_dfr(
+    c('P', 'R', 'A', 'S', 'B', '3PM'),
+    function(var) {
+      career_var <- str_c('CAREER_', var)
+      
+      x <- career_totals %>% 
+        filter(floor(get(career_var) / 500) > coalesce(floor(lag(get(career_var))/ 500), 0)) %>% 
+        filter(get(career_var) >= 500) %>% 
+        mutate(HEADLINE = str_c(
+          PLAYER, " <img src='logo-", tolower(TEAM), ".png' height='20'></img>",
+          ' reached a milestone of ', get(career_var), ' career ', var, '.'
+        ))
+      
+      x %>% 
+        select(SEASON, PLAYER, DATE, HEADLINE)
+    }
+  )
     
   
   bind_rows(
     feed_gmsc, 
     feed_records, 
-    feed_highs
+    feed_highs,
+    feed_milestones_career
   ) %>% 
     arrange(desc(DATE))
   

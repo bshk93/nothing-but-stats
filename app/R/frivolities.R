@@ -1,4 +1,21 @@
 
+win_streaks <- function(dfs) {
+  
+  dfs %>% 
+    distinct(TEAM, SEASON, DATE, WL) %>% 
+    group_by(TEAM, SEASON) %>% 
+    arrange(TEAM, SEASON, DATE) %>% 
+    mutate(flag = WL != coalesce(lag(WL), "X")) %>% 
+    mutate(streak_group = cumsum(flag)) %>% 
+    group_by(TEAM, SEASON, WL, streak_group) %>% 
+    summarize(
+      min_dt = min(DATE),
+      max_dt = max(DATE),
+      streak = n()
+    )
+  
+}
+
 big_three <- function(dfs) {
   
   x <- dfs %>% 

@@ -1,3 +1,5 @@
+#options(dplyr.summarize.inform = FALSE)
+
 dfs <- read_rds('data/dfs.rds')
 dfs_playoffs <- read_rds('data/dfs_playoffs.rds')
 
@@ -38,6 +40,11 @@ sidebar <- dashboardSidebar(
       icon = icon("code-fork")
     ),
     menuItem(
+      "The Lab (TM)",
+      tabName = "tab_lab",
+      icon = icon("microscope")
+    ),
+    menuItem(
       "Data Explorer",
       tabName = "tab_explore", 
       icon = icon("magnifying-glass-chart")
@@ -55,16 +62,16 @@ sidebar <- dashboardSidebar(
       badgeColor = "yellow"
     ),
     menuItem(
-      "Player Compare",
-      tabName = "tab_compare", 
-      icon = icon("user-group"),
+      "Player Stats",
+      tabName = "tab_records", 
+      icon = icon("ranking-star"),
       badgeLabel = "Prem",
       badgeColor = "yellow"
     ),
     menuItem(
-      "NBN/Franchise Records",
-      tabName = "tab_records", 
-      icon = icon("ranking-star"),
+      "Player Compare",
+      tabName = "tab_compare", 
+      icon = icon("user-group"),
       badgeLabel = "Prem",
       badgeColor = "yellow"
     ),
@@ -84,11 +91,6 @@ sidebar <- dashboardSidebar(
       "About",
       tabName = "tab_about", 
       icon = icon("question")
-    ),
-    menuItem(
-      "Diagnostics",
-      tabName = "tab_diag",
-      icon = icon("stethoscope")
     )
   )
 )
@@ -118,36 +120,43 @@ body <- dashboardBody(
       h2("LEAGUE LEADERS"),
       DTOutput("leaders"),
       
-      h2("PLAYER/TEAM SCATTER"),
-      selectizeInput(
-        'scatter_x',
-        'X = ',
-        c('GMSC', 'PPG', 'RPG', 'APG', 'SPG', 'BPG', 'FG', '3P', 'FT', 'TS',
-          'FGMPG', 'FGAPG', '3PMPG', '3PAPG', 'FTMPG', 'FTAPG'),
-        selected = 'TS'
-      ),
-      selectizeInput(
-        'scatter_y',
-        'Y = ',
-        c('GMSC', 'PPG', 'RPG', 'APG', 'SPG', 'BPG', 'FG', '3P', 'FT', 'TS',
-          'FGMPG', 'FGAPG', '3PMPG', '3PAPG', 'FTMPG', 'FTAPG'),
-        selected = 'PPG'
-      ),
-      selectizeInput(
-        'scatter_group',
-        'By:',
-        c('PLAYER', 'TEAM')
-      ),
-      checkboxInput('scatter_36', 'Per 36', value = FALSE),
-      sliderInput('scatter_min_games', 'Min. Games (for players)', 
-                  min = 1, max = 82, 
-                  value = 1,
-                  step = 1,
-                  round = TRUE),
-      plotlyOutput("season_scatter"),
+      # h2("PLAYER/TEAM SCATTER"),
+      # selectizeInput(
+      #   'scatter_x',
+      #   'X = ',
+      #   c('GMSC', 'PPG', 'RPG', 'APG', 'SPG', 'BPG', 'FG', '3P', 'FT', 'TS',
+      #     'FGMPG', 'FGAPG', '3PMPG', '3PAPG', 'FTMPG', 'FTAPG'),
+      #   selected = 'TS'
+      # ),
+      # selectizeInput(
+      #   'scatter_y',
+      #   'Y = ',
+      #   c('GMSC', 'PPG', 'RPG', 'APG', 'SPG', 'BPG', 'FG', '3P', 'FT', 'TS',
+      #     'FGMPG', 'FGAPG', '3PMPG', '3PAPG', 'FTMPG', 'FTAPG'),
+      #   selected = 'PPG'
+      # ),
+      # selectizeInput(
+      #   'scatter_group',
+      #   'By:',
+      #   c('PLAYER', 'TEAM')
+      # ),
+      # checkboxInput('scatter_36', 'Per 36', value = FALSE),
+      # sliderInput('scatter_min_games', 'Min. Games (for players)', 
+      #             min = 1, max = 82, 
+      #             value = 1,
+      #             step = 1,
+      #             round = TRUE),
+      # plotlyOutput("season_scatter"),
 
       h2("TEAM STATS"),
       DTOutput("team_stats"),
+      
+      h2("ROOKIE REPORT"),
+      p("Note: 'Rookie' indicates only that this is the player's first season in the NBN. The below list may contain the players who have played in the NBA, but not in the NBN."),
+      DTOutput("rookie_report"),
+      
+      h2("MOST IMPROVED"),
+      DTOutput("most_improved"),
 
       h2("DRAFT LOTTERY PREVIEW"),
       DTOutput("tankathon"),
@@ -197,10 +206,30 @@ body <- dashboardBody(
       selectizeInput(
         'seasonplayoffs',
         'Choose a Season:',
-        c("22-23", "21-22", "20-21")
+        c("23-24", "22-23", "21-22", "20-21")
       ),
       DTOutput("playoff_bracket"),
       DTOutput("playoff_series")
+    ),
+    
+    tabItem(
+      tabName = "tab_lab",
+      
+      h2("Team Stats By Season"),
+      selectizeInput(
+        'lab_team_season_var',
+        'Choose a var:',
+        c('GMSC', 'PPG', 'RPG', 'APG', 'SPG', 'BPG', 'FG', '3P', 'FT', 'TS')
+      ),
+      plotlyOutput("lab_team_season"),
+      
+      h2("Individual Stats By Season"),
+      selectizeInput(
+        'lab_player_season_var',
+        'Choose a var:',
+        c('GMSC', 'PPG', 'RPG', 'APG', 'SPG', 'BPG', 'FG', '3P', 'FT', 'TS')
+      ),
+      plotlyOutput("lab_player_season")
     ),
     
     tabItem(
@@ -344,6 +373,10 @@ body <- dashboardBody(
       htmlOutput("headshot"),
       verbatimTextOutput("player_summary"),
       DTOutput("tbl_season"),
+      selectizeInput('plot_season_var', "Pick a variable:", 
+                     c('GMSC', 'PPG', 'RPG', 'APG', 'SPG', 'BPG', 'FG', '3P', 'FT', 'TS')),
+      checkboxInput("plot_season_36", "Per 36", value = FALSE),
+      plotlyOutput("plot_season"),
       plotlyOutput("gamelog_plot"),
       h2("GAME/CAREER HIGHS"),
       DTOutput("records"),
@@ -373,7 +406,7 @@ body <- dashboardBody(
         'playercomp_season',
         'Choose Season:',
         c('CAREER', 
-          '23-24',
+          '23-24', '23-24 Playoffs',
           '22-23', '22-23 Playoffs',
           '21-22', '21-22 Playoffs',
           '20-21', '20-21 Playoffs')
@@ -464,14 +497,7 @@ body <- dashboardBody(
     tabItem(
       tabName = "tab_about",
       h2("Why Premium?"),
-      htmlOutput("premiumfaq"),
-      h2("Changelog"),
-      htmlOutput("changelog")
-    ),
-    
-    tabItem(
-      tabName = "tab_diag",
-      verbatimTextOutput("diag")
+      htmlOutput("premiumfaq")
     )
   )
 )
