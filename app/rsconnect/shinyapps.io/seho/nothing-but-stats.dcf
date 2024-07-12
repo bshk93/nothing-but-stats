@@ -1,12 +1,13 @@
 name: nothing-but-stats
 title: nothing-but-stats
-username:
+username: seho
 account: seho
 server: shinyapps.io
 hostUrl: https://api.shinyapps.io/v1
 appId: 6690581
-bundleId:
+bundleId: 8775835
 url: https://seho.shinyapps.io/nothing-but-stats/
+version: 1
 asMultiple: FALSE
 asStatic: FALSE
 ignoredFiles: .RData|.secrets/134f22af3ae3a9f0b7f0eb57dd61916f_bshk93@gmail.com|.secrets/7a6077d23f6776ccc63f8f70bc12b214_bshk93@gmail.com|.secrets/9566fe0643cfe888fecd0b72f870afec_bshk93@gmail.com|.secrets/d67d4efb39eee449dc62932502fd8a0f_bshk93@gmail.com

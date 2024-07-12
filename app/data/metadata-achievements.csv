@@ -1,4 +1,4 @@
-﻿TYPE,ACHIEVEMENT,DESCRIPTION
+TYPE,ACHIEVEMENT,DESCRIPTION
 Season,Carry Job,Score 30% of your team's points in a season.
 Season,The Waiter,Log 30% of your team's assists in a season.
 Season,I'm Him,Lead the league in points scored.
@@ -17,6 +17,7 @@ Season,Sharing Is Caring,Record 700 assists in a season.
 Season,GETDAFUCKOUTTAHEREIGOTIT,"Record 1,000 rebounds in a season."
 Season,Grand Theft Auto,Record 150 steals in a season.
 Season,Send It Back,Record 200 blocks in a season.
+Season,Free Throw Merchant,"Score 500 points in a season with at least 25% of your points from the line."
 Game,The Snell Award,"Play at least 28 minutes and log 0 points, rebounds, assists, blocks, or steals."
 Game,Stinker,Record a gamescore of -10 or lower.
 Game,One Man Show,Record a gamescore of 50 or higher.

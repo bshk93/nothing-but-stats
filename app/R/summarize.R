@@ -9,9 +9,9 @@ summarize_player <- function(df) {
 summarize_team <- function(df) {
   
   df %>% 
-    group_by(TEAM, DATE) %>% 
+    group_by(TEAM, SEASON, DATE) %>% 
     summarize_if(is.numeric, sum) %>% 
-    group_by(TEAM) %>% 
+    group_by(TEAM, SEASON) %>% 
     summarize_per_game(formatting = FALSE)
   
 }
@@ -23,6 +23,11 @@ summarize_per_game <- function(df, formatting = TRUE) {
   x <- df %>% 
     summarize(
       G     = n(),
+      WL    = str_c(
+        sum(case_when(WL == 'W' ~ 1, TRUE ~ 0)),
+        "-",
+        sum(case_when(WL == 'L' ~ 1, TRUE ~ 0))
+      ),
       MPG   = mean(M) %>% round(2),
       PPG   = mean(P) %>% round(2),
       RPG   = mean(R) %>% round(2),

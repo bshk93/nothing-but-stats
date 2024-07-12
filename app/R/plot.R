@@ -36,6 +36,8 @@ plot_scatter_general <- function(
   
   x %>% 
     
+    filter(!is.na(v_x), !is.na(v_y)) %>% 
+    
     plot_ly(
       x = ~v_x,
       y = ~v_y,

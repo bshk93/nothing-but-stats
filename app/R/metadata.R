@@ -3,7 +3,8 @@ get_champions <- function(dfs_playoffs) {
     ~SEASON, ~TEAM,
     '20-21 Playoffs', 'ATL',
     '21-22 Playoffs', 'ATL',
-    '22-23 Playoffs', 'PHX'
+    '22-23 Playoffs', 'PHX',
+    '23-24 Playoffs', 'CLE'
   )
   
   dfs_playoffs %>% 
@@ -130,7 +131,8 @@ get_mvp <- function() {
     ~PLAYER, ~SEASON,
     'HARDEN, JAMES', '20-21',
     'JOKIC, NIKOLA', '21-22',
-    'DONCIC, LUKA', '22-23'
+    'DONCIC, LUKA', '22-23',
+    'MITCHELL, DONOVAN', '23-24'
   ) %>% 
     mutate(crown = "<img src='crown.png' height='20'></img>")
 }
@@ -141,7 +143,8 @@ get_dpoy <- function() {
     ~PLAYER, ~SEASON,
     'ANTETOKOUNMPO, GIANNIS', '20-21',
     'GOBERT, RUDY', '21-22',
-    'DAVIS, ANTHONY', '22-23'
+    'DAVIS, ANTHONY', '22-23',
+    'WEMBANYAMA, VICTOR', '23-24'
   ) %>% 
     mutate(hand = "<img src='hand.png' height='20'></img>")
 }
@@ -152,7 +155,8 @@ get_roy <- function() {
     ~PLAYER, ~SEASON,
     'BALL, LAMELO', '20-21',
     'BARNES, SCOTTIE', '21-22',
-    'BANCHERO, PAOLO', '22-23'
+    'BANCHERO, PAOLO', '22-23',
+    'WEMBANYAMA, VICTOR', '23-24'
   ) %>% 
     mutate(baby = "<img src='baby.png' height='20'></img>")
 }
@@ -162,7 +166,8 @@ get_6moy <- function() {
     ~PLAYER, ~SEASON,
     'DINWIDDIE, SPENCER', '20-21',
     'ANTHONY, COLE', '21-22',
-    'FULTZ, MARKELLE', '22-23'
+    'FULTZ, MARKELLE', '22-23',
+    'BANE, DESMOND', '23-24'
   ) %>% 
     mutate(six = "<img src='six.png' height='20'></img>")
 }
@@ -172,7 +177,8 @@ get_mip <- function() {
     ~PLAYER, ~SEASON,
     'WOOD, CHRISTIAN', '20-21',
     'GARLAND, DARIUS', '21-22',
-    'BANE, DESMOND', '22-23'
+    'BANE, DESMOND', '22-23',
+    'OKONGWU, ONYEKA', '23-24'
   ) %>% 
     mutate(chart = "<img src='chart.png', height='20'></img>")
 }
@@ -196,7 +202,13 @@ get_allnbn1 <- function() {
     'JOKIC, NIKOLA', '22-23',
     'MORANT, JA', '22-23',
     'JAMES, LEBRON', '22-23',
-    'DURANT, KEVIN', '22-23'
+    'DURANT, KEVIN', '22-23',
+    
+    'MITCHELL, DONOVAN', '23-24',
+    'BUTLER, JIMMY', '23-24',
+    'JAMES, LEBRON', '23-24',
+    'TATUM, JAYSON', '23-24',
+    'JOKIC, NIKOLA', '23-24'
   ) %>% 
     mutate(medal1 = "<img src='medal1.png' height='20'></img>")
 }
@@ -220,7 +232,13 @@ get_allnbn2 <- function() {
     'HARDEN, JAMES', '22-23',
     'ANTETOKOUNMPO, GIANNIS', '22-23',
     'IRVING, KYRIE', '22-23',
-    'DAVIS, ANTHONY', '22-23'
+    'DAVIS, ANTHONY', '22-23',
+    
+    'DURANT, KEVIN', '23-24',
+    'GILGEOUS-ALEXANDER, SHAI', '23-24',
+    'ANTETOKOUNMPO, GIANNIS', '23-24',
+    'HARDEN, JAMES', '23-24',
+    'CURRY, STEPHEN', '23-24'
   ) %>% 
     mutate(medal2 = "<img src='medal2.png' height='20'></img>")
 }
@@ -244,9 +262,106 @@ get_allnbn3 <- function() {
     'EMBIID, JOEL', '22-23',
     'LILLARD, DAMIAN', '22-23',
     'INGRAM, BRANDON', '22-23',
-    'GEORGE, PAUL', '22-23'
+    'GEORGE, PAUL', '22-23',
+    
+    'MORANT, JA', '23-24',
+    'IRVING, KYRIE', '23-24',
+    'DAVIS, ANTHONY', '23-24',
+    'BOOKER, DEVIN', '23-24',
+    'GEORGE, PAUL', '23-24'
   ) %>% 
     mutate(medal3 = "<img src='medal3.png' height='20'></img>")
+}
+
+get_alldef <- function() {
+  tribble(
+    ~PLAYER, ~SEASON,
+    
+    'ANTETOKOUNMPO, GIANNIS', '20-21',
+    'DAVIS, ANTHONY', '20-21',
+    'DRUMMOND, ANDRE', '20-21',
+    'GEORGE, PAUL', '20-21',
+    'SIMMONS, BEN', '20-21',
+    'GOBERT, RUDY', '20-21',
+    'HOLIDAY, JRUE', '20-21',
+    'ISAAC, JONATHAN', '20-21',
+    'JAMES, LEBRON', '20-21',
+    'PAUL, CHRIS', '20-21',
+    
+    'SIMMONS, BEN', '21-22',
+    'CARUSO, ALEX', '21-22',
+    'BUTLER, JIMMY', '21-22',
+    'ANTETOKOUNMPO, GIANNIS', '21-22',
+    'GOBERT, RUDY', '21-22',
+    'HOLIDAY, JRUE', '21-22',
+    'SMART, MARCUS', '21-22',
+    'LEONARD, KAWHI', '21-22',
+    'JACKSON, JAREN', '21-22',
+    'WILLIAMS, ROBERT', '21-22',
+    
+    'DAVIS, ANTHONY', '22-23',
+    'JACKSON, JAREN', '22-23',
+    'LEONARD, KAWHI', '22-23',
+    'EMBIID, JOEL', '22-23',
+    'WILLIAMS, ROBERT', '22-23',
+    'PAUL, CHRIS', '22-23',
+    'GEORGE, PAUL', '22-23',
+    'SIMMONS, BEN', '22-23',
+    'ISAAC, JONATHAN', '22-23',
+    'BUTLER, JIMMY', '22-23',
+    
+    'WEMBANYAMA, VICTOR', '23-24',
+    'DAVIS, ANTHONY', '23-24',
+    'BUTLER, JIMMY', '23-24',
+    'GEORGE, PAUL', '23-24',
+    'GILGEOUS-ALEXANDER, SHAI', '23-24',
+    'LEONARD, KAWHI', '23-24',
+    'BALL, LONZO', '23-24',
+    'JACKSON, JAREN', '23-24',
+    'ANTETOKOUNMPO, GIANNIS', '23-24',
+    'HOLMGREN, CHET', '23-24'
+  ) %>% 
+    mutate(fence = "<img src='fence.png' height='20'></img>")
+}
+
+get_allrookie <- function() {
+  tribble(
+    ~PLAYER, ~SEASON,
+    
+    'CUNNINGHAM, CADE', '21-22',
+    'BARNES, SCOTTIE', '21-22',
+    'MOBLEY, EVAN', '21-22',
+    'GIDDEY, JOSH', '21-22',
+    'SENGUN, ALPEREN', '21-22',
+    'GREEN, JALEN', '21-22',
+    'SUGGS, JALEN', '21-22',
+    'DUARTE, CHRIS', '21-22',
+    'WAGNER, FRANZ', '21-22',
+    'MITCHELL, DAVION', '21-22',
+    
+    'BANCHERO, PAOLO', '22-23',
+    'DUREN, JALEN', '22-23',
+    'SMITH, JABARI', '22-23',
+    'HOLMGREN, CHET', '22-23',
+    'MURRAY, KEEGAN', '22-23',
+    'IVEY, JADEN', '22-23',
+    'MATHURIN, BENNEDICT', '22-23',
+    'KESSLER, WALKER', '22-23',
+    'WILLIAMS, JALEN', '22-23',
+    'SHARPE, SHAEDON', '22-23',
+    
+    'WEMBANYAMA, VICTOR', '23-24',
+    'THOMPSON, AUSAR', '23-24',
+    'THOMPSON, AMEN', '23-24',
+    'BLACK, ANTHONY', '23-24',
+    'HENDRICKS, TAYLOR', '23-24',
+    'MILLER, BRANDON', '23-24',
+    'WHITMORE, CAM', '23-24',
+    'HENDERSON, SCOOT', '23-24',
+    'GEORGE, KEYONTE', '23-24',
+    'VEZENKOV, SASHA', '23-24'
+  ) %>% 
+    mutate(seed = "<img src='seed.png' height='20'></img>")
 }
 
 get_coty <- function() {
@@ -254,7 +369,8 @@ get_coty <- function() {
     ~AWARD, ~TEAM, ~SEASON,
     'COTY (That1guy)', 'SAC', '20-21',
     'COTY (Kid Monotone)', 'IND', '21-22',
-    'COTY (bryn and Q)', 'SAS', '22-23'
+    'COTY (bryn and Q)', 'SAS', '22-23',
+    'COTY (Schu)', 'UTA', '23-24'
   )
 }
 
@@ -263,13 +379,34 @@ get_foty <- function() {
     ~TEAM, ~SEASON, ~AWARD,
     'ATL', '20-21', 'FOTY',
     'NOP', '21-22', 'FOTY',
-    'SAS', '22-23', 'FOTY'
+    'SAS', '22-23', 'FOTY',
+    'UTA', '23-24', 'FOTY'
   )
 }
 
 get_playoff_seeds <- function() {
   tribble(
     ~SEASON, ~CONF, ~SEED, ~TEAM,
+    
+    # 23-24
+    '23-24 Playoffs', 'EAST', 1, 'BKN',
+    '23-24 Playoffs', 'EAST', 2, 'IND',
+    '23-24 Playoffs', 'EAST', 3, 'MIL',
+    '23-24 Playoffs', 'EAST', 4, 'CLE',
+    '23-24 Playoffs', 'EAST', 5, 'BOS',
+    '23-24 Playoffs', 'EAST', 6, 'CHI',
+    '23-24 Playoffs', 'EAST', 7, 'NYK',
+    '23-24 Playoffs', 'EAST', 8, 'DET',
+    
+    '23-24 Playoffs', 'WEST', 1, 'UTA',
+    '23-24 Playoffs', 'WEST', 2, 'SAS',
+    '23-24 Playoffs', 'WEST', 3, 'GSW',
+    '23-24 Playoffs', 'WEST', 4, 'OKC',
+    '23-24 Playoffs', 'WEST', 5, 'SAC',
+    '23-24 Playoffs', 'WEST', 6, 'PHX',
+    '23-24 Playoffs', 'WEST', 7, 'HOU',
+    '23-24 Playoffs', 'WEST', 8, 'DAL',
+    
     
     # 22-23
     '22-23 Playoffs', 'EAST', 1, 'BKN',
