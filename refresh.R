@@ -12,16 +12,16 @@ source("R/utils.R")
 source("R/news.R")
 
 # Globals ----
-myseason <- "2023-24"
-myplayoffdate <- "2024-04-16" # Playoff start date
-check_start_date <- "2024-04-14" # Date to start doing checks (newly entered data)
-drop_after_date <- "2024-06-30" # Date after which to delete stats (e.g. unfinished days)
+myseason <- "2024-25"
+myplayoffdate <- "2025-04-16" # Playoff start date
+check_start_date <- "2024-10-20" # Date to start doing checks (newly entered data)
+drop_after_date <- "2025-06-30" # Date after which to delete stats (e.g. unfinished days)
 
 # Refresh stats ----
 
 # Pull down and check allstats, extracting data from Google sheets
 # Also runs some simple tests
-allstats <- get_allstats(delete_before = "2023-07-01")
+allstats <- get_allstats(delete_before = "2024-09-01")
 
 # Additional Testing
 test_allstats(
