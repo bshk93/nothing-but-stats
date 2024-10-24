@@ -108,7 +108,7 @@ body <- dashboardBody(
       selectizeInput(
         'season2',
         'Choose a Season:',
-        c("23-24", "22-23", "21-22", "20-21")
+        c("24-25", "23-24", "22-23", "21-22", "20-21")
       ),
 
       h2("AROUND THE NBN"),
@@ -177,7 +177,7 @@ body <- dashboardBody(
       selectizeInput(
         'pr_season',
         'Choose a Season',
-        c("23-24", "22-23", "21-22", "20-21")
+        c("24-25", "23-24", "22-23", "21-22", "20-21")
       ),
       selectizeInput(
         'pr_teams',
@@ -406,6 +406,7 @@ body <- dashboardBody(
         'playercomp_season',
         'Choose Season:',
         c('CAREER', 
+          '24-25',
           '23-24', '23-24 Playoffs',
           '22-23', '22-23 Playoffs',
           '21-22', '21-22 Playoffs',
@@ -427,7 +428,7 @@ body <- dashboardBody(
       selectizeInput(
         'season1',
         'Choose a Season:',
-        c("ALL-TIME", "23-24", "22-23", "21-22", "20-21")
+        c("ALL-TIME", "24-25", "23-24", "22-23", "21-22", "20-21")
       ),
       checkboxInput("reg_flag", "Include Regular Season", value = TRUE),
       checkboxInput("playoff_flag", "Include Playoffs", value = FALSE),
