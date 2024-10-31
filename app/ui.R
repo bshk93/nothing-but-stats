@@ -436,7 +436,28 @@ body <- dashboardBody(
       DTOutput("franchise_records"),
       
       h2('NBN Hall-of-Fame Points'),
-      DTOutput('hof_points')
+      DTOutput('hof_points'),
+      
+      h2('(Regular Season) Stat Race'),
+      selectizeInput(
+        'race_var',
+        'Select a stat to compare:',
+        c('M', 'P', 'R', 'A', 'S', 'B', '3PM'),
+        selected = 'P'
+      ),
+      selectizeInput(
+        'race_players',
+        'Select at least two players:',
+        named_names,
+        selected = c("BEAL, BRADLEY", "CURRY, STEPHEN"),
+        multiple = TRUE
+      ),
+      selectizeInput(
+        'race_season',
+        'Choose a Season:',
+        c("ALL-TIME", "24-25", "23-24", "22-23", "21-22", "20-21")
+      ),
+      plotOutput("stat_race_plot")
     ),
     
     tabItem(

@@ -367,7 +367,7 @@ function(input, output, session) {
                 BPG = mean(B),
                 `3PMPG` = mean(`3PM`))
 
-    leader_helper <- function(category, summary_df, dfs, min_games = 20) {
+    leader_helper <- function(category, summary_df, dfs, min_games = 1) {
       tmpvarname1 <- str_c(category, 'PG')
 
       x <- summary_df %>%
@@ -1081,6 +1081,9 @@ function(input, output, session) {
         S = sum(S),
         B = sum(B),
         `3PM` = sum(`3PM`),
+        `3P` = sum(`3PM`) / sum(`3PA`),
+        FG = sum(FGM) / sum(FGA),
+        FT = sum(FTM) / sum(FTA),
         GMSC = mean(GMSC)
       ) %>%
       mutate(
@@ -1107,23 +1110,44 @@ function(input, output, session) {
           GMSCP36 = GMSC*36/MPG
         ) %>%
 
-        select(-ends_with('PG'))
+        select(-ends_with('PG'), -`3P`, -FG, -FT)
     }
 
     x_end <- ncol(x)
 
-    x %>%
+    x <- x %>%
       datatable(
         options = list(scrollX = TRUE)
-      ) %>%
-      formatRound(
-        columns = 2:9,
-        digits = 0
-      ) %>%
-      formatRound(
-        columns = 10:x_end,
-        digits = 2
       )
+    
+    if (input$per_36_flag) {
+      x <- x %>% 
+        formatRound(
+          columns = 2:9,
+          digits = 0
+        ) %>%
+        formatRound(
+          columns = 10:x_end,
+          digits = 2
+        )
+    } else {
+      x <- x %>%
+        formatRound(
+          columns = 2:9,
+          digits = 0
+        ) %>%
+        formatRound(
+          columns = 10:12,
+          digits = 3
+        ) %>%
+        formatRound(
+          columns = 13:x_end,
+          digits = 2
+        )
+    }
+    
+    x
+    
   })
 
   output$hof_points <- renderDT({
@@ -1311,6 +1335,30 @@ function(input, output, session) {
     out
 
   }, options = list(pageLength = 25, scrollX = TRUE), rownames = FALSE)
+  
+  output$stat_race_plot <- renderPlot({
+    
+    req(input$password == myPassword || myPassword == '')
+    
+    if (input$race_season == "ALL-TIME") {
+      x <- dfs
+    } else {
+      x <- dfs %>% 
+        filter(SEASON == input$race_season)
+    }
+    
+    x %>% 
+      filter(PLAYER %in% input$race_players) %>% 
+      select(PLAYER, DATE, input$race_var) %>% 
+      arrange(PLAYER, DATE) %>% 
+      group_by(PLAYER) %>% 
+      mutate(!!input$race_var := cumsum(!!sym(input$race_var))) %>% 
+      ungroup() %>% 
+      ggplot(aes(x = DATE, y = !!sym(input$race_var), color = PLAYER)) + 
+      geom_line() + 
+      geom_point()
+    
+  })
 
   output$franchise_history_cum_diff <- renderPlot({
 
