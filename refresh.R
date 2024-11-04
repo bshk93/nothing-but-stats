@@ -3,7 +3,7 @@ if (stringr::str_detect(getwd(), 'bshk9')) {
 } else {
   setwd("C:/Users/Brian/OneDrive/home/projects/nothing-but-stats/app")
 }
-
+setwd("~/nothing-but-stats/app")
 
 # Source functions ----
 source("update.R")
@@ -14,8 +14,8 @@ source("R/news.R")
 # Globals ----
 myseason <- "2024-25"
 myplayoffdate <- "2025-04-16" # Playoff start date
-check_start_date <- "2024-10-28" # Date to start doing checks (newly entered data)
-drop_after_date <- "2024-10-29" # Date after which to delete stats (e.g. unfinished days)
+check_start_date <- "2024-10-31" # Date to start doing checks (newly entered data)
+drop_after_date <- "2024-10-31" # Date after which to delete stats (e.g. unfinished days)
 
 # Refresh stats ----
 
