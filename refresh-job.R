@@ -3,7 +3,8 @@ if (length(args) != 3) {
   rlang::abort("Three arguments to `refresh` are required.")
 }
 
-setwd("~/nothing-but-stats/app")
+#setwd("~/nothing-but-stats/app")
+setwd("/srv/shiny/nothing-but-stats/app")
 source("../refresh-utils.R")
 
 # myseason <- "2024-25"
