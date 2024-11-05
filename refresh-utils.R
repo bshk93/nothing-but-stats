@@ -233,9 +233,9 @@ add_playoff_info <- function(built_allstats) {
 }
 
 clean_allstats <- function(dfs) {
-  dfs %>% 
+  dfs_bind <- dfs %>% 
     bind_rows() %>% 
-    select(-any_of(c("...27", "V27"))) %>% 
+    select(-any_of(c("...27", "V27", "...28", "V28"))) %>% 
     mutate(FG = str_c(FGM, "-", FGA),
            `3P` = str_c(`3PM`, "-", `3PA`),
            FT = str_c(FTM, "-", FTA),
@@ -262,6 +262,11 @@ clean_allstats <- function(dfs) {
     mutate(GMSC = round(GMSC, 2)) %>% 
     
     arrange(PLAYER, DATE)
+  
+  if (!("OPP_RAW" %in% names(dfs_bind))) {
+    dfs_bind <- dfs_bind %>% 
+      mutate(OPP_RAW = str_replace(OPP, "^@", ""))
+  }
 }
 
 load_allstats <- function(playoffs = FALSE) {
