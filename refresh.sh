@@ -1,5 +1,6 @@
 #!/bin/bash
 set -e
+set -o pipefail
 
 if [ "$#" -ne 3 ]; then
   echo "You must provide exactly three arguments: the season YYYY-YY, the playoff start date YYYY-MM-DD, and the drop after date YYYY-MM-DD."
