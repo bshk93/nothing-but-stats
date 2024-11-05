@@ -14,8 +14,8 @@ source("../preprocess-utils.R")
 # drop_after_date <- "2024-11-03" # Date after which to delete stats (e.g. unfinished days)
 
 myseason <- args[1]
-myplayoffdate <- args[2]
-drop_after_date <- args[3]
+myplayoffdate <- as_date(args[2])
+drop_after_date <- as_date(args[3])
 
 # Pull data from sheets
 allstats <- get_allstats(delete_before = "2024-09-01") %>% 
@@ -42,6 +42,7 @@ maybe <- built_allstats %>%
   mutate(gametype = "PLAYOFF")
 
 if (nrow(maybe) > 0) {
+  inform("Some of these are playoff stats. Exporting.")
   maybe %>% 
     write_csv(glue::glue("data/allstats-playoffs-{str_extract(myseason, '\\\\d{2}$')}.csv"))
 }
