@@ -267,6 +267,8 @@ clean_allstats <- function(dfs) {
     dfs_bind <- dfs_bind %>% 
       mutate(OPP_RAW = str_replace(OPP, "^@", ""))
   }
+  
+  dfs_bind
 }
 
 load_allstats <- function(playoffs = FALSE) {
