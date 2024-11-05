@@ -16,6 +16,7 @@ source("../preprocess-utils.R")
 myseason <- args[1]
 myplayoffdate <- as_date(args[2])
 drop_after_date <- as_date(args[3])
+inform(glue("The args are {myseason}, {myplayoffdate}, and {drop_after_date}."))
 
 # Pull data from sheets
 allstats <- get_allstats(delete_before = "2024-09-01") %>% 
