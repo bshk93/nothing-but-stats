@@ -1,10 +1,19 @@
+args <- commandArgs(trailingOnly = TRUE)
+if (length(args) != 3) {
+  rlang::abort("Three arguments to `refresh` are required.")
+}
+
 setwd("~/nothing-but-stats/app")
 source("../refresh-utils.R")
 
-myseason <- "2024-25"
-myplayoffdate <- "2025-04-16" # Playoff start date
-check_start_date <- "2024-11-01" # Date to start doing checks (newly entered data)
-drop_after_date <- "2024-11-03" # Date after which to delete stats (e.g. unfinished days)
+# myseason <- "2024-25"
+# myplayoffdate <- "2025-04-16" # Playoff start date
+# check_start_date <- "2024-11-01" # Date to start doing checks (newly entered data)
+# drop_after_date <- "2024-11-03" # Date after which to delete stats (e.g. unfinished days)
+
+myseason <- args[1]
+myplayoffdate <- args[2]
+drop_after_date <- args[3]
 
 # Pull data from sheets
 allstats <- get_allstats(delete_before = "2024-09-01") %>% 

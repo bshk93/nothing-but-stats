@@ -1,5 +1,10 @@
 #!/bin/bash
 
+if [ "$#" -ne 3 ]; then
+  echo "You must provide exactly three arguments: the season YYYY-YY, the playoff start date YYYY-MM-DD, and the drop after date YYYY-MM-DD."
+  exit 1
+fi
+
 # Define paths
 APP_DIR="/srv/shiny/nothing-but-stats/app"
 PREPROCESS_SCRIPT="/srv/shiny/nothing-but-stats/refresh-job.R"
@@ -28,7 +33,7 @@ cd "$APP_DIR" || { echo "Failed to navigate to $APP_DIR" | tee -a "$LOG_FILE"; e
 
 # Step 4: Run the preprocessing script
 echo "Running preprocessing script..." | tee -a "$LOG_FILE"
-Rscript "$PREPROCESS_SCRIPT" | tee -a "$LOG_FILE"
+Rscript "$PREPROCESS_SCRIPT" "$1" "$2" "$3" | tee -a "$LOG_FILE"
 if [ $? -ne 0 ]; then
     echo "Preprocessing script failed. Aborting update." | tee -a "$LOG_FILE"
     exit 1
