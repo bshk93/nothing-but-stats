@@ -6,6 +6,7 @@ if (length(args) != 3) {
 #setwd("~/nothing-but-stats/app")
 setwd("/srv/shiny/nothing-but-stats/app")
 source("../refresh-utils.R")
+source("../preprocess-utils.R")
 
 # myseason <- "2024-25"
 # myplayoffdate <- "2025-04-16" # Playoff start date
