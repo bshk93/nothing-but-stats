@@ -12,7 +12,16 @@ if (nrow(allstats$errors$games) > 0) {
 
 built_allstats <- build_allstats(allstats$data)
 
+con = dbConnect(
+  Postgres(),
+  host = "localhost",
+  port = 5432,
+  dbname = "nbn",
+  user = "postgres",
+  password = "mylittl3Farter"
+)
 
+# For obs that exist, update values
 
 # Build and pre-process 
 
