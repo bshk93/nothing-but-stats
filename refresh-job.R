@@ -28,7 +28,7 @@ if (nrow(allstats$errors$games) > 0) {
     anti_join(allstats$errors$games, by = c("TEAM", "DATE"))
 }
 
-built_allstats <- build_allstats(allstats$data)
+built_allstats <- build_allstats(allstats$data %>% filter(DATE <= drop_after_date))
 
 # Write/update output file
 built_allstats %>% 
