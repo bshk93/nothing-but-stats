@@ -5,7 +5,7 @@ account: seho
 server: shinyapps.io
 hostUrl: https://api.shinyapps.io/v1
 appId: 6690581
-bundleId: 9369514
+bundleId: 9382079
 url: https://seho.shinyapps.io/nothing-but-stats/
 version: 1
 asMultiple: FALSE
