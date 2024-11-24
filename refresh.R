@@ -1,8 +1,3 @@
-if (stringr::str_detect(getwd(), 'bshk9')) {
-  setwd("C:/Users/bshk9/OneDrive/home/projects/nothing-but-stats/app")
-} else {
-  setwd("C:/Users/Brian/OneDrive/home/projects/nothing-but-stats/app")
-}
 setwd("~/nothing-but-stats/app")
 
 # Source functions ----
@@ -69,12 +64,32 @@ dfs_playoffs <- load_allstats(playoffs = TRUE) %>%
   mutate(gametype = 'PLAYOFF',
          ROOKIE = NA)
 
+dfs_everything <- rbind(dfs, dfs_playoffs)
+
 write_rds(dfs, 'data/dfs.rds')
 write_rds(get_newsfeed(dfs), 'data/news.rds')
 
 write_rds(dfs_playoffs, 'data/dfs_playoffs.rds')
 
-dfs_everything <- rbind(dfs, dfs_playoffs)
+start_time <- Sys.time()
+inform("Calculating achievements....")
+ach_metadata <- read_csv("data/metadata-achievements.csv", show_col_types = FALSE)
+
+ach_season <- dfs %>% 
+  nest_by(PLAYER) %>% 
+  mutate(ach = list(get_achievements_season(
+    data,
+    dfs,
+    PLAYER,
+    ach_metadata
+  ))) %>% 
+  select(-data) %>% 
+  unnest(ach) %>% 
+  ungroup()
+
+write_rds(ach_season, 'data/ach_season.rds')
+
+inform(glue(" * DONE [{round(Sys.time() - start_time, 1)}s]"))
 
 
 # STOP HERE ----

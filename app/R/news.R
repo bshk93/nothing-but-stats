@@ -100,8 +100,8 @@ get_newsfeed <- function(dfs, gmsc_thresh = 35) {
       career_var <- str_c('CAREER_', var)
       
       x <- career_totals %>% 
-        filter(floor(get(career_var) / 500) > coalesce(floor(lag(get(career_var))/ 500), 0)) %>% 
-        filter(get(career_var) >= 500) %>% 
+        filter(floor(get(career_var) / 1000) > coalesce(floor(lag(get(career_var))/ 1000), 0)) %>% 
+        filter(get(career_var) >= 1000) %>% 
         mutate(HEADLINE = str_c(
           PLAYER, " <img src='logo-", tolower(TEAM), ".png' height='20'></img>",
           ' reached a milestone of ', get(career_var), ' career ', var, '.'

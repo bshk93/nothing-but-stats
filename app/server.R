@@ -197,16 +197,16 @@ function(input, output, session) {
   
   myAwards <- reactive({
     get_allstars() %>%
-      full_join(get_mvp()) %>%
-      full_join(get_dpoy()) %>%
-      full_join(get_6moy()) %>%
-      full_join(get_roy()) %>%
-      full_join(get_mip()) %>%
-      full_join(get_allnbn1()) %>%
-      full_join(get_allnbn2()) %>%
-      full_join(get_allnbn3()) %>%
-      full_join(get_alldef()) %>%
-      full_join(get_allrookie()) %>%
+      full_join(get_mvp(), by = c("PLAYER", "SEASON")) %>%
+      full_join(get_dpoy(), by = c("PLAYER", "SEASON")) %>%
+      full_join(get_6moy(), by = c("PLAYER", "SEASON")) %>%
+      full_join(get_roy(), by = c("PLAYER", "SEASON")) %>%
+      full_join(get_mip(), by = c("PLAYER", "SEASON")) %>%
+      full_join(get_allnbn1(), by = c("PLAYER", "SEASON")) %>%
+      full_join(get_allnbn2(), by = c("PLAYER", "SEASON")) %>%
+      full_join(get_allnbn3(), by = c("PLAYER", "SEASON")) %>%
+      full_join(get_alldef(), by = c("PLAYER", "SEASON")) %>%
+      full_join(get_allrookie(), by = c("PLAYER", "SEASON")) %>%
       filter(PLAYER == input$name)
   })
   
@@ -282,38 +282,40 @@ function(input, output, session) {
     
     summary_df <- mySeasonDF() %>%
       group_by(PLAYER) %>%
-      summarize(G = n(),
-                GMSCPG = mean(GMSC),
-                PPG = mean(P),
-                RPG = mean(R),
-                APG = mean(A),
-                SPG = mean(S),
-                BPG = mean(B),
-                `3PMPG` = mean(`3PM`))
+      summarize(
+        G = n(),
+        across(
+          c(GMSC, P, R, A, S, B, `3PM`),
+          mean,
+          .names = "{.col}PG"
+        ),
+        .groups = "drop"
+      )
     
     leader_helper <- function(category, summary_df, dfs, min_games = 1) {
       tmpvarname1 <- str_c(category, 'PG')
-      
+      tmpvarname2 <- str_c('PLAYER_', category)
+
       x <- summary_df %>%
         filter(G >= min_games) %>%
         arrange_at(tmpvarname1) %>%
         arrange(desc(row_number())) %>%
         head(10)
-      
-      x <- x %>% 
+
+      x <- x %>%
         left_join(get_last_played_for_2(dfs), by = 'PLAYER')
-      
-      tmpvarname2 <- str_c('PLAYER_', category)
-      
+
+
+
       # This is throwing tidyverse warning
       # Warning: Using an external vector in selections was deprecated in tidyselect 1.1.0.
       # ℹ Please use `all_of()` or `any_of()` instead.
       # # Was:
       # data %>% select(tmpvarname1)
-      # 
+      #
       # # Now:
       # data %>% select(all_of(tmpvarname1))
-      # 
+      #
       # See <https://tidyselect.r-lib.org/reference/faq-external-vector.html>.
       x %>%
         mutate(PLAYER = str_c(PLAYER, ' ', get_logo(TEAM, height = 20))) %>%
@@ -324,23 +326,53 @@ function(input, output, session) {
       
     }
     
-    leaders_gmsc <- leader_helper('GMSC', summary_df, dfs)
-    leaders_p <- leader_helper('P', summary_df, dfs)
-    leaders_r <- leader_helper('R', summary_df, dfs)
-    leaders_a <- leader_helper('A', summary_df, dfs)
-    leaders_s <- leader_helper('S', summary_df, dfs)
-    leaders_b <- leader_helper('B', summary_df, dfs)
-    leaders_3 <- leader_helper('3PM', summary_df, dfs)
+    categories <- c("GMSC", "P", "R", "A", "S", "B", "3PM")
     
-    y <- leaders_gmsc %>%
-      full_join(leaders_p, by = "rn") %>%
-      full_join(leaders_r, by = "rn") %>%
-      full_join(leaders_a, by = "rn") %>%
-      full_join(leaders_s, by = "rn") %>%
-      full_join(leaders_b, by = "rn") %>%
-      full_join(leaders_3, by = "rn") %>%
-      arrange(rn) %>%
-      select(-rn)
+    leaders_list <- map(categories, ~ leader_helper(.x, summary_df, dfs))
+    
+    # Combine into a single data frame with a new column `category`
+    names(leaders_list) <- categories
+    
+    # Add row numbers for merging
+    leaders_with_rn <- map(leaders_list, ~ .x %>% mutate(rn = row_number()))
+    
+    # Iteratively join all categories by `rn`
+    y <- reduce(leaders_with_rn, full_join, by = "rn") %>%
+      select(
+        PLAYER_GMSC, GMSCPG,
+        PLAYER_P, PPG,
+        PLAYER_R, RPG,
+        PLAYER_A, APG,
+        PLAYER_S, SPG,
+        PLAYER_B, BPG,
+        PLAYER_3PM, `3PMPG`
+      )
+    
+    # y <- leaders %>%
+    #   pivot_wider(
+    #     names_from = category,
+    #     values_from = c(starts_with("PLAYER"), ends_with("PG"))
+    #   ) %>%
+    #   arrange(rn) %>%
+    #   select(-rn)
+    # 
+    # # leaders_gmsc <- leader_helper('GMSC', summary_df, dfs)
+    # # leaders_p <- leader_helper('P', summary_df, dfs)
+    # # leaders_r <- leader_helper('R', summary_df, dfs)
+    # # leaders_a <- leader_helper('A', summary_df, dfs)
+    # # leaders_s <- leader_helper('S', summary_df, dfs)
+    # # leaders_b <- leader_helper('B', summary_df, dfs)
+    # # leaders_3 <- leader_helper('3PM', summary_df, dfs)
+    # # 
+    # # y <- leaders_gmsc %>%
+    # #   full_join(leaders_p, by = "rn") %>%
+    # #   full_join(leaders_r, by = "rn") %>%
+    # #   full_join(leaders_a, by = "rn") %>%
+    # #   full_join(leaders_s, by = "rn") %>%
+    # #   full_join(leaders_b, by = "rn") %>%
+    # #   full_join(leaders_3, by = "rn") %>%
+    # #   arrange(rn) %>%
+    # #   select(-rn)
     
     print(glue("[{sprintf('%.7f', round(Sys.time() - begin, 7))}] leaders table generated."))
     
@@ -772,8 +804,6 @@ function(input, output, session) {
     
     begin <- Sys.time()
     
-    #req(input$password == myPassword || myPassword == '')
-    
     champs <- champions %>%
       distinct(TEAM, SEASON) %>%
       mutate(ring = "<img src='ring.png' height='20'></img>")
@@ -960,7 +990,9 @@ function(input, output, session) {
     
     begin <- Sys.time()
     
-    x <- get_achievements_season(myPlayerData(), dfs, input$name, ach_metadata) %>%
+    x <- read_rds('data/ach_season.rds') %>% 
+      filter(PLAYER == input$name) %>% 
+      select(-PLAYER) %>% 
       format_as_datatable()
     
     print(glue("[{sprintf('%.7f', round(Sys.time() - begin, 7))}] player season achievements generated."))

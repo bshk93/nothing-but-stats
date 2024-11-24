@@ -8,10 +8,12 @@ get_achievements_season <- function(player_df, dfs, playername, ach_metadata) {
     ) %>% 
     group_by(SEASON, DATE, TEAM) %>% 
     summarize(TEAM_PTS = sum(P),
-              PLAYER_PTS = sum(case_when(PLAYER == playername ~ P, TRUE ~ 0))) %>% 
+              PLAYER_PTS = sum(case_when(PLAYER == playername ~ P, TRUE ~ 0)),
+              .groups = "drop") %>% 
     group_by(SEASON) %>% 
     summarize(TEAM_PTS = sum(TEAM_PTS), 
-              PLAYER_PTS = sum(PLAYER_PTS)) %>% 
+              PLAYER_PTS = sum(PLAYER_PTS),
+              .groups = "drop") %>% 
     mutate(ACHIEVEMENT = "Carry Job") %>% 
     mutate(PCT = PLAYER_PTS / TEAM_PTS) %>% 
     filter(PCT >= .3) %>% 
@@ -26,10 +28,12 @@ get_achievements_season <- function(player_df, dfs, playername, ach_metadata) {
     ) %>% 
     group_by(SEASON, DATE, TEAM) %>% 
     summarize(TEAM_A = sum(A),
-              PLAYER_A = sum(case_when(PLAYER == playername ~ A, TRUE ~ 0))) %>% 
+              PLAYER_A = sum(case_when(PLAYER == playername ~ A, TRUE ~ 0)),
+              .groups = "drop") %>% 
     group_by(SEASON) %>% 
     summarize(TEAM_A = sum(TEAM_A), 
-              PLAYER_A = sum(PLAYER_A)) %>% 
+              PLAYER_A = sum(PLAYER_A),
+              .groups = "drop") %>% 
     mutate(PCT = PLAYER_A / TEAM_A) %>% 
     filter(PCT >= .3) %>% 
     mutate(ACHIEVEMENT = "The Waiter") %>% 
@@ -38,7 +42,8 @@ get_achievements_season <- function(player_df, dfs, playername, ach_metadata) {
   # I'm Him
   ach_im_him <- dfs %>% 
     group_by(SEASON, PLAYER) %>% 
-    summarize(P = sum(P)) %>% 
+    summarize(P = sum(P),
+              .groups = "drop") %>% 
     group_by(SEASON) %>% 
     filter(P == max(P)) %>% 
     filter(PLAYER == playername) %>% 
@@ -48,7 +53,7 @@ get_achievements_season <- function(player_df, dfs, playername, ach_metadata) {
   # Jake from State Farm
   ach_jake <- dfs %>% 
     group_by(SEASON, PLAYER) %>% 
-    summarize(A = sum(A)) %>% 
+    summarize(A = sum(A), .groups = "drop") %>% 
     group_by(SEASON) %>% 
     filter(A == max(A)) %>% 
     filter(PLAYER == playername) %>% 
@@ -58,7 +63,7 @@ get_achievements_season <- function(player_df, dfs, playername, ach_metadata) {
   # Director of Boards
   ach_dob <- dfs %>% 
     group_by(SEASON, PLAYER) %>% 
-    summarize(R = sum(R)) %>% 
+    summarize(R = sum(R), .groups = "drop") %>% 
     group_by(SEASON) %>% 
     filter(R == max(R)) %>% 
     filter(PLAYER == playername) %>% 
@@ -68,7 +73,7 @@ get_achievements_season <- function(player_df, dfs, playername, ach_metadata) {
   # Steal Yo Girl
   ach_steal_yo_girl <- dfs %>% 
     group_by(SEASON, PLAYER) %>% 
-    summarize(S = sum(S)) %>% 
+    summarize(S = sum(S), .groups = "drop") %>% 
     group_by(SEASON) %>% 
     filter(S == max(S)) %>% 
     filter(PLAYER == playername) %>% 
@@ -78,7 +83,7 @@ get_achievements_season <- function(player_df, dfs, playername, ach_metadata) {
   # Turn Down the Sliders
   ach_sliders <- dfs %>% 
     group_by(SEASON, PLAYER) %>% 
-    summarize(B = sum(B)) %>% 
+    summarize(B = sum(B), .groups = "drop") %>% 
     group_by(SEASON) %>% 
     filter(B == max(B)) %>% 
     filter(PLAYER == playername) %>% 
@@ -88,7 +93,7 @@ get_achievements_season <- function(player_df, dfs, playername, ach_metadata) {
   # Splash Brother
   ach_splash <- dfs %>% 
     group_by(SEASON, PLAYER) %>% 
-    summarize(`3PM` = sum(`3PM`)) %>% 
+    summarize(`3PM` = sum(`3PM`), .groups = "drop") %>% 
     group_by(SEASON) %>% 
     filter(`3PM` == max(`3PM`)) %>% 
     filter(PLAYER == playername) %>% 
@@ -98,7 +103,7 @@ get_achievements_season <- function(player_df, dfs, playername, ach_metadata) {
   # Enforcer
   ach_enforcer <- dfs %>% 
     group_by(SEASON, PLAYER) %>% 
-    summarize(PF = sum(PF)) %>% 
+    summarize(PF = sum(PF), .groups = "drop") %>% 
     group_by(SEASON) %>% 
     filter(PF == max(PF)) %>% 
     filter(PLAYER == playername) %>% 
@@ -109,14 +114,16 @@ get_achievements_season <- function(player_df, dfs, playername, ach_metadata) {
   ach_tank <- dfs %>% 
     filter(PLAYER == playername) %>% 
     group_by(SEASON) %>% 
-    summarize(W = sum(case_when(WL == "W" ~ 1, TRUE ~ 0))) %>% 
+    summarize(W = sum(case_when(WL == "W" ~ 1, TRUE ~ 0)),
+              .groups = "drop") %>% 
     left_join(
       dfs %>% 
         group_by(SEASON) %>% 
         summarize(
           M = sum(case_when(PLAYER == playername ~ M, TRUE ~ 0)),
           G = sum(case_when(PLAYER == playername ~ 1, TRUE ~ 0)),
-          MPG = M/G
+          MPG = M/G,
+          .groups = "drop"
         ),
       by = "SEASON"
     ) %>% 
@@ -127,7 +134,8 @@ get_achievements_season <- function(player_df, dfs, playername, ach_metadata) {
   # Hot Potato
   ach_hot_potato <- player_df %>% 
     group_by(SEASON) %>% 
-    summarize(TEAMS = n_distinct(TEAM)) %>% 
+    summarize(TEAMS = n_distinct(TEAM),
+              .groups = "drop") %>% 
     filter(TEAMS > 2) %>% 
     mutate(ACHIEVEMENT = "Hot Potato") %>% 
     select(ACHIEVEMENT, SEASON)
@@ -138,7 +146,8 @@ get_achievements_season <- function(player_df, dfs, playername, ach_metadata) {
     summarize(
       FG = sum(FGM)/sum(FGA),
       `3P` = sum(`3PM`)/sum(`3PA`),
-      FT = sum(FTM)/sum(FTA)
+      FT = sum(FTM)/sum(FTA),
+      .groups = "drop"
     ) %>% 
     filter(FG + `3P` + FT < 1) %>% 
     mutate(ACHIEVEMENT = "The Singler Line") %>% 
@@ -150,7 +159,8 @@ get_achievements_season <- function(player_df, dfs, playername, ach_metadata) {
     summarize(
       FG = sum(FGM)/sum(FGA),
       `3P` = sum(`3PM`)/sum(`3PA`),
-      FT = sum(FTM)/sum(FTA)
+      FT = sum(FTM)/sum(FTA),
+      .groups = "drop"
     ) %>% 
     filter(FG >= .5, `3P` >= .4, FT >= .9) %>% 
     mutate(ACHIEVEMENT = "50/40/90 Club") %>% 
@@ -159,7 +169,7 @@ get_achievements_season <- function(player_df, dfs, playername, ach_metadata) {
   # 2K Club
   ach_2k <- player_df %>% 
     group_by(SEASON) %>% 
-    summarize(P = sum(P)) %>% 
+    summarize(P = sum(P), .groups = "drop") %>% 
     filter(P >= 2000) %>% 
     mutate(ACHIEVEMENT = "2K Club") %>% 
     select(ACHIEVEMENT, SEASON)
@@ -167,7 +177,7 @@ get_achievements_season <- function(player_df, dfs, playername, ach_metadata) {
   # Sharing is Caring
   ach_sharing <- player_df %>% 
     group_by(SEASON) %>% 
-    summarize(A = sum(A)) %>% 
+    summarize(A = sum(A), .groups = "drop") %>% 
     filter(A >= 700) %>% 
     mutate(ACHIEVEMENT = "Sharing is Caring") %>% 
     select(ACHIEVEMENT, SEASON)
@@ -175,7 +185,7 @@ get_achievements_season <- function(player_df, dfs, playername, ach_metadata) {
   # GETDAFUCKOUTTAHEREIGOTIT
   ach_getdaf <- player_df %>% 
     group_by(SEASON) %>% 
-    summarize(R = sum(R)) %>% 
+    summarize(R = sum(R), .groups = "drop") %>% 
     filter(R >= 1000) %>% 
     mutate(ACHIEVEMENT = "GETDAFUCKOUTTAHEREIGOTIT") %>% 
     select(ACHIEVEMENT, SEASON)
@@ -183,7 +193,7 @@ get_achievements_season <- function(player_df, dfs, playername, ach_metadata) {
   # Grand Theft Auto
   ach_gta <- player_df %>% 
     group_by(SEASON) %>% 
-    summarize(S = sum(S)) %>% 
+    summarize(S = sum(S), .groups = "drop") %>% 
     filter(S >= 150) %>% 
     mutate(ACHIEVEMENT = "Grand Theft Auto") %>% 
     select(ACHIEVEMENT, SEASON)
@@ -191,7 +201,7 @@ get_achievements_season <- function(player_df, dfs, playername, ach_metadata) {
   # Send It Back
   ach_senditback <- player_df %>% 
     group_by(SEASON) %>% 
-    summarize(B = sum(B)) %>% 
+    summarize(B = sum(B), .groups = "drop") %>% 
     filter(B >= 1000) %>% 
     mutate(ACHIEVEMENT = "Send It Back") %>% 
     select(ACHIEVEMENT, SEASON)
@@ -199,7 +209,8 @@ get_achievements_season <- function(player_df, dfs, playername, ach_metadata) {
   # Free Throw Merchant
   ach_freethrowmerchant <- player_df %>% 
     group_by(SEASON) %>% 
-    summarize(P = sum(P), P_FT = sum(FTM)) %>% 
+    summarize(P = sum(P), P_FT = sum(FTM),
+              .groups = "drop") %>% 
     mutate(PCT = P_FT/P) %>% 
     filter(P >= 500, PCT >= 0.25) %>% 
     mutate(ACHIEVEMENT = "Free Throw Merchant") %>% 
