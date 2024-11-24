@@ -96,10 +96,28 @@ sidebar <- dashboardSidebar(
 # Dashboard Body ----
 body <- dashboardBody(
   
+  # css stuff
   tags$style(
     type = 'text/css',
     '.modal-dialog { width: fit-content !important; }'
   ),
+  
+  tags$style(HTML("
+    .plot-container {
+      width: 100%;
+      height: 100%;
+      padding-bottom: 100%; /* Aspect ratio trick */
+      position: relative;
+    }
+
+    .plot-container .plotly {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+    }
+  ")),
   
   tabItems(
     ## Season Dashboard ----
@@ -193,7 +211,7 @@ body <- dashboardBody(
       htmlOutput("franchise_history_rings"),
       htmlOutput("franchise_history_retired"),
       DTOutput("franchise_history_yoy"),
-      plotlyOutput("franchise_history_scatter"),
+      div(class = "plot-container", plotlyOutput("franchise_history_scatter", height = "100%")),
       DTOutput("franchise_history_awards"),
       h2("TEAM LEGENDS"),
       DTOutput("franchise_history_legends"),
