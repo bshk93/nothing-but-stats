@@ -112,8 +112,9 @@ dfs_everything %>%
 # team game highs
 dfs_everything %>% 
   group_by(TEAM, SEASON, DATE, OPP) %>% 
+  mutate(DIFF = (TEAM_PTS - OPP_TEAM_PTS) / n()) %>% 
   summarize(across(
-    c(P, R, A, S, B, `3PM`, TO, PF), 
+    c(DIFF, P, R, A, S, B, `3PM`, TO, PF), 
     sum,
     .names = "{.col}"
   ), .groups = "drop") %>% 
@@ -123,10 +124,12 @@ dfs_everything %>%
 dfs_everything %>% 
   group_by(TEAM, SEASON) %>% 
   summarize(across(
-    c(P, R, A, S, B, `3PM`, TO, PF, TD), 
+    c(P, R, A, S, B, `3PM`, TO, PF, TD, TEAM_PTS, OPP_TEAM_PTS), 
     sum, 
     .names = "{.col}"
   ), .groups = "drop") %>% 
+  mutate(DIFF = TEAM_PTS - OPP_TEAM_PTS) %>% 
+  select(-TEAM_PTS, -OPP_TEAM_PTS) %>% 
   write_rds("data/season_high_team.rds")
 
 inform(glue(" * DONE [{round(Sys.time() - start_time, 1)}s]"))

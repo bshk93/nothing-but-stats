@@ -284,14 +284,14 @@ body <- dashboardBody(
         'Choose a Season',
         c("24-25", "23-24", "22-23", "21-22", "20-21")
       ),
-      selectizeInput(
-        'pr_teams',
-        'Select at least one team:',
-        allteams,
-        selected = FALSE,
-        multiple = TRUE
-      ),
-      plotOutput("power_rankings", width = "130%"),
+      # selectizeInput(
+      #   'pr_teams',
+      #   'Select at least one team:',
+      #   allteams,
+      #   selected = FALSE,
+      #   multiple = TRUE
+      # ),
+      # plotOutput("power_rankings", width = "130%"),
       
       reactableOutput("power_rankings_table")
     ),
