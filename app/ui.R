@@ -68,11 +68,11 @@ sidebar <- dashboardSidebar(
     #   tabName = "tab_lab",
     #   icon = icon("microscope")
     # ),
-    menuItem(
-      "Data Explorer",
-      tabName = "tab_explore", 
-      icon = icon("magnifying-glass-chart")
-    ),
+    # menuItem(
+    #   "Data Explorer",
+    #   tabName = "tab_explore", 
+    #   icon = icon("magnifying-glass-chart")
+    # ),
     menuItem(
       "Player Compare",
       tabName = "tab_compare", 
@@ -307,38 +307,38 @@ body <- dashboardBody(
       DTOutput('boxscore_selected')
     ),
     
-    ## Data Explorer ----
-    tabItem(
-      tabName = "tab_explore",
-      selectizeInput(
-        'explore_type',
-        'I want to explore:',
-        c('The highest', 'The lowest'),
-        selected = 'The highest',
-        multiple = FALSE
-      ),
-      
-      selectizeInput(
-        'explore_var',
-        'Values of:',
-        c('G', 'M', 'GMSC', 
-          'P', 'R', 'A', 'S', 'B', 'TO', 
-          'FGM', 'FGA', #'FG_PCT',
-          '3PM', '3PA', #'3P_PCT',
-          'FTM', 'FTA', #'FT_PCT',
-          'OR', 'PF'),
-        selected = 'P',
-        multiple = FALSE
-      ),
-      
-      selectizeInput(
-        'explore_level',
-        '',
-        c('in a game', 'in a season (total)', 'in a season (avg)', 'in a career (total)', 'in a career (avg)')
-      ),
-      
-      DTOutput('explore_output')
-    ),
+    # ## Data Explorer ----
+    # tabItem(
+    #   tabName = "tab_explore",
+    #   selectizeInput(
+    #     'explore_type',
+    #     'I want to explore:',
+    #     c('The highest', 'The lowest'),
+    #     selected = 'The highest',
+    #     multiple = FALSE
+    #   ),
+    #   
+    #   selectizeInput(
+    #     'explore_var',
+    #     'Values of:',
+    #     c('G', 'M', 'GMSC', 
+    #       'P', 'R', 'A', 'S', 'B', 'TO', 
+    #       'FGM', 'FGA', #'FG_PCT',
+    #       '3PM', '3PA', #'3P_PCT',
+    #       'FTM', 'FTA', #'FT_PCT',
+    #       'OR', 'PF'),
+    #     selected = 'P',
+    #     multiple = FALSE
+    #   ),
+    #   
+    #   selectizeInput(
+    #     'explore_level',
+    #     '',
+    #     c('in a game', 'in a season (total)', 'in a season (avg)', 'in a career (total)', 'in a career (avg)')
+    #   ),
+    #   
+    #   DTOutput('explore_output')
+    # ),
     
     ## Player Compare ----
     tabItem(
