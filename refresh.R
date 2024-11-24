@@ -91,6 +91,46 @@ write_rds(ach_season, 'data/ach_season.rds')
 
 inform(glue(" * DONE [{round(Sys.time() - start_time, 1)}s]"))
 
+start_time <- Sys.time()
+inform("Calculate league stats....")
+# game highs
+dfs_everything %>% 
+  filter(P + R + A + S + B >= 20) %>% 
+  select(PLAYER, SEASON, DATE, OPP, P, R, A, S, B, `3PM`, TO, PF) %>% 
+  write_rds("data/game_high_player.rds")
+
+# season highs
+dfs_everything %>% 
+  group_by(PLAYER, SEASON) %>% 
+  summarize(across(
+    c(M, P, R, A, S, B, `3PM`, TO, PF, TD), 
+    sum, 
+    .names = "{.col}"
+  ), .groups = "drop") %>% 
+  write_rds("data/season_high_player.rds")
+
+# team game highs
+dfs_everything %>% 
+  group_by(TEAM, SEASON, DATE, OPP) %>% 
+  summarize(across(
+    c(P, R, A, S, B, `3PM`, TO, PF), 
+    sum,
+    .names = "{.col}"
+  ), .groups = "drop") %>% 
+  write_rds("data/game_high_team.rds")
+
+# team season highs
+dfs_everything %>% 
+  group_by(TEAM, SEASON) %>% 
+  summarize(across(
+    c(P, R, A, S, B, `3PM`, TO, PF, TD), 
+    sum, 
+    .names = "{.col}"
+  ), .groups = "drop") %>% 
+  write_rds("data/season_high_team.rds")
+
+inform(glue(" * DONE [{round(Sys.time() - start_time, 1)}s]"))
+
 
 # STOP HERE ----
 # Afterwards, re-build the Shiny app

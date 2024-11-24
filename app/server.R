@@ -11,6 +11,11 @@ ach_metadata <- read_csv("data/metadata-achievements.csv", show_col_types = FALS
 
 my_ranks <- get_ranks(dfs)
 
+game_high_player <- read_rds("data/game_high_player.rds")
+season_high_player <- read_rds("data/season_high_player.rds")
+game_high_team <- read_rds("data/game_high_team.rds")
+season_high_team <- read_rds("data/season_high_team.rds")
+
 # Server ----
 function(input, output, session) {
 
@@ -1275,9 +1280,10 @@ function(input, output, session) {
   })
   
   
-  ### Career Totals ----
-  #### NBN/Franchise Leaders ----
+  ### League Stats ----
+  #### Career Totals ----
   output$franchise_records <- renderDT({
+    begin <- Sys.time()
     
     if (input$reg_flag && input$playoff_flag) {
       x <- rbind(dfs, dfs_playoffs)
@@ -1345,7 +1351,8 @@ function(input, output, session) {
     
     x <- x %>%
       datatable(
-        options = list(scrollX = TRUE)
+        options = list(scrollX = TRUE),
+        rownames = FALSE
       )
     
     if (input$per_36_flag) {
@@ -1374,9 +1381,44 @@ function(input, output, session) {
         )
     }
     
+    print(glue("[{sprintf('%.7f', round(Sys.time() - begin, 7))}] nbn/franchise records generated."))
+    
     x
     
   })
+  
+  #### Game Highs ----
+  output$game_high_player <- renderDT({
+    begin <- Sys.time()
+    x <- format_as_datatable(game_high_player)
+    print(glue("[{sprintf('%.7f', round(Sys.time() - begin, 7))}] player game highs generated."))
+    x
+  })
+  
+  #### Season Highs ----
+  output$season_high_player <- renderDT({
+    begin <- Sys.time()
+    x <- format_as_datatable(season_high_player)
+    print(glue("[{sprintf('%.7f', round(Sys.time() - begin, 7))}] player season highs generated."))
+    x
+  })
+  
+  #### Team Game Highs ----
+  output$game_high_team <- renderDT({
+    begin <- Sys.time()
+    x <- format_as_datatable(game_high_team)
+    print(glue("[{sprintf('%.7f', round(Sys.time() - begin, 7))}] team game highs generated."))
+    x
+  })
+  
+  #### Team Season Highs ----
+  output$season_high_team <- renderDT({
+    begin <- Sys.time()
+    x <- format_as_datatable(season_high_team)
+    print(glue("[{sprintf('%.7f', round(Sys.time() - begin, 7))}] team season highs generated."))
+    x
+  })
+  
   
   #### Stat Race Plot ----
   output$stat_race_plot <- renderPlot({

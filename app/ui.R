@@ -42,7 +42,7 @@ sidebar <- dashboardSidebar(
       # badgeColor = "yellow"
     ),
     menuItem(
-      "Career Totals",
+      "League Stats",
       tabName = "tab_records", 
       icon = icon("ranking-star")
       # badgeLabel = "Prem",
@@ -213,11 +213,11 @@ body <- dashboardBody(
       plotOutput("franchise_history_cum_diff")
     ),
     
-    ## Career Totals ----
+    ## League Stats ----
     tabItem(
       tabName = "tab_records",
       
-      h2('NBN/Franchise Leaders'),
+      h2('Career Totals'),
       selectizeInput(
         'team',
         'Choose a Team:',
@@ -232,6 +232,19 @@ body <- dashboardBody(
       checkboxInput("playoff_flag", "Include Playoffs", value = FALSE),
       checkboxInput("per_36_flag", "Per 36", value = FALSE),
       DTOutput("franchise_records"),
+      
+      h2('Game Highs'),
+      p("Includes any game in which a player's points, rebounds, assists, steals, and blocks add up to at least 20."),
+      DTOutput("game_high_player"),
+      
+      h2('Season Highs'),
+      DTOutput("season_high_player"),
+      
+      h2('Team Game Highs'),
+      DTOutput("game_high_team"),
+      
+      h2('Team Season Highs'),
+      DTOutput("season_high_team"),
       
       h2('(Regular Season) Stat Race'),
       selectizeInput(
