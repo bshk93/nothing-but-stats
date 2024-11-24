@@ -1,5 +1,4 @@
-#options(dplyr.summarize.inform = FALSE)
-
+# Load ----
 dfs <- read_rds('data/dfs.rds')
 dfs_playoffs <- read_rds('data/dfs_playoffs.rds')
 
@@ -14,15 +13,45 @@ player_teams <- bind_rows(dfs, dfs_playoffs) %>%
 named_names <- player_teams$PLAYER %>% 
   set_names(player_teams$NAME)
 
-# UI ----
+# Dashboard Sidebar ----
 
 sidebar <- dashboardSidebar(
-  passwordInput("password", "PREMIUM Password:"),
   sidebarMenu(
     menuItem(
       "Season Dashboard",
        tabName = "tab_dash", 
        icon = icon("dashboard")
+    ),
+    menuItem(
+      "Playoff Archive",
+      tabName = "tab_playoffs", 
+      icon = icon("code-fork")
+    ),
+    menuItem(
+      "Player Profiles",
+      tabName = "tab_player", 
+      icon = icon("user")
+      # badgeLabel = "Prem",
+      # badgeColor = "yellow"
+    ),
+    menuItem(
+      "Franchise Profiles",
+      tabName = "tab_franchise",
+      icon = icon("book")
+      # badgeLabel = "Prem",
+      # badgeColor = "yellow"
+    ),
+    menuItem(
+      "Career Totals",
+      tabName = "tab_records", 
+      icon = icon("ranking-star")
+      # badgeLabel = "Prem",
+      # badgeColor = "yellow"
+    ),
+    menuItem(
+      "Hall of Fame and Awards",
+      tabName = "tab_awards",
+      icon = icon("award")
     ),
     menuItem(
       "Power Rankings",
@@ -34,20 +63,22 @@ sidebar <- dashboardSidebar(
       tabName = "tab_box", 
       icon = icon("table")
     ),
-    menuItem(
-      "Playoff Archive",
-      tabName = "tab_playoffs", 
-      icon = icon("code-fork")
-    ),
-    menuItem(
-      "The Lab (TM)",
-      tabName = "tab_lab",
-      icon = icon("microscope")
-    ),
+    # menuItem(
+    #   "The Lab (TM)",
+    #   tabName = "tab_lab",
+    #   icon = icon("microscope")
+    # ),
     menuItem(
       "Data Explorer",
       tabName = "tab_explore", 
       icon = icon("magnifying-glass-chart")
+    ),
+    menuItem(
+      "Player Compare",
+      tabName = "tab_compare", 
+      icon = icon("user-group")
+      # badgeLabel = "Prem",
+      # badgeColor = "yellow"
     ),
     menuItem(
       "Trade Machine",
@@ -55,46 +86,14 @@ sidebar <- dashboardSidebar(
       icon = icon("trademark")
     ),
     menuItem(
-      "Player Overview",
-      tabName = "tab_player", 
-      icon = icon("user"),
-      badgeLabel = "Prem",
-      badgeColor = "yellow"
-    ),
-    menuItem(
-      "Player Stats",
-      tabName = "tab_records", 
-      icon = icon("ranking-star"),
-      badgeLabel = "Prem",
-      badgeColor = "yellow"
-    ),
-    menuItem(
-      "Player Compare",
-      tabName = "tab_compare", 
-      icon = icon("user-group"),
-      badgeLabel = "Prem",
-      badgeColor = "yellow"
-    ),
-    menuItem(
-      "Franchise History",
-      tabName = "tab_franchise", 
-      icon = icon("book"),
-      badgeLabel = "Prem",
-      badgeColor = "yellow"
-    ),
-    menuItem(
       "NBN Wall Street",
       tabName = "tab_ws", 
       icon = icon("dollar-sign")
-    ),
-    menuItem(
-      "About",
-      tabName = "tab_about", 
-      icon = icon("question")
     )
   )
 )
 
+# Dashboard Body ----
 body <- dashboardBody(
   
   tags$style(
@@ -103,6 +102,7 @@ body <- dashboardBody(
   ),
   
   tabItems(
+    ## Season Dashboard ----
     tabItem(
       tabName = "tab_dash",
       selectizeInput(
@@ -119,34 +119,6 @@ body <- dashboardBody(
 
       h2("LEAGUE LEADERS"),
       DTOutput("leaders"),
-      
-      # h2("PLAYER/TEAM SCATTER"),
-      # selectizeInput(
-      #   'scatter_x',
-      #   'X = ',
-      #   c('GMSC', 'PPG', 'RPG', 'APG', 'SPG', 'BPG', 'FG', '3P', 'FT', 'TS',
-      #     'FGMPG', 'FGAPG', '3PMPG', '3PAPG', 'FTMPG', 'FTAPG'),
-      #   selected = 'TS'
-      # ),
-      # selectizeInput(
-      #   'scatter_y',
-      #   'Y = ',
-      #   c('GMSC', 'PPG', 'RPG', 'APG', 'SPG', 'BPG', 'FG', '3P', 'FT', 'TS',
-      #     'FGMPG', 'FGAPG', '3PMPG', '3PAPG', 'FTMPG', 'FTAPG'),
-      #   selected = 'PPG'
-      # ),
-      # selectizeInput(
-      #   'scatter_group',
-      #   'By:',
-      #   c('PLAYER', 'TEAM')
-      # ),
-      # checkboxInput('scatter_36', 'Per 36', value = FALSE),
-      # sliderInput('scatter_min_games', 'Min. Games (for players)', 
-      #             min = 1, max = 82, 
-      #             value = 1,
-      #             step = 1,
-      #             round = TRUE),
-      # plotlyOutput("season_scatter"),
 
       h2("TEAM STATS"),
       DTOutput("team_stats"),
@@ -167,11 +139,131 @@ body <- dashboardBody(
       h2("SEASON AWARDS"),
       h3("All-Stars"),
       DTOutput("season_allstars")
-
-      # h2("POINTS SCORED VS ALLOWED"),
-      # plotOutput("points_scored_allowed")
     ),
     
+    ## Playoff Archive ----
+    tabItem(
+      tabName = "tab_playoffs",
+      selectizeInput(
+        'seasonplayoffs',
+        'Choose a Season:',
+        c("23-24", "22-23", "21-22", "20-21")
+      ),
+      DTOutput("playoff_bracket"),
+      DTOutput("playoff_series")
+    ),
+    
+    ## Player Profiles ----
+    tabItem(
+      tabName = "tab_player",
+      selectizeInput(
+        'name',
+        'Choose a Player:',
+        named_names
+      ),
+      htmlOutput("headshot"),
+      verbatimTextOutput("player_summary"),
+      DTOutput("tbl_season"),
+      # selectizeInput('plot_season_var', "Pick a variable:", 
+      #                c('GMSC', 'PPG', 'RPG', 'APG', 'SPG', 'BPG', 'FG', '3P', 'FT', 'TS')),
+      # checkboxInput("plot_season_36", "Per 36", value = FALSE),
+      # plotlyOutput("plot_season"),
+      plotlyOutput("gamelog_plot"),
+      h2("GAME/CAREER HIGHS"),
+      DTOutput("records"),
+      h2("ALL-TIME TOTALS AND RANKINGS"),
+      DTOutput("rankings"),
+      h2("ACHIEVEMENTS (SEASON)"),
+      DTOutput("achievements_season"),
+      h2("ACHIEVEMENTS (GAME)"),
+      DTOutput("achievements_game"),
+      h2("GAME LOG"),
+      DTOutput("tbl")
+    ),
+    
+    ## Franchise Profiles ----
+    tabItem(
+      tabName = "tab_franchise",
+      selectizeInput(
+        'team_history',
+        'Choose a Team:',
+        allteams
+      ),
+      htmlOutput("team_history_logo"),
+      htmlOutput("franchise_history_rings"),
+      htmlOutput("franchise_history_retired"),
+      DTOutput("franchise_history_yoy"),
+      plotlyOutput("franchise_history_scatter"),
+      DTOutput("franchise_history_awards"),
+      h2("TEAM LEGENDS"),
+      DTOutput("franchise_history_legends"),
+      h2("TEAM LEADERS"),
+      selectizeInput(
+        'stat_cat_team_history',
+        'Choose a statistical category:',
+        c('G', 'P', 'R', 'A', 'S', 'B', '3PM', 'GMSC')
+      ),
+      selectizeInput(
+        'stattype1',
+        'All-Time or Single Game Leaders:',
+        c('All-Time', 'Single Game')
+      ),
+      DTOutput("franchise_history_leaders"),
+      h2("CUMULATIVE POINT DIFFERENTIAL"),
+      plotOutput("franchise_history_cum_diff")
+    ),
+    
+    ## Career Totals ----
+    tabItem(
+      tabName = "tab_records",
+      
+      h2('NBN/Franchise Leaders'),
+      selectizeInput(
+        'team',
+        'Choose a Team:',
+        c("NBA", allteams)
+      ),
+      selectizeInput(
+        'season1',
+        'Choose a Season:',
+        c("ALL-TIME", "24-25", "23-24", "22-23", "21-22", "20-21")
+      ),
+      checkboxInput("reg_flag", "Include Regular Season", value = TRUE),
+      checkboxInput("playoff_flag", "Include Playoffs", value = FALSE),
+      checkboxInput("per_36_flag", "Per 36", value = FALSE),
+      DTOutput("franchise_records"),
+      
+      h2('(Regular Season) Stat Race'),
+      selectizeInput(
+        'race_var',
+        'Select a stat to compare:',
+        c('M', 'P', 'R', 'A', 'S', 'B', '3PM'),
+        selected = 'P'
+      ),
+      selectizeInput(
+        'race_players',
+        'Select at least two players:',
+        named_names,
+        selected = c("BEAL, BRADLEY", "CURRY, STEPHEN"),
+        multiple = TRUE
+      ),
+      selectizeInput(
+        'race_season',
+        'Choose a Season:',
+        c("ALL-TIME", "24-25", "23-24", "22-23", "21-22", "20-21")
+      ),
+      plotOutput("stat_race_plot")
+    ),
+    
+    ## Hall of Fame + Awards ----
+    tabItem(
+      tabName = "tab_awards",
+      
+      h2('NBN Hall-of-Fame Points'),
+      DTOutput('hof_points')
+    ),
+    
+    ## Power Rankings ----
     tabItem(
       tabName = "tab_prs",
       selectizeInput(
@@ -191,6 +283,7 @@ body <- dashboardBody(
       reactableOutput("power_rankings_table")
     ),
     
+    ## Box Scores ----
     tabItem(
       tabName = "tab_box",
       dateInput(
@@ -201,37 +294,7 @@ body <- dashboardBody(
       DTOutput('boxscore_selected')
     ),
     
-    tabItem(
-      tabName = "tab_playoffs",
-      selectizeInput(
-        'seasonplayoffs',
-        'Choose a Season:',
-        c("23-24", "22-23", "21-22", "20-21")
-      ),
-      DTOutput("playoff_bracket"),
-      DTOutput("playoff_series")
-    ),
-    
-    tabItem(
-      tabName = "tab_lab",
-      
-      h2("Team Stats By Season"),
-      selectizeInput(
-        'lab_team_season_var',
-        'Choose a var:',
-        c('GMSC', 'PPG', 'RPG', 'APG', 'SPG', 'BPG', 'FG', '3P', 'FT', 'TS')
-      ),
-      plotlyOutput("lab_team_season"),
-      
-      h2("Individual Stats By Season"),
-      selectizeInput(
-        'lab_player_season_var',
-        'Choose a var:',
-        c('GMSC', 'PPG', 'RPG', 'APG', 'SPG', 'BPG', 'FG', '3P', 'FT', 'TS')
-      ),
-      plotlyOutput("lab_player_season")
-    ),
-    
+    ## Data Explorer ----
     tabItem(
       tabName = "tab_explore",
       selectizeInput(
@@ -264,6 +327,34 @@ body <- dashboardBody(
       DTOutput('explore_output')
     ),
     
+    ## Player Compare ----
+    tabItem(
+      tabName = "tab_compare",
+      selectizeInput(
+        'playercomp1',
+        'Choose Player 1:',
+        named_names
+      ),
+      selectizeInput(
+        'playercomp2',
+        'Choose Player 2:',
+        named_names
+      ),
+      selectizeInput(
+        'playercomp_season',
+        'Choose Season:',
+        c('CAREER', 
+          '24-25',
+          '23-24', '23-24 Playoffs',
+          '22-23', '22-23 Playoffs',
+          '21-22', '21-22 Playoffs',
+          '20-21', '20-21 Playoffs')
+      ),
+      
+      DTOutput('player_compare')
+    ),
+    
+    ## Trade Machine ----
     tabItem(
       tabName = "tab_tm",
       h2("Cap Details"),
@@ -363,134 +454,7 @@ body <- dashboardBody(
       p("In general: always double-check and sanity check the trade machine.")
     ),
     
-    tabItem(
-      tabName = "tab_player",
-      selectizeInput(
-        'name',
-        'Choose a Player:',
-        named_names
-      ),
-      htmlOutput("headshot"),
-      verbatimTextOutput("player_summary"),
-      DTOutput("tbl_season"),
-      selectizeInput('plot_season_var', "Pick a variable:", 
-                     c('GMSC', 'PPG', 'RPG', 'APG', 'SPG', 'BPG', 'FG', '3P', 'FT', 'TS')),
-      checkboxInput("plot_season_36", "Per 36", value = FALSE),
-      plotlyOutput("plot_season"),
-      plotlyOutput("gamelog_plot"),
-      h2("GAME/CAREER HIGHS"),
-      DTOutput("records"),
-      h2("ALL-TIME TOTALS AND RANKINGS"),
-      DTOutput("rankings"),
-      h2("ACHIEVEMENTS (SEASON)"),
-      DTOutput("achievements_season"),
-      h2("ACHIEVEMENTS (GAME)"),
-      DTOutput("achievements_game"),
-      h2("GAME LOG"),
-      DTOutput("tbl")
-    ),
-    
-    tabItem(
-      tabName = "tab_compare",
-      selectizeInput(
-        'playercomp1',
-        'Choose Player 1:',
-        named_names
-      ),
-      selectizeInput(
-        'playercomp2',
-        'Choose Player 2:',
-        named_names
-      ),
-      selectizeInput(
-        'playercomp_season',
-        'Choose Season:',
-        c('CAREER', 
-          '24-25',
-          '23-24', '23-24 Playoffs',
-          '22-23', '22-23 Playoffs',
-          '21-22', '21-22 Playoffs',
-          '20-21', '20-21 Playoffs')
-      ),
-      
-      DTOutput('player_compare')
-    ),
-    
-    tabItem(
-      tabName = "tab_records",
-      
-      h2('NBN/Franchise Leaders'),
-      selectizeInput(
-        'team',
-        'Choose a Team:',
-        c("NBA", allteams)
-      ),
-      selectizeInput(
-        'season1',
-        'Choose a Season:',
-        c("ALL-TIME", "24-25", "23-24", "22-23", "21-22", "20-21")
-      ),
-      checkboxInput("reg_flag", "Include Regular Season", value = TRUE),
-      checkboxInput("playoff_flag", "Include Playoffs", value = FALSE),
-      checkboxInput("per_36_flag", "Per 36", value = FALSE),
-      DTOutput("franchise_records"),
-      
-      h2('NBN Hall-of-Fame Points'),
-      DTOutput('hof_points'),
-      
-      h2('(Regular Season) Stat Race'),
-      selectizeInput(
-        'race_var',
-        'Select a stat to compare:',
-        c('M', 'P', 'R', 'A', 'S', 'B', '3PM'),
-        selected = 'P'
-      ),
-      selectizeInput(
-        'race_players',
-        'Select at least two players:',
-        named_names,
-        selected = c("BEAL, BRADLEY", "CURRY, STEPHEN"),
-        multiple = TRUE
-      ),
-      selectizeInput(
-        'race_season',
-        'Choose a Season:',
-        c("ALL-TIME", "24-25", "23-24", "22-23", "21-22", "20-21")
-      ),
-      plotOutput("stat_race_plot")
-    ),
-    
-    tabItem(
-      tabName = "tab_franchise",
-      selectizeInput(
-        'team_history',
-        'Choose a Team:',
-        allteams
-      ),
-      htmlOutput("team_history_logo"),
-      htmlOutput("franchise_history_rings"),
-      htmlOutput("franchise_history_retired"),
-      DTOutput("franchise_history_yoy"),
-      plotlyOutput("franchise_history_scatter"),
-      DTOutput("franchise_history_awards"),
-      h2("TEAM LEGENDS"),
-      DTOutput("franchise_history_legends"),
-      h2("TEAM LEADERS"),
-      selectizeInput(
-        'stat_cat_team_history',
-        'Choose a statistical category:',
-        c('G', 'P', 'R', 'A', 'S', 'B', '3PM', 'GMSC')
-      ),
-      selectizeInput(
-        'stattype1',
-        'All-Time or Single Game Leaders:',
-        c('All-Time', 'Single Game')
-      ),
-      DTOutput("franchise_history_leaders"),
-      h2("CUMULATIVE POINT DIFFERENTIAL"),
-      plotOutput("franchise_history_cum_diff")
-    ),
-    
+    ## NBN Wall Street ----
     tabItem(
       tabName = "tab_ws",
       DTOutput("ws_prices"),
@@ -516,6 +480,29 @@ body <- dashboardBody(
       plotlyOutput("ws_div")
     ),
     
+    ## Currently Unused Pages ----
+    ### The Lab ----
+    tabItem(
+      tabName = "tab_lab",
+      
+      h2("Team Stats By Season"),
+      selectizeInput(
+        'lab_team_season_var',
+        'Choose a var:',
+        c('GMSC', 'PPG', 'RPG', 'APG', 'SPG', 'BPG', 'FG', '3P', 'FT', 'TS')
+      ),
+      plotlyOutput("lab_team_season"),
+      
+      h2("Individual Stats By Season"),
+      selectizeInput(
+        'lab_player_season_var',
+        'Choose a var:',
+        c('GMSC', 'PPG', 'RPG', 'APG', 'SPG', 'BPG', 'FG', '3P', 'FT', 'TS')
+      ),
+      plotlyOutput("lab_player_season")
+    ),
+    
+    ### About ----
     tabItem(
       tabName = "tab_about",
       h2("Why Premium?"),
@@ -524,7 +511,7 @@ body <- dashboardBody(
   )
 )
 
-# Put them together into a dashboardPage
+# Dashboard Page ----
 dashboardPage(
   dashboardHeader(
     title = h5(HTML(glue(
