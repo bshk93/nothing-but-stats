@@ -2,8 +2,18 @@
 set -e
 set -o pipefail
 
+# Trap errors and exit gracefully
+trap 'echo "Error occurred at $(date). Exiting!" | tee -a "$LOG_FILE"; exit 1' ERR
+trap 'echo "Script exited at $(date)" | tee -a "$LOG_FILE"' EXIT
+
 if [ "$#" -ne 3 ]; then
-  echo "You must provide exactly three arguments: the season YYYY-YY, the playoff start date YYYY-MM-DD, and the drop after date YYYY-MM-DD."
+  echo "Provide exactly three arguments: the season YYYY-YY, the playoff start date YYYY-MM-DD, and the drop after date YYYY-MM-DD."
+  exit 1
+fi
+
+# Validate argument formats
+if ! [[ "$1" =~ ^[0-9]{4}-[0-9]{2}$ && "$2" =~ ^[0-9]{4}-[0-9]{2}-[0-9]{2}$ && "$3" =~ ^[0-9]{4}-[0-9]{2}-[0-9]{2}$ ]]; then
+  echo "Invalid argument format. Expected: YYYY-YY for season, YYYY-MM-DD for dates."
   exit 1
 fi
 
@@ -11,42 +21,27 @@ fi
 APP_DIR="/srv/shiny/nothing-but-stats/app"
 PREPROCESS_SCRIPT="/srv/shiny/nothing-but-stats/refresh-job.R"
 SERVICE_NAME="shiny-release.service" 
-
-# Log file for tracking updates
 LOG_FILE="/var/log/refresh.log"
 
-echo "Starting update process at $(date)" | tee -a "$LOG_FILE"
+# Redirect all stdout and stderr to the log file
+exec > >(tee -a "$LOG_FILE") 2>&1
 
-# Step 1: Navigate to the app directory
-cd "$APP_DIR" || { echo "Failed to navigate to $APP_DIR" | tee -a "$LOG_FILE"; exit 1; }
+echo "Starting update process at $(date)"
 
-## Step 2: Check if we're on the main branch
-#CURRENT_BRANCH=$(git rev-parse --abbrev-ref HEAD)
-#if [ "$CURRENT_BRANCH" != "main" ]; then
-#    echo "Currently on branch $CURRENT_BRANCH. Switching to 'main'..." | tee -a "$LOG_FILE"
-#    # Stash changes if any
-#    git stash save "Auto-stash before switching branches on $(date)" | tee -a "$LOG_FILE"
-#    git checkout main | tee -a "$LOG_FILE"
-#fi
+# Navigate to the app directory
+cd "$APP_DIR" || { echo "Failed to navigate to $APP_DIR"; exit 1; }
 
-## Step 3: Pull the latest changes from main
-#echo "Pulling latest changes from main branch..." | tee -a "$LOG_FILE"
-#git pull origin main | tee -a "$LOG_FILE"
+# Pull the latest changes
+echo "Pulling latest changes from remote..."
+git pull
 
-# Step 4: Run the preprocessing script
-echo "Running preprocessing script..." | tee -a "$LOG_FILE"
-Rscript "$PREPROCESS_SCRIPT" "$1" "$2" "$3" | tee -a "$LOG_FILE"
-if [ $? -ne 0 ]; then
-    echo "Preprocessing script failed. Aborting update." | tee -a "$LOG_FILE"
-    exit 1
-fi
+# Run the preprocessing script
+echo "Running preprocessing script..."
+Rscript "$PREPROCESS_SCRIPT" "$1" "$2" "$3"
 
-# Step 5: Restart the Shiny app service
-echo "Restarting the Shiny app service..." | tee -a "$LOG_FILE"
-sudo systemctl restart "$SERVICE_NAME" | tee -a "$LOG_FILE"
-if [ $? -ne 0 ]; then
-    echo "Failed to restart the service $SERVICE_NAME. Please check the service configuration." | tee -a "$LOG_FILE"
-    exit 1
-fi
+# Restart the Shiny app service
+echo "Restarting the Shiny app service..."
+sudo systemctl restart "$SERVICE_NAME"
+systemctl is-active "$SERVICE_NAME" || { echo "Service $SERVICE_NAME failed to restart."; exit 1; }
 
-echo "Update completed successfully at $(date)" | tee -a "$LOG_FILE"
+echo "Update completed successfully at $(date)"

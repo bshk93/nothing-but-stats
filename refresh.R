@@ -5,12 +5,13 @@ source("update.R")
 source("R/read.R")
 source("R/utils.R")
 source("R/news.R")
+source("R/ach.R")
 
 # Globals ----
 myseason <- "2024-25"
 myplayoffdate <- "2025-04-16" # Playoff start date
-check_start_date <- "2024-11-19" # Date to start doing checks (newly entered data)
-drop_after_date <- "2024-11-22" # Date after which to delete stats (e.g. unfinished days)
+check_start_date <- "2024-11-23" # Date to start doing checks (newly entered data)
+drop_after_date <- "2024-11-24" # Date after which to delete stats (e.g. unfinished days)
 
 # Refresh stats ----
 
