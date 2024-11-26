@@ -19,39 +19,6 @@ library(bslib)
 library(shinydashboard)
 
 
-clean_allstats <- function(dfs) {
-  dfs %>% 
-    bind_rows() %>% 
-    select(-any_of(c("...27", "V27"))) %>% 
-    mutate(FG = str_c(FGM, "-", FGA),
-           `3P` = str_c(`3PM`, "-", `3PA`),
-           FT = str_c(FTM, "-", FTA),
-           GMSC = P + (0.4 * FGM) - (0.7 * FGA) - (0.4 * (FTA - FTM)) + (0.7 * OR) + 
-             (0.3 * DR) + S + (0.7 * A) + (0.7 * B) - (0.4 * PF) - TO,
-           TS = 0.5*P/(FGA + .475*FTA)) %>% 
-    mutate(PLAYER = case_when(
-      PLAYER == "KANTER, ENES" ~ "FREEDOM, ENES",
-      PLAYER == "BAMBA, MO" ~ "BAMBA, MOHAMED",
-      PLAYER == "CAREY JR., VERNON" ~ "CAREY, VERNON",
-      PLAYER == "CHAMAGNIE, JUSTIN" ~ "CHAMPAGNIE, JUSTIN",
-      PLAYER == "HAMMONDS, RAYSHON" ~ "HAMMONDS, RAYSHAUN",
-      PLAYER == "MATTHEWS, WES" ~ "MATTHEWS, WESLEY",
-      PLAYER == "O'NEALE, ROYCE" ~ "ONEALE, ROYCE",
-      PLAYER == "PIPPEN, SCOTTIE" ~ "PIPPEN, SCOTTY",
-      PLAYER == "ROBINSON, GLENNN" ~ "ROBINSON, GLENN",
-      PLAYER == "WHITE, COLBY" ~ "WHITE, COBY",
-      PLAYER == "BERTANS,DAVIS" ~ "BERTANS, DAVIS",
-      PLAYER == "HIGHSMITH, HAYDEN" ~ "HIGHSMITH, HAYWOOD",
-      PLAYER == "THOMAS, CAMERON" ~ "THOMAS, CAM",
-      PLAYER == "REDDISH, CAMERON" ~ "REDDISH, CAM",
-      TRUE ~ PLAYER
-    )) %>% 
-    mutate(GMSC = round(GMSC, 2)) %>% 
-    
-    arrange(PLAYER, DATE)
-}
-
-
 get_ranks <- function(dfs) {
   dfs %>% 
     group_by(PLAYER, SEASON) %>% 

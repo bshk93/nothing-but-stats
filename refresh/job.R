@@ -30,7 +30,7 @@ if (drop_date == "") {
 }
 
 
-setwd("~/nothing-but-stats/")
+setwd("~/nothing-but-stats/refresh")
 source("refresh-utils.R")
 source("preprocess-utils.R")
 

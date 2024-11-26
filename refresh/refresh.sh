@@ -6,8 +6,8 @@ set -o pipefail
 trap 'echo "Error occurred at $(date). Exiting!" | tee -a "$LOG_FILE"; exit 1' ERR
 trap 'echo "Script exited at $(date)" | tee -a "$LOG_FILE"' EXIT
 
-APP_DIR="$HOME/nothing-but-stats/app"
-PREPROCESS_SCRIPT="$HOME/nothing-but-stats/refresh-job.R"
+REFRESH_DIR="$HOME/nothing-but-stats/refresh"
+PREPROCESS_SCRIPT="$HOME/nothing-but-stats/refresh/job.R"
 SERVICE_NAME="shiny-release.service" 
 LOG_FILE="/var/log/refresh.log"
 
@@ -39,7 +39,7 @@ done
 echo "Starting update process at $(date)"
 echo "Season: $SEASON, Playoff Date: $PLAYOFF_DATE, Drop Date: $DROP_DATE"
 
-cd "$APP_DIR" || { echo "Failed to navigate to $APP_DIR"; exit 1; }
+cd "$REFRESH_DIR" || { echo "Failed to navigate to $REFRESH_DIR"; exit 1; }
 
 echo "Pulling latest changes from remote..."
 git pull
