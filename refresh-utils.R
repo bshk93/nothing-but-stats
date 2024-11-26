@@ -149,9 +149,9 @@ check_allstats <- function(allstats) {
       bad_sanity_checks = bad_sanity_checks,
       bad_missing = bad_missing,
       games = bind_rows(
-        select(bad_minute_games, "TEAM", "DATE"),
-        select(bad_sanity_checks, "TEAM", "DATE"),
-        select(bad_missing, "TEAM", "DATE")
+        select(bad_minute_games, "TEAM", "DATE") %>% mutate(REASON = "bad total minutes"),
+        select(bad_sanity_checks, "TEAM", "DATE") %>% mutate(REASON = "data don't make sense"),
+        select(bad_missing, "TEAM", "DATE") %>% mutate(REASON = "missing data")
       ) %>% 
         distinct()
     )

@@ -1,34 +1,72 @@
+# args <- c("", "", "")
+
 args <- commandArgs(trailingOnly = TRUE)
 if (length(args) != 3) {
   rlang::abort("Three arguments to `refresh` are required.")
 }
 
-#setwd("~/nothing-but-stats/app")
-setwd("/srv/shiny/nothing-but-stats/app")
+season <- ifelse(length(args) >= 1, args[1], "")
+playoff_date <- ifelse(length(args) >= 2, args[2], "")
+drop_date <- ifelse(length(args) >= 3, args[3], "")
+
+# Set-Up ----
+today <- Sys.Date()
+current_year <- as.numeric(format(today, "%Y"))
+cutoff_date <- as.Date(paste0(current_year, "-08-31"))
+
+# default for season
+if (season == "") {
+  if (today <= cutoff_date) {
+    season <- paste0(substr(current_year - 1, 3, 4), "-", substr(current_year, 3, 4))
+  } else {
+    season <- paste0(substr(current_year, 3, 4), "-", substr(current_year + 1, 3, 4))
+  }
+}
+
+# default for drop date
+if (drop_date == "") {
+  drop_date <- today
+}
+
+
+setwd("~/nothing-but-stats/app")
+#setwd("/srv/shiny/nothing-but-stats/app")
+# source("update.R")
+# source("R/read.R")
+# source("R/utils.R")
 source("../refresh-utils.R")
-source("../preprocess-utils.R")
+source("R/news.R")
+source("R/ach.R")
 
-# myseason <- "2024-25"
-# myplayoffdate <- "2025-04-16" # Playoff start date
-# check_start_date <- "2024-11-01" # Date to start doing checks (newly entered data)
-# drop_after_date <- "2024-11-03" # Date after which to delete stats (e.g. unfinished days)
-
-myseason <- args[1]
-myplayoffdate <- as_date(args[2])
-drop_after_date <- as_date(args[3])
-inform(glue("The args are {myseason}, {myplayoffdate}, and {drop_after_date}."))
-
-# Pull data from sheets
-allstats <- get_allstats(delete_before = "2024-09-01") %>% 
+# Pull Data from Sheets ----
+delete_before_date <- cutoff_date
+if (today < cutoff_date) {
+  delete_before_date <- ymd(str_c(c(
+    year(cutoff_date) - 1,
+    month(cutoff_date),
+    day(cutoff_date)
+  ), collapse = "-"))
+}
+allstats <- get_allstats(delete_before = delete_before_date) %>% 
   check_allstats()
 
 if (nrow(allstats$errors$games) > 0) {
-  warn(glue("Found {nrow(allstats$errors$games)} games with errors that will be dropped."))
-  allstats$data <- allstats$data %>% 
-    anti_join(allstats$errors$games, by = c("TEAM", "DATE"))
+  # warn(glue("Found {nrow(allstats$errors$games)} games with errors that will be dropped."))
+  # allstats$data <- allstats$data %>% 
+  #   anti_join(allstats$errors$games, by = c("TEAM", "DATE"))
+  abort(c(
+    "Found errors in the Sheets data.",
+    str_c(
+      allstats$errors$games$TEAM,
+      " on ",
+      allstats$errors$games$DATE,
+      " bc of: ",
+      allstats$errors$games$REASON
+    )
+  ))
 }
 
-built_allstats <- build_allstats(allstats$data %>% filter(DATE <= drop_after_date))
+built_allstats <- build_allstats(allstats$data %>% filter(DATE <= drop_date))
 
 # Write/update output file
 built_allstats %>% 
