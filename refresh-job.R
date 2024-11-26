@@ -68,22 +68,29 @@ if (nrow(allstats$errors$games) > 0) {
 
 built_allstats <- build_allstats(allstats$data %>% filter(DATE <= drop_date))
 
-# Write/update output file
-built_allstats %>% 
-  filter(DATE < myplayoffdate) %>% 
-  mutate(gametype = "REG") %>% 
-  write_csv(glue::glue("data/allstats-{str_extract(myseason, '\\\\d{2}-\\\\d{2}')}.csv"))
-
-# Playoffs, if applicable
-maybe <- built_allstats %>% 
-  filter(DATE >= myplayoffdate) %>% 
-  add_playoff_info() %>% 
-  mutate(gametype = "PLAYOFF")
-
-if (nrow(maybe) > 0) {
-  inform("Some of these are playoff stats. Exporting.")
-  maybe %>% 
-    write_csv(glue::glue("data/allstats-playoffs-{str_extract(myseason, '\\\\d{2}$')}.csv"))
+if (playoff_date == "") {
+  # Write/update output file
+  built_allstats %>% 
+    mutate(gametype = "REG") %>% 
+    write_csv(glue::glue("data/allstats-{str_extract(season, '\\\\d{2}-\\\\d{2}')}.csv"))
+} else {
+  # Write/update output file
+  built_allstats %>% 
+    filter(DATE < playoff_date) %>% 
+    mutate(gametype = "REG") %>% 
+    write_csv(glue::glue("data/allstats-{str_extract(season, '\\\\d{2}-\\\\d{2}')}.csv"))
+  
+  # Playoffs, if applicable
+  maybe <- built_allstats %>% 
+    filter(DATE >= playoff_date) %>% 
+    add_playoff_info() %>% 
+    mutate(gametype = "PLAYOFF")
+  
+  if (nrow(maybe) > 0) {
+    inform("Some of these are playoff stats. Exporting.")
+    maybe %>% 
+      write_csv(glue::glue("data/allstats-playoffs-{str_extract(season, '\\\\d{2}$')}.csv"))
+  }
 }
 
 # Post-processing of data
@@ -105,6 +112,71 @@ write_rds(dfs, 'data/dfs.rds')
 write_rds(get_newsfeed(dfs), 'data/news.rds')
 
 write_rds(dfs_playoffs, 'data/dfs_playoffs.rds')
+
+start_time <- Sys.time()
+inform("Calculating achievements....")
+ach_metadata <- read_csv("data/metadata-achievements.csv", show_col_types = FALSE)
+
+ach_season <- dfs %>% 
+  nest_by(PLAYER) %>% 
+  mutate(ach = list(get_achievements_season(
+    data,
+    dfs,
+    PLAYER,
+    ach_metadata
+  ))) %>% 
+  select(-data) %>% 
+  unnest(ach) %>% 
+  ungroup()
+
+write_rds(ach_season, 'data/ach_season.rds')
+
+inform(glue(" * DONE [{round(Sys.time() - start_time, 1)}s]"))
+
+start_time <- Sys.time()
+inform("Calculate league stats....")
+# game highs
+dfs_everything %>% 
+  filter(P + R + A + S + B >= 20) %>% 
+  select(PLAYER, SEASON, DATE, OPP, P, R, A, S, B, `3PM`, TO, PF) %>% 
+  write_rds("data/game_high_player.rds")
+
+# season highs
+dfs_everything %>% 
+  group_by(PLAYER, SEASON) %>% 
+  summarize(across(
+    c(M, P, R, A, S, B, `3PM`, TO, PF, TD), 
+    sum, 
+    .names = "{.col}"
+  ), .groups = "drop") %>% 
+  write_rds("data/season_high_player.rds")
+
+# team game highs
+dfs_everything %>% 
+  group_by(TEAM, SEASON, DATE, OPP) %>% 
+  mutate(DIFF = (TEAM_PTS - OPP_TEAM_PTS) / n()) %>% 
+  summarize(across(
+    c(DIFF, P, R, A, S, B, `3PM`, TO, PF), 
+    sum,
+    .names = "{.col}"
+  ), .groups = "drop") %>% 
+  write_rds("data/game_high_team.rds")
+
+# team season highs
+dfs_everything %>% 
+  group_by(TEAM, SEASON) %>% 
+  summarize(across(
+    c(P, R, A, S, B, `3PM`, TO, PF, TD, TEAM_PTS, OPP_TEAM_PTS), 
+    sum, 
+    .names = "{.col}"
+  ), .groups = "drop") %>% 
+  mutate(DIFF = TEAM_PTS - OPP_TEAM_PTS) %>% 
+  select(-TEAM_PTS, -OPP_TEAM_PTS) %>% 
+  write_rds("data/season_high_team.rds")
+
+inform(glue(" * DONE [{round(Sys.time() - start_time, 1)}s]"))
+
+
 # con = dbConnect(
 #   Postgres(),
 #   host = "localhost",
