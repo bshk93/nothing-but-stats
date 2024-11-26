@@ -16,7 +16,6 @@ drop_after_date <- "2024-11-24" # Date after which to delete stats (e.g. unfinis
 # Refresh stats ----
 
 # Pull down and check allstats, extracting data from Google sheets
-# Also runs some simple tests
 allstats <- get_allstats(delete_before = "2024-09-01")
 
 # Additional Testing
@@ -93,7 +92,7 @@ write_rds(ach_season, 'data/ach_season.rds')
 inform(glue(" * DONE [{round(Sys.time() - start_time, 1)}s]"))
 
 start_time <- Sys.time()
-inform("Calculate league stats....")
+inform("Calculating league stats....")
 # game highs
 dfs_everything %>% 
   filter(P + R + A + S + B >= 20) %>% 

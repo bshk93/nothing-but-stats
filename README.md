@@ -1,4 +1,4 @@
-This project consists of code and data supporting the Nothing But Stats! Shiny application, hosted [here](https://seho.shinyapps.io/nothing-but-stats/). 
+This project consists of code and data supporting the Nothing But Stats! Shiny application, hosted [here](https://stats.nbn.today). 
 
 # Project Tree
 
@@ -17,9 +17,8 @@ This project consists of code and data supporting the Nothing But Stats! Shiny a
    * `read.R`: i/o functions
    * `summarize.R`: commonly used summarizing functions
    * `utils.R`: utility functions
-* `www/`: image files.
+* `www/`: image and other files.
 * `server.R`: server-side configuration.
 * `ui.R`: UI configuration.
-* `update.R`: support code for `refresh.R`.
 
 `refresh.R`: refresh the Shiny app with new data entered in Sheets.

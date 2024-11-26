@@ -26,19 +26,16 @@ if (season == "") {
 # default for drop date
 if (drop_date == "") {
   drop_date <- today
+  inform(glue("Drop after date defaulted to today ({today})."))
 }
 
 
-setwd("~/nothing-but-stats/app")
-#setwd("/srv/shiny/nothing-but-stats/app")
-# source("update.R")
-# source("R/read.R")
-# source("R/utils.R")
-source("../refresh-utils.R")
-source("R/news.R")
-source("R/ach.R")
+setwd("~/nothing-but-stats/")
+source("refresh-utils.R")
+source("preprocess-utils.R")
 
 # Pull Data from Sheets ----
+inform("\nPulling data from sheets....")
 delete_before_date <- cutoff_date
 if (today < cutoff_date) {
   delete_before_date <- ymd(str_c(c(
@@ -47,13 +44,12 @@ if (today < cutoff_date) {
     day(cutoff_date)
   ), collapse = "-"))
 }
+inform(" * DONE")
+
 allstats <- get_allstats(delete_before = delete_before_date) %>% 
   check_allstats()
 
 if (nrow(allstats$errors$games) > 0) {
-  # warn(glue("Found {nrow(allstats$errors$games)} games with errors that will be dropped."))
-  # allstats$data <- allstats$data %>% 
-  #   anti_join(allstats$errors$games, by = c("TEAM", "DATE"))
   abort(c(
     "Found errors in the Sheets data.",
     str_c(
@@ -66,14 +62,17 @@ if (nrow(allstats$errors$games) > 0) {
   ))
 }
 
+inform("Building allstats....")
 built_allstats <- build_allstats(allstats$data %>% filter(DATE <= drop_date))
 
 if (playoff_date == "") {
+  inform("No playoff_date provided, assuming no playoff data.")
   # Write/update output file
   built_allstats %>% 
     mutate(gametype = "REG") %>% 
     write_csv(glue::glue("data/allstats-{str_extract(season, '\\\\d{2}-\\\\d{2}')}.csv"))
 } else {
+  inform(glue("A playoff_date was provided, using {playoff_date} as cutoff to check for playoff stats."))
   # Write/update output file
   built_allstats %>% 
     filter(DATE < playoff_date) %>% 
@@ -116,7 +115,7 @@ write_rds(get_newsfeed(dfs), 'data/news.rds')
 write_rds(dfs_playoffs, 'data/dfs_playoffs.rds')
 
 start_time <- Sys.time()
-inform("Calculate league stats....")
+inform("Calculating league stats....")
 # game highs
 dfs_everything %>% 
   filter(P + R + A + S + B >= 20) %>% 
