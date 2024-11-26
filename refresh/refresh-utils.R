@@ -281,11 +281,11 @@ load_allstats <- function(playoffs = FALSE) {
   }
   
   # Find all allstats files in R/ directory
-  list.files("../app/data/", ptrn) %>% 
+  list.files("app/data/", ptrn) %>% 
     map(function(fp) {
       tmp_season <- as.numeric(str_extract(fp, "\\d{2}\\."))
       
-      data.table::fread(str_c('../app/data/', fp)) %>% 
+      data.table::fread(str_c('app/data/', fp)) %>% 
         tibble() %>% 
         mutate_if(is.numeric, as.numeric) %>% 
         mutate(SEASON = str_c(tmp_season-1, "-", tmp_season, pstr)) %>% 
