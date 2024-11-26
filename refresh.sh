@@ -53,10 +53,14 @@ git pull
 echo "Running preprocessing script..."
 Rscript "$PREPROCESS_SCRIPT" "$SEASON" "$PLAYOFF_DATE" "$DROP_DATE"
 
-# Push on git if successful
-git add ..
-git commit -m "Automatic update from script"
-git push
+# Check for changes before committing
+if [[ -n $(git status --porcelain) ]]; then
+  git add ..
+  git commit -m "Automatic update from script"
+  git push
+else
+  echo "No changes to commit."
+fi
 
 # Restart the Shiny app service
 echo "Restarting the Shiny app service..."
