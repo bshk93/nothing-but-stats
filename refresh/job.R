@@ -10,6 +10,10 @@ playoff_date <- ifelse(length(args) >= 2, args[2], "")
 drop_date <- ifelse(length(args) >= 3, args[3], "")
 
 # Set-Up ----
+setwd("~/nothing-but-stats/refresh")
+source("refresh-utils.R")
+source("preprocess-utils.R")
+
 today <- Sys.Date()
 current_year <- as.numeric(format(today, "%Y"))
 cutoff_date <- as.Date(paste0(current_year, "-08-31"))
@@ -28,11 +32,6 @@ if (drop_date == "") {
   drop_date <- today
   inform(glue("Drop after date defaulted to today ({today})."))
 }
-
-
-setwd("~/nothing-but-stats/refresh")
-source("refresh-utils.R")
-source("preprocess-utils.R")
 
 # Pull Data from Sheets ----
 inform("\nPulling data from sheets....")
