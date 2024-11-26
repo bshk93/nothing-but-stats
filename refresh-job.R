@@ -108,30 +108,12 @@ dfs_playoffs <- load_allstats(playoffs = TRUE) %>%
   mutate(gametype = 'PLAYOFF',
          ROOKIE = NA)
 
+dfs_everything <- rbind(dfs, dfs_playoffs)
+
 write_rds(dfs, 'data/dfs.rds')
 write_rds(get_newsfeed(dfs), 'data/news.rds')
 
 write_rds(dfs_playoffs, 'data/dfs_playoffs.rds')
-
-start_time <- Sys.time()
-inform("Calculating achievements....")
-ach_metadata <- read_csv("data/metadata-achievements.csv", show_col_types = FALSE)
-
-ach_season <- dfs %>% 
-  nest_by(PLAYER) %>% 
-  mutate(ach = list(get_achievements_season(
-    data,
-    dfs,
-    PLAYER,
-    ach_metadata
-  ))) %>% 
-  select(-data) %>% 
-  unnest(ach) %>% 
-  ungroup()
-
-write_rds(ach_season, 'data/ach_season.rds')
-
-inform(glue(" * DONE [{round(Sys.time() - start_time, 1)}s]"))
 
 start_time <- Sys.time()
 inform("Calculate league stats....")
@@ -173,6 +155,26 @@ dfs_everything %>%
   mutate(DIFF = TEAM_PTS - OPP_TEAM_PTS) %>% 
   select(-TEAM_PTS, -OPP_TEAM_PTS) %>% 
   write_rds("data/season_high_team.rds")
+
+inform(glue(" * DONE [{round(Sys.time() - start_time, 1)}s]"))
+
+start_time <- Sys.time()
+inform("Calculating achievements....")
+ach_metadata <- read_csv("data/metadata-achievements.csv", show_col_types = FALSE)
+
+ach_season <- dfs %>% 
+  nest_by(PLAYER) %>% 
+  mutate(ach = list(get_achievements_season(
+    data,
+    dfs,
+    PLAYER,
+    ach_metadata
+  ))) %>% 
+  select(-data) %>% 
+  unnest(ach) %>% 
+  ungroup()
+
+write_rds(ach_season, 'data/ach_season.rds')
 
 inform(glue(" * DONE [{round(Sys.time() - start_time, 1)}s]"))
 
