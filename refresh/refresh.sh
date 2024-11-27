@@ -29,6 +29,10 @@ while [[ "$#" -gt 0 ]]; do
       DROP_DATE="$2"
       shift 2
       ;;
+    --achievements)
+      ACHIEVEMENTS="$2"
+      shift 2
+      ;;
     *)
       echo "Unknown option: $1"
       exit 1
@@ -45,7 +49,7 @@ echo "Pulling latest changes from remote..."
 git pull
 
 echo "Running preprocessing script..."
-Rscript "$PREPROCESS_SCRIPT" "$SEASON" "$PLAYOFF_DATE" "$DROP_DATE"
+Rscript "$PREPROCESS_SCRIPT" "$SEASON" "$PLAYOFF_DATE" "$DROP_DATE" "$ACHIEVEMENTS"
 
 # check for git status updates
 if [[ -n $(git status --porcelain) ]]; then

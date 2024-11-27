@@ -1,13 +1,14 @@
 # args <- c("", "", "")
 
 args <- commandArgs(trailingOnly = TRUE)
-if (length(args) != 3) {
-  rlang::abort("Three arguments to `refresh` are required.")
+if (length(args) != 4) {
+  rlang::abort("Four arguments to `refresh` are required.")
 }
 
 season <- ifelse(length(args) >= 1, args[1], "")
 playoff_date <- ifelse(length(args) >= 2, args[2], "")
 drop_date <- ifelse(length(args) >= 3, args[3], "")
+achievements <- ifelse(length(args) >= 4, args[4], "")
 
 # Set-Up ----
 setwd("~/nothing-but-stats")
@@ -156,25 +157,30 @@ dfs_everything %>%
 
 inform(glue(" * DONE [{round(Sys.time() - start_time, 1)}s]"))
 
-start_time <- Sys.time()
-inform("Calculating achievements....")
-ach_metadata <- read_csv("app/data/metadata-achievements.csv", show_col_types = FALSE)
+if (toupper(achievements) %in% c("TRUE", "T")) {
+  start_time <- Sys.time()
+  inform("Calculating achievements....")
+  ach_metadata <- read_csv("app/data/metadata-achievements.csv", show_col_types = FALSE)
+  
+  ach_season <- dfs %>% 
+    nest_by(PLAYER) %>% 
+    mutate(ach = list(get_achievements_season(
+      data,
+      dfs,
+      PLAYER,
+      ach_metadata
+    ))) %>% 
+    select(-data) %>% 
+    unnest(ach) %>% 
+    ungroup()
+  
+  write_rds(ach_season, 'app/data/ach_season.rds')
+  
+  inform(glue(" * DONE [{round(Sys.time() - start_time, 1)}s]"))
+} else {
+  inform("Skipping achievements.")
+}
 
-ach_season <- dfs %>% 
-  nest_by(PLAYER) %>% 
-  mutate(ach = list(get_achievements_season(
-    data,
-    dfs,
-    PLAYER,
-    ach_metadata
-  ))) %>% 
-  select(-data) %>% 
-  unnest(ach) %>% 
-  ungroup()
-
-write_rds(ach_season, 'app/data/ach_season.rds')
-
-inform(glue(" * DONE [{round(Sys.time() - start_time, 1)}s]"))
 
 
 # con = dbConnect(
