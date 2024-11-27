@@ -56,9 +56,15 @@ else
   echo "No changes to commit."
 fi
 
+# pull from /srv/shiny/nothing-but-stats
+cd /srv/shiny/nothing-but-stats
+git pull
+
 # restart shiny app service
 echo "Restarting the Shiny app service..."
 sudo systemctl restart "$SERVICE_NAME"
 systemctl is-active "$SERVICE_NAME" || { echo "Service $SERVICE_NAME failed to restart."; exit 1; }
 
 echo "Update completed successfully at $(date)"
+
+trap "kill $(jobs -p)" EXIT
