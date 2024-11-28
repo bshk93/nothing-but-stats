@@ -1011,7 +1011,11 @@ function(input, output, session) {
     
     begin <- Sys.time()
     
-    x <- get_achievements_game(myCombinedData(), ach_metadata) %>%
+    # x <- get_achievements_game(myCombinedData(), ach_metadata) %>%
+    #   format_as_datatable()
+    x <- read_rds('data/ach_game.rds') %>% 
+      filter(PLAYER == input$name) %>% 
+      select(-PLAYER) %>% 
       format_as_datatable()
     
     print(glue("[{sprintf('%.7f', round(Sys.time() - begin, 7))}] player game achievements generated."))

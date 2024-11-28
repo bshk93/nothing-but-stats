@@ -426,5 +426,5 @@ get_achievements_game <- function(combined_df, ach_metadata) {
       by = "ACHIEVEMENT"
     ) %>% 
     group_by(TYPE, ACHIEVEMENT, DESCRIPTION) %>% 
-    summarize(DATES = str_c(DATE, collapse = ", "))
+    summarize(DATES = str_c(DATE, collapse = ", "), .groups = "drop")
 }

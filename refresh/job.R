@@ -8,7 +8,7 @@ if (length(args) != 4) {
 season <- ifelse(length(args) >= 1, args[1], "")
 playoff_date <- ifelse(length(args) >= 2, args[2], "")
 drop_date <- ifelse(length(args) >= 3, args[3], "")
-achievements <- ifelse(length(args) >= 4, args[4], "")
+skip_achievements <- ifelse(length(args) >= 4, args[4], "")
 
 # Set-Up ----
 setwd("~/nothing-but-stats")
@@ -157,10 +157,23 @@ dfs_everything %>%
 
 inform(glue(" * DONE [{round(Sys.time() - start_time, 1)}s]"))
 
-if (toupper(achievements) %in% c("TRUE", "T")) {
+if (toupper(skip_achievements) %in% c("TRUE", "T")) {
+  inform("Skipping achievements.")
+} else {
   start_time <- Sys.time()
   inform("Calculating achievements....")
   ach_metadata <- read_csv("app/data/metadata-achievements.csv", show_col_types = FALSE)
+  
+  ach_game <- dfs %>% 
+    nest_by(PLAYER) %>% 
+    mutate(ach = list(get_achievements_game(
+      data,
+      ach_metadata
+    ))) %>% 
+    select(-data) %>% 
+    unnest(ach)
+  
+  write_rds(ach_game, 'app/data/ach_game.rds')
   
   ach_season <- dfs %>% 
     nest_by(PLAYER) %>% 
@@ -177,8 +190,6 @@ if (toupper(achievements) %in% c("TRUE", "T")) {
   write_rds(ach_season, 'app/data/ach_season.rds')
   
   inform(glue(" * DONE [{round(Sys.time() - start_time, 1)}s]"))
-} else {
-  inform("Skipping achievements.")
 }
 
 
