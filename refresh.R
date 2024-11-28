@@ -1,26 +1,21 @@
-if (stringr::str_detect(getwd(), 'bshk9')) {
-  setwd("C:/Users/bshk9/OneDrive/home/projects/nothing-but-stats/app")
-} else {
-  setwd("C:/Users/Brian/OneDrive/home/projects/nothing-but-stats/app")
-}
-
+setwd("~/nothing-but-stats/app")
 
 # Source functions ----
 source("update.R")
 source("R/read.R")
 source("R/utils.R")
 source("R/news.R")
+source("R/ach.R")
 
 # Globals ----
 myseason <- "2024-25"
 myplayoffdate <- "2025-04-16" # Playoff start date
-check_start_date <- "2024-10-28" # Date to start doing checks (newly entered data)
-drop_after_date <- "2024-10-29" # Date after which to delete stats (e.g. unfinished days)
+check_start_date <- "2024-11-23" # Date to start doing checks (newly entered data)
+drop_after_date <- "2024-11-24" # Date after which to delete stats (e.g. unfinished days)
 
 # Refresh stats ----
 
 # Pull down and check allstats, extracting data from Google sheets
-# Also runs some simple tests
 allstats <- get_allstats(delete_before = "2024-09-01")
 
 # Additional Testing
@@ -69,12 +64,75 @@ dfs_playoffs <- load_allstats(playoffs = TRUE) %>%
   mutate(gametype = 'PLAYOFF',
          ROOKIE = NA)
 
+dfs_everything <- rbind(dfs, dfs_playoffs)
+
 write_rds(dfs, 'data/dfs.rds')
 write_rds(get_newsfeed(dfs), 'data/news.rds')
 
 write_rds(dfs_playoffs, 'data/dfs_playoffs.rds')
 
-dfs_everything <- rbind(dfs, dfs_playoffs)
+start_time <- Sys.time()
+inform("Calculating achievements....")
+ach_metadata <- read_csv("data/metadata-achievements.csv", show_col_types = FALSE)
+
+ach_season <- dfs %>% 
+  nest_by(PLAYER) %>% 
+  mutate(ach = list(get_achievements_season(
+    data,
+    dfs,
+    PLAYER,
+    ach_metadata
+  ))) %>% 
+  select(-data) %>% 
+  unnest(ach) %>% 
+  ungroup()
+
+write_rds(ach_season, 'data/ach_season.rds')
+
+inform(glue(" * DONE [{round(Sys.time() - start_time, 1)}s]"))
+
+start_time <- Sys.time()
+inform("Calculating league stats....")
+# game highs
+dfs_everything %>% 
+  filter(P + R + A + S + B >= 20) %>% 
+  select(PLAYER, SEASON, DATE, OPP, P, R, A, S, B, `3PM`, TO, PF) %>% 
+  write_rds("data/game_high_player.rds")
+
+# season highs
+dfs_everything %>% 
+  group_by(PLAYER, SEASON) %>% 
+  summarize(across(
+    c(M, P, R, A, S, B, `3PM`, TO, PF, TD), 
+    sum, 
+    .names = "{.col}"
+  ), .groups = "drop") %>% 
+  write_rds("data/season_high_player.rds")
+
+# team game highs
+dfs_everything %>% 
+  group_by(TEAM, SEASON, DATE, OPP) %>% 
+  mutate(DIFF = (TEAM_PTS - OPP_TEAM_PTS) / n()) %>% 
+  summarize(across(
+    c(DIFF, P, R, A, S, B, `3PM`, TO, PF), 
+    sum,
+    .names = "{.col}"
+  ), .groups = "drop") %>% 
+  write_rds("data/game_high_team.rds")
+
+# team season highs
+dfs_everything %>% 
+  group_by(TEAM, SEASON) %>% 
+  summarize(across(
+    c(P, R, A, S, B, `3PM`, TO, PF, TD, TEAM_PTS, OPP_TEAM_PTS), 
+    sum, 
+    .names = "{.col}"
+  ), .groups = "drop") %>% 
+  mutate(DIFF = TEAM_PTS - OPP_TEAM_PTS) %>% 
+  select(-TEAM_PTS, -OPP_TEAM_PTS) %>% 
+  write_rds("data/season_high_team.rds")
+
+inform(glue(" * DONE [{round(Sys.time() - start_time, 1)}s]"))
 
 
 # STOP HERE ----
