@@ -59,6 +59,11 @@ sidebar <- dashboardSidebar(
       icon = icon("arrow-trend-up")
     ),
     menuItem(
+      "Frivolities",
+      tabName = "tab_frivolities",
+      icon = icon("face-laugh")
+    ),
+    menuItem(
       "Box Scores",
       tabName = "tab_box", 
       icon = icon("table")
@@ -314,6 +319,12 @@ body <- dashboardBody(
       reactableOutput("power_rankings_table")
     ),
     
+    ## Frivolities ----
+    tabItem(
+      tabName = "tab_frivolities",
+      plotlyOutput("stability")
+    ),
+    
     ## Box Scores ----
     tabItem(
       tabName = "tab_box",
@@ -324,39 +335,6 @@ body <- dashboardBody(
       uiOutput('boxscore_input'),
       DTOutput('boxscore_selected')
     ),
-    
-    # ## Data Explorer ----
-    # tabItem(
-    #   tabName = "tab_explore",
-    #   selectizeInput(
-    #     'explore_type',
-    #     'I want to explore:',
-    #     c('The highest', 'The lowest'),
-    #     selected = 'The highest',
-    #     multiple = FALSE
-    #   ),
-    #   
-    #   selectizeInput(
-    #     'explore_var',
-    #     'Values of:',
-    #     c('G', 'M', 'GMSC', 
-    #       'P', 'R', 'A', 'S', 'B', 'TO', 
-    #       'FGM', 'FGA', #'FG_PCT',
-    #       '3PM', '3PA', #'3P_PCT',
-    #       'FTM', 'FTA', #'FT_PCT',
-    #       'OR', 'PF'),
-    #     selected = 'P',
-    #     multiple = FALSE
-    #   ),
-    #   
-    #   selectizeInput(
-    #     'explore_level',
-    #     '',
-    #     c('in a game', 'in a season (total)', 'in a season (avg)', 'in a career (total)', 'in a career (avg)')
-    #   ),
-    #   
-    #   DTOutput('explore_output')
-    # ),
     
     ## Player Compare ----
     tabItem(
@@ -512,6 +490,40 @@ body <- dashboardBody(
     ),
     
     ## Currently Unused Pages ----
+    
+    ### Data Explorer (Unserved) ----
+    tabItem(
+      tabName = "tab_explore",
+      selectizeInput(
+        'explore_type',
+        'I want to explore:',
+        c('The highest', 'The lowest'),
+        selected = 'The highest',
+        multiple = FALSE
+      ),
+
+      selectizeInput(
+        'explore_var',
+        'Values of:',
+        c('G', 'M', 'GMSC',
+          'P', 'R', 'A', 'S', 'B', 'TO',
+          'FGM', 'FGA', #'FG_PCT',
+          '3PM', '3PA', #'3P_PCT',
+          'FTM', 'FTA', #'FT_PCT',
+          'OR', 'PF'),
+        selected = 'P',
+        multiple = FALSE
+      ),
+
+      selectizeInput(
+        'explore_level',
+        '',
+        c('in a game', 'in a season (total)', 'in a season (avg)', 'in a career (total)', 'in a career (avg)')
+      ),
+
+      DTOutput('explore_output')
+    ),
+    
     ### The Lab ----
     tabItem(
       tabName = "tab_lab",

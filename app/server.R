@@ -1450,7 +1450,8 @@ function(input, output, session) {
   ### Hall of Fame + Awards ----
   output$hof_points <- renderDT({
     calculate_hof_points(dfs_everything, dfs_playoffs, dfs)
-  }, options = list(scrollX = TRUE))
+  })
+  #}, options = list(scrollX = TRUE))
   
   
   ### Power Rankings ----
@@ -1514,6 +1515,13 @@ function(input, output, session) {
       highlight = TRUE,
       compact = TRUE
     )
+  })
+  
+  
+  ### Frivolities ----
+  output$stability <- renderPlotly({
+    roster_stability(dfs) %>% 
+      plot_roster_stability()
   })
   
   
