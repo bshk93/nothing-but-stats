@@ -1524,6 +1524,11 @@ function(input, output, session) {
       plot_roster_stability()
   })
   
+  output$most_teams <- renderDT({
+    most_teams(dfs_everything) %>% 
+      format_as_datatable(escape = FALSE)
+  })
+  
   
   ### Box Scores ----
   output$boxscore_input <- renderUI({

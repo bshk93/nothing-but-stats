@@ -154,7 +154,7 @@ plot_roster_stability <- function(stability_df) {
     colors = colorRamp(c("red", "yellow", "green")) # Stability color scale
   ) %>%
     layout(
-      title = "Roster Stability",
+      #title = "Roster Stability",
       xaxis = list(title = "", tickangle = 45, automargin = TRUE),
       yaxis = list(title = "", autorange = "reversed", automargin = TRUE),
       legend = list(orientation = "h", y = -0.2, x = 0.5, xanchor = "center"), # Horizontal legend
@@ -168,6 +168,22 @@ plot_roster_stability <- function(stability_df) {
     )
 }
 
+
+
+most_teams <- function(dfs_everything) {
+  dfs_everything %>% 
+    group_by(PLAYER, TEAM) %>% 
+    summarize(G = n(), .groups = "drop") %>% 
+    group_by(PLAYER, G) %>% 
+    mutate(TEAM = str_c('<img src="logo-', tolower(TEAM), '.png" height=20></img>')) %>% 
+    group_by(PLAYER) %>% 
+    summarize(N_TEAMS = n(),
+              GAMES_W_ONE_TEAM = max(G),
+              THE_TEAM = TEAM[which.max(G)],
+              ALL_TEAMS = str_c(TEAM, collapse = ''),
+              .groups = "drop") %>% 
+    arrange(desc(N_TEAMS))
+}
 
 
 calculate_hof_points <- function(dfs_everything, dfs_playoffs, dfs,

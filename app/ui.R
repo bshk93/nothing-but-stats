@@ -322,7 +322,11 @@ body <- dashboardBody(
     ## Frivolities ----
     tabItem(
       tabName = "tab_frivolities",
-      plotlyOutput("stability")
+      h2("Roster Stability"),
+      p("Values represent how many of the minutes played in season N went to players who were on the team in season N-1."),
+      plotlyOutput("stability"),
+      h2("Who They Played For"),
+      DTOutput("most_teams")
     ),
     
     ## Box Scores ----
