@@ -115,6 +115,14 @@ write_rds(get_newsfeed(dfs), 'app/data/news.rds')
 write_rds(dfs_playoffs, 'app/data/dfs_playoffs.rds')
 
 start_time <- Sys.time()
+inform("Parsing roster log....")
+
+read_delim("app/data/roster-log.txt", delim = ";FARTS;", col_names = c("ts", "text")) %>% 
+  transmute(DATE = as_date(ts), TEXT = toupper(text))
+
+inform(glue(" * DONE [{round(Sys.time() - start_time, 1)}s]"))
+
+start_time <- Sys.time()
 inform("Calculating league stats....")
 # game highs
 dfs_everything %>% 

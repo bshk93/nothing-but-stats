@@ -990,6 +990,11 @@ function(input, output, session) {
     x
   })
   
+  #### Transaction History ----
+  output$transaction_history <- renderDT({
+    read_delim()
+  })
+  
   #### Achievements - Season ----
   output$achievements_season <- renderDT({
     
@@ -1798,20 +1803,67 @@ function(input, output, session) {
     if (nrow(diffs) == 0) {
       NULL
     } else if (length(input$ws_teams) == 1) {
+      # 
+      # diffs %>%
+      #   
+      #   select(SEASON, TEAM, DATE, N, DIFF_DIFF, PCT_CHG, PRICE) %>%
+      #   group_by(TEAM) %>%
+      #   
+      #   ggplot(aes(x = DATE, y = PRICE)) +
+      #   geom_line() +
+      #   geom_point(aes(col = SEASON), size = 0.5) +
+      #   scale_y_continuous(
+      #     labels=scales::dollar_format()
+      #   ) +
+      #   #xlim(c(input$ws_date_min, input$ws_date_max)) +
+      #   ggtitle('Team Value')
       
+      # diffs %>%
+      #   mutate(
+      #     # Custom ordering: Regular season comes before playoffs
+      #     SEASON = factor(SEASON, levels = unique(diffs %>%
+      #                                               arrange(DATE) %>%  # Ensure chronological order
+      #                                               pull(SEASON)), 
+      #                     ordered = TRUE)
+      #   ) %>%
+      #   mutate(
+      #     SEASON_DATE = paste(SEASON, DATE, sep = "_")  # Combine season and date
+      #   ) %>%
+      #   ggplot(aes(x = SEASON_DATE, y = PRICE, group = TEAM)) +
+      #   geom_line() +
+      #   geom_point(aes(col = SEASON), size = 0.5) +
+      #   scale_y_continuous(labels = scales::dollar_format()) +
+      #   scale_x_discrete(
+      #     breaks = function(x) x[seq(1, length(x), by = 30)],  # Show every 30th tick
+      #     labels = function(x) gsub(".*_(.*)", "\\1", x)  # Only display the date part
+      #   ) +
+      #   theme_minimal() +
+      #   theme(
+      #     axis.text.x = element_text(angle = 45, hjust = 1, size = 8),  # Smaller, angled labels
+      #     panel.grid.major.x = element_blank()  # Remove excessive gridlines
+      #   ) +
+      #   labs(x = "Date", y = "Price", title = "Price Trends by Season")
+      
+      # Plot without explicit ordering of SEASON, but removing gaps
       diffs %>%
-        
-        select(SEASON, TEAM, DATE, N, DIFF_DIFF, PCT_CHG, PRICE) %>%
-        group_by(TEAM) %>%
-        
-        ggplot(aes(x = DATE, y = PRICE)) +
+        ggplot(aes(x = DATE, y = PRICE, group = TEAM)) +
         geom_line() +
         geom_point(aes(col = SEASON), size = 0.5) +
-        scale_y_continuous(
-          labels=scales::dollar_format()
+        scale_y_continuous(labels = scales::dollar_format()) +
+        scale_x_date(
+          breaks = "1 month",  # Monthly breaks for better readability
+          date_labels = "%b %Y",  # Format the dates
+          expand = c(0, 0)  # Avoid padding
         ) +
-        #xlim(c(input$ws_date_min, input$ws_date_max)) +
-        ggtitle('Team Value')
+        theme_minimal() +
+        theme(
+          axis.text.x = element_text(angle = 45, hjust = 1, size = 8),  # Smaller, angled labels
+          panel.grid.major.x = element_blank()  # Remove excessive gridlines
+        ) +
+        labs(x = "Date", y = "Price", title = "Price Trends by Season")
+      
+      
+      
       
     } else {
       
