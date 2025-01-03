@@ -114,13 +114,13 @@ write_rds(get_newsfeed(dfs), 'app/data/news.rds')
 
 write_rds(dfs_playoffs, 'app/data/dfs_playoffs.rds')
 
-start_time <- Sys.time()
-inform("Parsing roster log....")
-
-read_delim("app/data/roster-log.txt", delim = ";FARTS;", col_names = c("ts", "text")) %>% 
-  transmute(DATE = as_date(ts), TEXT = toupper(text))
-
-inform(glue(" * DONE [{round(Sys.time() - start_time, 1)}s]"))
+# start_time <- Sys.time()
+# inform("Parsing roster log....")
+# 
+# read_delim("app/data/roster-log.txt", delim = ";FARTS;", col_names = c("ts", "text")) %>% 
+#   transmute(DATE = as_date(ts), TEXT = toupper(text))
+# 
+# inform(glue(" * DONE [{round(Sys.time() - start_time, 1)}s]"))
 
 start_time <- Sys.time()
 inform("Calculating league stats....")
@@ -162,6 +162,46 @@ dfs_everything %>%
   mutate(DIFF = TEAM_PTS - OPP_TEAM_PTS) %>% 
   select(-TEAM_PTS, -OPP_TEAM_PTS) %>% 
   write_rds("app/data/season_high_team.rds")
+
+# # worst seasons (at least 40 games)
+# dfs %>%
+#   select(PLAYER, SEASON, TEAM, M, P, R, OR, DR, A, S, B, TO, GMSC, FGM, FGA, `3PM`, `3PA`, FTM, FTA, PF, WL) %>%
+#   group_by(PLAYER, SEASON) %>%
+#   summarize(
+#     G = n(),
+#     TEAMS = str_c(unique(TEAM), collapse = ", "),
+#     foul_outs = sum(PF == 6),
+#     win_pct = round(sum(WL == "W")/n(), 3),
+#     across(-c(TEAM, TEAMS, foul_outs, WL, win_pct), sum),
+#     .groups = "drop"
+#   ) %>%
+#   filter(M > 1500) %>% 
+#   mutate(
+#     fg_missed = FGA - FGM,
+#     ft_missed = FTA - FTM,
+#     pts_missed = 2 * (fg_missed) + (ft_missed),
+#     turnovers = TO,
+#     possessions_wasted = FGA - FGM + TO - OR - S,
+#     GMSC_per_min = GMSC / M
+#   ) %>%
+#   select(
+#     PLAYER, SEASON, TEAMS, G, MP = M,
+#     win_pct,
+#     GMSC_per_min,
+#     fg_missed,
+#     ft_missed,
+#     pts_missed,
+#     turnovers,
+#     possessions_wasted,
+#     foul_outs
+#   ) %>%
+#   mutate(
+#     pts_missed_per_min = pts_missed / MP,
+#     possessions_wasted_per_min = possessions_wasted / MP,
+#     foul_outs_per_min = foul_outs / MP
+#   )
+
+
 
 inform(glue(" * DONE [{round(Sys.time() - start_time, 1)}s]"))
 
