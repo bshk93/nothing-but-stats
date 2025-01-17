@@ -1458,6 +1458,79 @@ function(input, output, session) {
   })
   #}, options = list(scrollX = TRUE))
   
+  #### Season Awards History ----
+  output$season_awards_history <- renderDT({
+    x <- bind_rows(
+      get_mvp() %>% mutate(AWARD = "Most Valuable Player"),
+      get_dpoy() %>% mutate(AWARD = "Defensive Player of the Year"),
+      get_roy() %>% mutate(AWARD = "Rookie of the Year"),
+      get_6moy() %>% mutate(AWARD = "Sixth Man of the Year"),
+      get_mip() %>% mutate(AWARD = "Most Improved Player")
+    ) %>% 
+      select(AWARD, SEASON, PLAYER)
+    
+    y <- dfs %>% 
+      filter(PLAYER %in% x$PLAYER) %>% 
+      group_by(PLAYER, SEASON) %>% 
+      arrange(PLAYER, SEASON, DATE) %>% 
+      summarize(TEAM = last(TEAM), .groups = "drop") %>% 
+      mutate(TEAM = get_logo(TEAM, height = 30))
+    
+    x %>% 
+      left_join(
+        y,
+        by = c("PLAYER", "SEASON")
+      ) %>% 
+      mutate(PLAYER = str_c(PLAYER, " ", TEAM)) %>% 
+      select(-TEAM) %>% 
+      format_as_datatable(escape = FALSE)
+  })
+  
+  output$front_office_awards <- renderDT({
+    bind_rows(
+      get_foty(),
+      get_coty() %>% 
+        mutate(
+          x = str_extract(AWARD, "\\(.*\\)"),
+          AWARD = "COTY"
+        )
+    ) %>% 
+      arrange(SEASON, AWARD) %>% 
+      
+      mutate(
+        TEAM = str_c(TEAM, " ", get_logo(TEAM, height = 30), " ", coalesce(x, ""))
+      ) %>% 
+      
+      select(SEASON, AWARD, TEAM) %>% 
+      format_as_datatable(escape = FALSE)
+  })
+  
+  output$all_nbn <- renderDT({
+    x <- bind_rows(
+      get_allnbn1() %>% mutate(AWARD = "NBN FIRST TEAM"),
+      get_allnbn2() %>% mutate(AWARD = "NBN SECOND TEAM"),
+      get_allnbn3() %>% mutate(AWARD = "NBN THIRD TEAM")
+    ) %>% 
+      select(SEASON, AWARD, PLAYER) %>% 
+      arrange(SEASON, AWARD, PLAYER)
+    
+    y <- dfs %>% 
+      filter(PLAYER %in% x$PLAYER) %>% 
+      group_by(PLAYER, SEASON) %>% 
+      arrange(PLAYER, SEASON, DATE) %>% 
+      summarize(TEAM = last(TEAM), .groups = "drop") %>% 
+      mutate(TEAM = get_logo(TEAM, height = 30))
+    
+    x %>% 
+      left_join(
+        y,
+        by = c("PLAYER", "SEASON")
+      ) %>% 
+      mutate(PLAYER = str_c(PLAYER, " ", TEAM)) %>% 
+      select(-TEAM) %>% 
+      format_as_datatable(escape = FALSE, page_length = 15)
+  })
+  
   
   ### Power Rankings ----
   output$power_rankings <- renderPlot({

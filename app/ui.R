@@ -296,7 +296,16 @@ body <- dashboardBody(
       tabName = "tab_awards",
       
       h2('NBN Hall-of-Fame Points'),
-      DTOutput('hof_points')
+      DTOutput('hof_points'),
+      
+      h2('Season Awards History'),
+      DTOutput('season_awards_history'),
+      
+      h2('Front Office Awards'),
+      DTOutput('front_office_awards'),
+      
+      h2('All-NBN Teams'),
+      DTOutput('all_nbn')
     ),
     
     ## Power Rankings ----
