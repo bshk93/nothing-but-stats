@@ -133,7 +133,7 @@ check_allstats <- function(allstats) {
     filter(OR > R | DR > R | FGM > FGA | `3PM` > `3PA` | FTM > FTA | PF > 6 | P != FTM + 2*FGM + 1*`3PM`)
   
   if (nrow(bad_sanity_checks) > 0) {
-    warning(glue("There are {nrow(bad_sanity_checks)} row(s) where the numbers don't make sense."))
+    warning(glue("There are {nrow(bad_sanity_checks)} row(s) where the numbers don't make sense: {str_c(bad_sanity_checks$PLAYER, collapse = ', ')}"))
   }
   
   bad_missing <- allstats %>% 
