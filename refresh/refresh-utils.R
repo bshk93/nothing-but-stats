@@ -126,7 +126,7 @@ check_allstats <- function(allstats) {
     filter(t_min != 240 & t_min != 265 & t_min != 290 & t_min != 315)
   
   if (nrow(bad_minute_games) > 0) {
-    warning(glue("There are {nrow(bad_minute_games)} game(s) where the total minutes doesn't make sense."))
+    warning(glue("There are {nrow(bad_minute_games)} game(s) where the total minutes doesn't make sense: {str_c(bad_minute_games$t_min, collapse = ', ')}"))
   }
   
   bad_sanity_checks <- allstats %>% 
