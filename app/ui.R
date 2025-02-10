@@ -172,6 +172,7 @@ body <- dashboardBody(
     ## NBYen ----
     tabItem(
       tabName = "tab_nbyen",
+      DTOutput("nbyen_table"),
       plotlyOutput("nbyen_plot")
     ),
     

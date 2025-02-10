@@ -1848,6 +1848,18 @@ function(input, output, session) {
       )
   })
   
+  output$nbyen_table <- renderDT({
+    nbyen %>% 
+      group_by(team) %>% 
+      filter(date == max(date)) %>% 
+      ungroup() %>% 
+      select(team, nby) %>% 
+      arrange(desc(nby)) %>% 
+      format_as_datatable(
+        page_length = 30
+      )
+  })
+  
   
   ### NBN Wall Street ----
   output$ws_prices <- renderDT({

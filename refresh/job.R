@@ -68,8 +68,12 @@ read_csv("https://docs.google.com/spreadsheets/d/e/2PACX-1vQ5gjscoT5YzUb0xyLafid
   transmute(
     date = mdy(Date),
     team = Team,
-    nby = as.numeric(str_replace_all(Amount, "[^\\d]", ""))
+    nby = as.numeric(str_replace_all(Amount, "[^\\d-]", ""))
   ) %>% 
+  filter(!is.na(team)) %>% 
+  group_by(team) %>% 
+  arrange(team, date) %>% 
+  mutate(nby = cumsum(nby)) %>% 
   write_csv("app/data/nbyen.csv")
 
 
