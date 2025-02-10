@@ -62,6 +62,17 @@ if (nrow(allstats$errors$games) > 0) {
   ))
 }
 
+# Refresh NBYen
+read_csv("https://docs.google.com/spreadsheets/d/e/2PACX-1vQ5gjscoT5YzUb0xyLafidnkQDxF_8RfULxLSyZYIoXD6RPdHoi4dUoJhDBYwuD4zugcFl_LyBrL44K/pub?gid=0&single=true&output=csv",
+         col_names = T, skip = 1) %>%
+  transmute(
+    date = mdy(Date),
+    team = Team,
+    nby = as.numeric(str_replace_all(Amount, "[^\\d]", ""))
+  ) %>% 
+  write_csv("app/data/nbyen.csv")
+
+
 inform("Building allstats....")
 built_allstats <- build_allstats(allstats$data %>% filter(DATE <= drop_date))
 

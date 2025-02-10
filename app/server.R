@@ -8,6 +8,7 @@ bios <- read_rds('data/bios.rds')
 champions <- get_champions(dfs_playoffs)
 
 ach_metadata <- read_csv("data/metadata-achievements.csv", show_col_types = FALSE)
+nbyen <- read_csv("data/nbyen.csv")
 
 my_ranks <- get_ranks(dfs)
 
@@ -1832,6 +1833,20 @@ function(input, output, session) {
   })
   
   output$tm_output <- renderDT({tm_inputs()})
+  
+  
+  ### NBYen ----
+  
+  output$nbyen_plot <- renderPlotly({
+    nbyen %>% 
+      plot_ly(
+        x = ~date,
+        y = ~nby,
+        color = ~team,
+        type = "scatter",
+        mode = "lines"
+      )
+  })
   
   
   ### NBN Wall Street ----

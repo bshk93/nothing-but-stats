@@ -23,6 +23,11 @@ sidebar <- dashboardSidebar(
        icon = icon("dashboard")
     ),
     menuItem(
+      "NBYen",
+      tabName = "tab_nbyen",
+      icon = icon("yen-sign")
+    ),
+    menuItem(
       "Playoff Archive",
       tabName = "tab_playoffs", 
       icon = icon("code-fork")
@@ -162,6 +167,12 @@ body <- dashboardBody(
       h2("SEASON AWARDS"),
       h3("All-Stars"),
       DTOutput("season_allstars")
+    ),
+    
+    ## NBYen ----
+    tabItem(
+      tabName = "tab_nbyen",
+      plotlyOutput("nbyen_plot")
     ),
     
     ## Playoff Archive ----
