@@ -1857,7 +1857,8 @@ function(input, output, session) {
       arrange(desc(nby)) %>% 
       format_as_datatable(
         page_length = 30
-      )
+      ) %>% 
+      formatCurrency("nby", currency = "¥")
   })
   
   
