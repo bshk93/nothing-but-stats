@@ -49,7 +49,7 @@ allstats <- get_allstats(delete_before = delete_before_date) %>%
   check_allstats()
 inform(" * DONE")
 
-if (nrow(allstats$errors$games) > 0) {
+if (nrow(allstats$errors$games %>% filter(DATE <= drop_date)) > 0) {
   abort(c(
     "Found errors in the Sheets data.",
     str_c(
