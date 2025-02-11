@@ -256,6 +256,44 @@ if (toupper(skip_achievements) %in% c("TRUE", "T")) {
 }
 
 
+# Update files in /var/www/stats.nbn.today/files/
+inform("Updating /files/...")
+  
+x <- dfs %>% 
+  filter(SEASON == max(SEASON)) %>% 
+  group_by(DATE, TEAM, OPP) %>%
+  summarize(TEAM_PTS = sum(P), .groups = 'drop') %>%
+  ungroup() %>%
+  mutate(OPP = str_replace(OPP, "@", ""))
+
+x %>%
+  left_join(
+    x %>%
+      select(DATE, OPP = TEAM, OPP_PTS = TEAM_PTS),
+    by = c('DATE', 'OPP')
+  ) %>%
+  group_by(TEAM) %>%
+  summarize(
+    W = sum(TEAM_PTS > OPP_PTS),
+    L = sum(TEAM_PTS < OPP_PTS),
+    PPG = mean(TEAM_PTS),
+    OPPG = mean(OPP_PTS),
+    .groups = 'drop'
+  ) %>%
+  mutate(PCT = round(W / (W+L), 3),
+         DIFF = round(PPG - OPPG, 1),
+         PPG = round(PPG, 1),
+         OPPG = round(OPPG, 1),
+         CONF = get_conference(TEAM)) %>%
+  group_by(CONF) %>%
+  mutate(GB = (max(W - L) - (W - L))/2) %>%
+  arrange(CONF, GB) %>%
+  mutate(SEED = str_c(CONF, "-", row_number())) %>%
+  ungroup() %>%
+  select(SEED, TEAM, GB, W, L, PCT, PPG, OPPG, DIFF) %>% 
+  write_csv("files/standings.csv")
+
+
 
 # con = dbConnect(
 #   Postgres(),
