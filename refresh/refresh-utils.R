@@ -292,3 +292,12 @@ load_allstats <- function(playoffs = FALSE) {
         filter(!is.na(SEASON))
     })
 }
+
+get_conference <- function(team) {
+  case_when(
+    team %in% c("MIL", "IND", "BOS", "BKN", "ATL", "ORL", "MIA", "PHI", "WAS", 
+                "TOR", "CHI", "CHA", "CLE", "NYK", "DET") ~ "East",
+    team %in% c("HOU", "SAC", "GSW", "LAL", "DAL", "LAC", "MIN", "POR", "DEN",
+                "NOP", "PHX", "OKC", "SAS", "UTA", "MEM") ~ "West"
+  )
+}
