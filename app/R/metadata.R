@@ -120,7 +120,34 @@ get_allstars <- function() {
     'HALIBURTON, TYRESE', '23-24',
     'BRUNSON, JALEN', '23-24',
     'BEAL, BRADLEY', '23-24',
-    'EDWARDS, ANTHONY', '23-24'
+    'EDWARDS, ANTHONY', '23-24',
+    
+    # 2025
+    'DONCIC, LUKA', '24-25',
+    'JOKIC, NIKOLA', '24-25',
+    'GILGEOUS-ALEXANDER, SHAI', '24-25',
+    'BOOKER, DEVIN', '24-25',
+    'TATUM, JAYSON', '24-25',
+    'EMBIID, JOEL', '24-25',
+    'SABONIS, DOMANTAS', '24-25',
+    'MAXEY, TYRESE', '24-25',
+    'MITCHELL, DONOVAN', '24-25',
+    'MORANT, JA', '24-25',
+    'FOX, DEAARON', '24-25',
+    'BROWN, JAYLEN', '24-25',
+    'BUTLER, JIMMY', '24-25',
+    'WILLIAMS, JALEN', '24-25',
+    'JAMES, LEBRON', '24-25',
+    'DAVIS, ANTHONY', '24-25',
+    'ANTETOKOUNMPO, GIANNIS', '24-25',
+    'CURRY, STEPHEN', '24-25',
+    'WEMBANYAMA, VICTOR', '24-25',
+    'BRUNSON, JALEN', '24-25',
+    'EDWARDS, ANTHONY', '24-25',
+    'YOUNG, TRAE', '24-25',
+    'TOWNS, KARL-ANTHONY', '24-25',
+    'HALIBURTON, TYRESE', '24-25',
+    'BALL, LAMELO', '24-25'
   ) %>% 
     mutate(star = "<img src='star.png' height='20'></img>")
 }

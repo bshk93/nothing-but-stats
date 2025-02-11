@@ -283,6 +283,12 @@ calculate_hof_points <- function(dfs_everything, dfs_playoffs, dfs,
                            coalesce(ALL_NBN_2, ''), 
                            coalesce(ALL_NBN_3, ''))) %>% 
     
+    left_join(
+      get_allstars() %>% 
+        group_by(PLAYER) %>% 
+        summarize(ALLSTARS = n(), .groups = "drop")
+    ) %>% 
+    
     arrange(desc(GMSC_WEIGHTED)) %>% 
     
     mutate(HOF_POINTS = round(GMSC_WEIGHTED / 100, 1)) %>% 
@@ -292,6 +298,7 @@ calculate_hof_points <- function(dfs_everything, dfs_playoffs, dfs,
            HOF_POINTS,
            RINGS, 
            PLAYOFF_APPS,
+           ALLSTARS,
            starts_with('ALL_'),
            everything(),
            -starts_with('ALL_NBN_'),
