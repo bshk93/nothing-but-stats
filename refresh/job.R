@@ -70,7 +70,7 @@ read_csv("https://docs.google.com/spreadsheets/d/e/2PACX-1vQ5gjscoT5YzUb0xyLafid
     team = Team,
     nby = as.numeric(str_replace_all(Amount, "[^\\d-]", ""))
   ) %>% 
-  filter(!is.na(team)) %>% 
+  filter(!is.na(team), team != "HOUSE") %>% 
   group_by(team) %>% 
   arrange(team, date) %>% 
   mutate(nby = cumsum(nby)) %>% 
