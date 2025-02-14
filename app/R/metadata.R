@@ -147,7 +147,9 @@ get_allstars <- function() {
     'YOUNG, TRAE', '24-25',
     'TOWNS, KARL-ANTHONY', '24-25',
     'HALIBURTON, TYRESE', '24-25',
-    'BALL, LAMELO', '24-25'
+    'BALL, LAMELO', '24-25',
+    'CUNNINGHAM, CADE', '24-25',
+    'ADEBAYO, BAM', '24-25'
   ) %>% 
     mutate(star = "<img src='star.png' height='20'></img>")
 }
