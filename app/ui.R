@@ -269,7 +269,7 @@ body <- dashboardBody(
       DTOutput("franchise_records"),
       
       h2('Game Highs'),
-      p("Includes any game in which a player's points, rebounds, assists, steals, and blocks add up to at least 20."),
+      p("Includes any game in which a player recorded at least 5 points, rebounds, assists, steals, or blocks."),
       DTOutput("game_high_player"),
       
       h2('Season Highs'),
