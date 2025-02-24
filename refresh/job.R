@@ -141,8 +141,8 @@ start_time <- Sys.time()
 inform("Calculating league stats....")
 # game highs
 dfs_everything %>% 
-  filter(P + R + A + S + B >= 20) %>% 
-  select(PLAYER, SEASON, DATE, OPP, P, R, A, S, B, `3PM`, TO, PF) %>% 
+  filter(pmax(P, R, A, S, B) >= 20) %>% 
+  select(PLAYER, SEASON, DATE, OPP, P, R, A, S, B, FGM, FGA, `3PM`, `3PA`, TO, PF) %>% 
   write_rds("app/data/game_high_player.rds")
 
 # season highs
@@ -292,6 +292,9 @@ x %>%
   ungroup() %>%
   select(SEED, TEAM, GB, W, L, PCT, PPG, OPPG, DIFF) %>% 
   write_csv("files/standings.csv")
+
+dfs_everything %>% 
+  write_csv("files/allstats.csv")
 
 
 
