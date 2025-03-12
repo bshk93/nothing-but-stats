@@ -282,6 +282,9 @@ body <- dashboardBody(
       DTOutput("season_high_team"),
       
       h2('Team Season Offensive/Defensive/Overall Ratings'),
+      p("Offensive rating == 'How many more points do they score than the opponent typically allows?'"),
+      p("Defensive rating == 'How many fewer points do they allow than the opponent typically scores?'"),
+      p("Overall rating == Offensive rating + Defensive rating"),
       DTOutput("team_ratings"),
       
       h2('(Regular Season) Stat Race'),
