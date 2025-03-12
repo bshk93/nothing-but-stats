@@ -4,6 +4,7 @@ dfs_playoffs <- read_rds('data/dfs_playoffs.rds')
 dfs_everything <- rbind(dfs, dfs_playoffs)
 news <- read_rds('data/news.rds')
 bios <- read_rds('data/bios.rds')
+team_ratings <- read_rds('data/team_ratings.rds')
 
 champions <- get_champions(dfs_playoffs)
 
@@ -1150,7 +1151,7 @@ function(input, output, session) {
   #### Franchise Offensive/Defensive Rating Plot ----
   output$franchise_history_scatter <- renderPlotly({
     
-    team_data <- calculate_team_offense_defense(dfs) %>%
+    team_data <- team_ratings %>%
       ungroup() %>%
       mutate(ids = str_c(SEASON, ' ', TEAM, '\nOFF: ', round(OFF_RTG, 2), '\nDEF: ', round(DEF_RTG, 2)),
              color = case_when(TEAM == input$team_history ~ 'red',

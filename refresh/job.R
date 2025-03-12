@@ -129,6 +129,8 @@ write_rds(get_newsfeed(dfs), 'app/data/news.rds')
 
 write_rds(dfs_playoffs, 'app/data/dfs_playoffs.rds')
 
+write_rds(calculate_team_offense_defense(dfs), 'app/data/team_ratings.rds')
+
 # start_time <- Sys.time()
 # inform("Parsing roster log....")
 # 
