@@ -281,6 +281,9 @@ body <- dashboardBody(
       h2('Team Season Highs'),
       DTOutput("season_high_team"),
       
+      h2('Team Season Offensive/Defensive/Overall Ratings'),
+      DTOutput("team_ratings"),
+      
       h2('(Regular Season) Stat Race'),
       selectizeInput(
         'race_var',

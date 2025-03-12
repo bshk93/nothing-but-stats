@@ -1400,34 +1400,29 @@ function(input, output, session) {
   
   #### Game Highs ----
   output$game_high_player <- renderDT({
-    begin <- Sys.time()
-    x <- format_as_datatable(game_high_player)
-    print(glue("[{sprintf('%.7f', round(Sys.time() - begin, 7))}] player game highs generated."))
-    x
+    format_as_datatable(game_high_player)
   })
   
   #### Season Highs ----
   output$season_high_player <- renderDT({
-    begin <- Sys.time()
-    x <- format_as_datatable(season_high_player)
-    print(glue("[{sprintf('%.7f', round(Sys.time() - begin, 7))}] player season highs generated."))
-    x
+    format_as_datatable(season_high_player)
   })
   
   #### Team Game Highs ----
   output$game_high_team <- renderDT({
-    begin <- Sys.time()
-    x <- format_as_datatable(game_high_team)
-    print(glue("[{sprintf('%.7f', round(Sys.time() - begin, 7))}] team game highs generated."))
-    x
+    format_as_datatable(game_high_team)
   })
   
   #### Team Season Highs ----
   output$season_high_team <- renderDT({
-    begin <- Sys.time()
-    x <- format_as_datatable(season_high_team)
-    print(glue("[{sprintf('%.7f', round(Sys.time() - begin, 7))}] team season highs generated."))
-    x
+    format_as_datatable(season_high_team)
+  })
+  
+  #### Team Offensive/Defensive Ratings ----
+  output$team_ratings <- renderDT({
+    team_ratings %>% 
+      mutate_if(is.numeric, round, 2) %>% 
+      format_as_datatable()
   })
   
   
