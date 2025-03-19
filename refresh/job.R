@@ -172,8 +172,8 @@ dfs_everything %>%
 x <- dfs_everything %>% 
   distinct(TEAM, SEASON, TEAM_PTS, OPP_TEAM_PTS, DATE) %>% 
   mutate(
-    W = sum(if_else(TEAM_PTS > OPP_TEAM_PTS, 1, 0)),
-    L = sum(if_else(TEAM_PTS < OPP_TEAM_PTS, 1, 0))
+    W = if_else(TEAM_PTS > OPP_TEAM_PTS, 1, 0),
+    L = if_else(TEAM_PTS < OPP_TEAM_PTS, 1, 0)
   ) %>% 
   group_by(TEAM, SEASON) %>% 
   summarize(
