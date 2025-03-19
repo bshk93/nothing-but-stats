@@ -170,8 +170,8 @@ dfs_everything %>%
 
 # team season highs
 x <- dfs_everything %>% 
-  distinct(TEAM, SEASON, DATE, WL) %>% 
-  group_by(TEAM, SEASON) %>% 
+  distinct(TEAM, SEASON, TEAM_PTS, OPP_TEAM_PTS, DATE, WL) %>% 
+  group_by(TEAM, SEASON, TEAM_PTS, OPP_TEAM_PTS) %>% 
   summarize(
     W = sum(if_else(WL == "W", 1, 0)),
     L = sum(if_else(WL == "L", 1, 0))
@@ -183,7 +183,7 @@ x <- dfs_everything %>%
 dfs_everything %>% 
   group_by(TEAM, SEASON) %>% 
   summarize(across(
-    c(P, R, A, S, B, `3PM`, TO, PF, TD, TEAM_PTS, OPP_TEAM_PTS), 
+    c(P, R, A, S, B, `3PM`, TO, PF, TD), 
     sum, 
     .names = "{.col}"
   ), .groups = "drop") %>% 
