@@ -169,6 +169,17 @@ dfs_everything %>%
   write_rds("app/data/game_high_team.rds")
 
 # team season highs
+x <- dfs_everything %>% 
+  distinct(TEAM, SEASON, DATE, WL) %>% 
+  group_by(TEAM, SEASON) %>% 
+  summarize(
+    W = sum(if_else(WL == "W", 1, 0)),
+    L = sum(if_else(WL == "L", 1, 0))
+  ) %>% 
+  mutate(
+    RECORD = str_c(W, "-", L),
+    PCT = W / (W + L)
+  )
 dfs_everything %>% 
   group_by(TEAM, SEASON) %>% 
   summarize(across(
@@ -178,6 +189,7 @@ dfs_everything %>%
   ), .groups = "drop") %>% 
   mutate(DIFF = TEAM_PTS - OPP_TEAM_PTS) %>% 
   select(-TEAM_PTS, -OPP_TEAM_PTS) %>% 
+  left_join(x, by = c("TEAM", "SEASON")) %>% 
   write_rds("app/data/season_high_team.rds")
 
 # # worst seasons (at least 40 games)
