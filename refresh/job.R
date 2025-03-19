@@ -178,7 +178,7 @@ x <- dfs_everything %>%
   ) %>% 
   mutate(
     RECORD = str_c(W, "-", L),
-    PCT = W / (W + L)
+    PCT = round(W / (W + L), 3)
   )
 dfs_everything %>% 
   group_by(TEAM, SEASON) %>% 
