@@ -190,6 +190,7 @@ dfs_everything %>%
   mutate(DIFF = TEAM_PTS - OPP_TEAM_PTS) %>% 
   select(-TEAM_PTS, -OPP_TEAM_PTS) %>% 
   left_join(x, by = c("TEAM", "SEASON")) %>% 
+  mutate(MOV = round(DIFF / (W + L), 2)) %>% 
   write_rds("app/data/season_high_team.rds")
 
 # # worst seasons (at least 40 games)
