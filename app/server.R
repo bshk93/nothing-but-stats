@@ -189,11 +189,11 @@ function(input, output, session) {
     
     correct <- trivia_game_state$current_question$correct_answer
     if (input$trivia_user_answer == correct && !trivia_game_state$game_over) {
-      trivia_game_state$streak <- trivia_game_state$streak + 1
+      trivia_game_state$points <- trivia_game_state$points + trivia_game_state$current_question$difficulty
       trivia_game_state$current_question <- NULL
       trivia_game_state$current_question <- trivia_next_question()
       output$trivia_result <- renderText({
-        paste("Correct! Your streak:", trivia_game_state$streak)
+        paste("Correct! You have", trivia_game_state$points, "points.")
       })
       #print(trivia_game_state$current_question)
     } else {
@@ -209,13 +209,13 @@ function(input, output, session) {
       output$trivia_result <- renderText({
         paste("You lose! The answer was...", 
               trivia_game_state$current_question$correct_answer,
-              "Your streak ended at:", trivia_game_state$streak)
+              "Your final score:", trivia_game_state$points)
       })
     }
   })
   
   observeEvent(input$trivia_restart, {
-    trivia_game_state$streak <- 0
+    trivia_game_state$points <- 0
     trivia_game_state$game_over <- FALSE
     trivia_game_state$current_question <- NULL
     trivia_game_state$current_question <- trivia_next_question()
@@ -266,7 +266,7 @@ function(input, output, session) {
   
   trivia_game_state <- reactiveValues(
     current_question = NULL,
-    streak = 0,
+    points = 0,
     game_over = FALSE
   )
   
@@ -298,17 +298,25 @@ function(input, output, session) {
         FT = (sum(FTM)/sum(FTA)) %>% round(3)
       ) %>% 
       filter(G >= 50) %>% 
+      mutate(difficulty = case_when(
+        G < 100 ~ 1000,
+        G < 200 ~ 500,
+        G < 300 ~ 250,
+        TRUE ~ 200
+      )) %>% 
       mutate(question = str_c(
         "Teams played for: ", TEAMS, "\n",
         "First season: ", FIRST_SEASON, "\n",
         "Last season: ", LAST_SEASON, "\n",
         "Career games: ", G, "\n",
         "Career high: ", HIGH, "\n",
+        "Career MPG: ", M, "\n",
         "Career P/R/A: ", str_c(P, "/", R, "/", A), "\n",
         "Career splits: ", str_c(FG, "/", `3PT`, "/", FT), "\n",
-        "(All regular season stats)"
+        "(All regular season stats)", "\n",
+        "This question is worth ", difficulty, " points."
       )) %>% 
-      select(question, correct_answer = PLAYER)
+      select(question, difficulty, correct_answer = PLAYER)
     
     df
   })
