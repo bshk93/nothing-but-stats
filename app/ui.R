@@ -23,9 +23,9 @@ sidebar <- dashboardSidebar(
        icon = icon("dashboard")
     ),
     menuItem(
-      "NBYen",
-      tabName = "tab_nbyen",
-      icon = icon("yen-sign")
+      "NBN Trivia!",
+      tabName = "tab_trivia",
+      icon = icon("puzzle-piece")
     ),
     menuItem(
       "Playoff Archive",
@@ -169,12 +169,24 @@ body <- dashboardBody(
       DTOutput("season_allstars")
     ),
     
-    ## NBYen ----
+    ## Trivia ----
     tabItem(
-      tabName = "tab_nbyen",
-      DTOutput("nbyen_table"),
-      plotlyOutput("nbyen_plot")
+      tabName = "tab_trivia",
+      verbatimTextOutput("trivia_question"),
+      uiOutput("trivia_answer"),
+      actionButton("trivia_submit", "Submit Answer"),
+      textOutput("trivia_streak"),
+      textOutput("trivia_result"),
+      actionButton("trivia_restart", "Start Over")#, style = "display:none;")#,
+      #tableOutput("trivia_leaderboard")
     ),
+    
+    # ## NBYen ----
+    # tabItem(
+    #   tabName = "tab_nbyen",
+    #   DTOutput("nbyen_table"),
+    #   plotlyOutput("nbyen_plot")
+    # ),
     
     ## Playoff Archive ----
     tabItem(

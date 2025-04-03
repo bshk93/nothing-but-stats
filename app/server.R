@@ -1,4 +1,5 @@
 # Load ----
+library(shinyjs)
 dfs <- read_rds('data/dfs.rds')
 dfs_playoffs <- read_rds('data/dfs_playoffs.rds')
 dfs_everything <- rbind(dfs, dfs_playoffs)
@@ -176,6 +177,52 @@ function(input, output, session) {
     choices = sort(unique(dfs$PLAYER)),
     server = TRUE
   )
+  
+  observe({
+    if (is.null(trivia_game_state$current_question)) {
+      trivia_game_state$current_question <- trivia_next_question()
+    }
+  })
+  
+  observeEvent(input$trivia_submit, {
+    req(input$trivia_user_answer, trivia_game_state$current_question) 
+    
+    correct <- trivia_game_state$current_question$correct_answer
+    if (input$trivia_user_answer == correct && !trivia_game_state$game_over) {
+      trivia_game_state$streak <- trivia_game_state$streak + 1
+      trivia_game_state$current_question <- NULL
+      trivia_game_state$current_question <- trivia_next_question()
+      output$trivia_result <- renderText({
+        paste("Correct! Your streak:", trivia_game_state$streak)
+      })
+      #print(trivia_game_state$current_question)
+    } else {
+      trivia_game_state$game_over <- TRUE
+      #trivia_save_score(trivia_game_state$streak)
+    }
+  })
+  
+  observeEvent(trivia_game_state$game_over, {
+    if (trivia_game_state$game_over) {
+      hide("trivia_submit")
+      show("trivia_restart")
+      output$trivia_result <- renderText({
+        paste("You lose! The answer was...", 
+              trivia_game_state$current_question$correct_answer,
+              "Your streak ended at:", trivia_game_state$streak)
+      })
+    }
+  })
+  
+  observeEvent(input$trivia_restart, {
+    trivia_game_state$streak <- 0
+    trivia_game_state$game_over <- FALSE
+    trivia_game_state$current_question <- NULL
+    trivia_game_state$current_question <- trivia_next_question()
+    output$trivia_result <- renderText({""})
+    hide("trivia_restart")
+    show("trivia_submit")
+  })
 
   ## Reactives ----
   myPlayerData <- reactive({
@@ -216,6 +263,60 @@ function(input, output, session) {
       full_join(get_allrookie(), by = c("PLAYER", "SEASON")) %>%
       filter(PLAYER == input$name)
   })
+  
+  trivia_game_state <- reactiveValues(
+    current_question = NULL,
+    streak = 0,
+    game_over = FALSE
+  )
+  
+  trivia_questions <- reactive({
+    # df <- tibble(
+    #   question = "This is a question?",
+    #   #choices = list(c("A" = "a", "B" = "b", "C" = "c")),
+    #   correct_answer = "A"
+    # ) %>% 
+    #   bind_rows(tibble(
+    #     question = "A different question?",
+    #     correct_answer = "ADAMS, STEVEN"
+    #   ))
+    
+    df <- dfs %>% 
+      group_by(PLAYER) %>% 
+      summarize(
+        FIRST_SEASON = min(SEASON),
+        LAST_SEASON = max(SEASON),
+        TEAMS = str_c(unique(TEAM), collapse = ', '),
+        HIGH = max(P),
+        G = n(),
+        M = mean(M) %>% round(1),
+        P = mean(P) %>% round(1),
+        R = mean(R) %>% round(1),
+        A = mean(A) %>% round(1),
+        FG = (sum(FGM)/sum(FGA)) %>% round(3),
+        `3PT` = (sum(`3PM`)/sum(`3PA`)) %>% round(3),
+        FT = (sum(FTM)/sum(FTA)) %>% round(3)
+      ) %>% 
+      filter(G >= 50) %>% 
+      mutate(question = str_c(
+        "Teams played for: ", TEAMS, "\n",
+        "First season: ", FIRST_SEASON, "\n",
+        "Last season: ", LAST_SEASON, "\n",
+        "Career games: ", G, "\n",
+        "Career high: ", HIGH, "\n",
+        "Career P/R/A: ", str_c(P, "/", R, "/", A), "\n",
+        "Career splits: ", str_c(FG, "/", `3PT`, "/", FT), "\n",
+        "(All regular season stats)"
+      )) %>% 
+      select(question, correct_answer = PLAYER)
+    
+    df
+  })
+  
+  trivia_next_question <- function() {
+    #req(!trivia_game_state$game_over)
+    sample_n(trivia_questions(), 1)
+  }
   
   ## Outputs ----
   ### Season Dashboard ----
@@ -1831,7 +1932,33 @@ function(input, output, session) {
   output$tm_output <- renderDT({tm_inputs()})
   
   
+  ### Trivia ----
+  output$trivia_question <- renderText({
+    req(trivia_game_state$current_question)
+    trivia_game_state$current_question$question
+  })
+  
+  output$trivia_answer <- renderUI({
+    req(trivia_game_state$current_question)
+    #choices <- trivia_game_state$current_question$choices
+    #print(choices)
+    #radioButtons("trivia_user_answer", "Your answer: ", choices = choices)
+    selectizeInput(
+      'trivia_user_answer',
+      "Your answer: ",
+      unique(dfs$PLAYER)
+    )
+  })
+  
+  output$trivia_leaderboard <- renderDT({
+    tibble(still = "UNDER CONSTRUCTION")
+  })
+  
+  
   ### NBYen ----
+  trivia_save_score <- function(streak) {
+    
+  }
   
   output$nbyen_plot <- renderPlotly({
     nbyen %>% 
