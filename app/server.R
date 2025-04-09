@@ -2022,6 +2022,11 @@ function(input, output, session) {
              N = str_c(SEASON, ' G', rn)) %>%
       ungroup()
     
+    diffs_dates <- diffs %>% 
+      distinct(DATE) %>% 
+      arrange(DATE) %>% 
+      mutate(date_index = row_number())
+    
     if (!is.null(input$ws_date_min)) {
       diffs <- diffs %>%
         filter(DATE >= input$ws_date_min)
@@ -2077,16 +2082,17 @@ function(input, output, session) {
       #   labs(x = "Date", y = "Price", title = "Price Trends by Season")
       
       # Plot without explicit ordering of SEASON, but removing gaps
-      diffs %>%
-        ggplot(aes(x = DATE, y = PRICE, group = TEAM)) +
+      p <- diffs %>%
+        left_join(diffs_dates, by = "DATE") %>% 
+        ggplot(aes(x = date_index, y = PRICE, group = TEAM)) +
         geom_line() +
         geom_point(aes(col = SEASON), size = 0.5) +
         scale_y_continuous(labels = scales::dollar_format()) +
-        scale_x_date(
-          breaks = "1 month",  # Monthly breaks for better readability
-          date_labels = "%b %Y",  # Format the dates
-          expand = c(0, 0)  # Avoid padding
-        ) +
+        # scale_x_date(
+        #   breaks = "1 month",  # Monthly breaks for better readability
+        #   date_labels = "%b %Y",  # Format the dates
+        #   expand = c(0, 0)  # Avoid padding
+        # ) +
         theme_minimal() +
         theme(
           axis.text.x = element_text(angle = 45, hjust = 1, size = 8),  # Smaller, angled labels
@@ -2094,16 +2100,26 @@ function(input, output, session) {
         ) +
         labs(x = "Date", y = "Price", title = "Price Trends by Season")
       
-      
+      ggplotly(p) %>% 
+        layout(
+          xaxis = list(
+            title = "Date",
+            tickmode = "array",
+            tickvalues = unique(diffs_dates$date_index),
+            ticktext = unique(format(diffs_dates$DATE, "%b %d")),
+            tickangle = -45
+          )
+        )
       
       
     } else {
       
-      diffs %>%
+      p <- diffs %>%
+        left_join(diffs_dates, by = "DATE") %>% 
         
-        select(rn, SEASON, TEAM, DATE, DIFF_DIFF, PCT_CHG, PRICE) %>%
+        select(rn, SEASON, TEAM, DATE, DIFF_DIFF, PCT_CHG, PRICE, date_index) %>%
         
-        ggplot(aes(x = DATE, y = PRICE, color = TEAM)) +
+        ggplot(aes(x = date_index, y = PRICE, color = TEAM)) +
         #ggplot(aes(x = DATE, y = PRICE, color = COLOR)) +
         geom_line() +
         scale_y_continuous(
@@ -2111,6 +2127,17 @@ function(input, output, session) {
         ) +
         #xlim(c(input$ws_date_min, input$ws_date_max)) +
         ggtitle('Team Value')
+      
+      ggplotly(p) %>% 
+        layout(
+          xaxis = list(
+            title = "Date",
+            tickmode = "array",
+            tickvalues = unique(diffs_dates$date_index),
+            ticktext = unique(format(diffs_dates$DATE, "%b %d")),
+            tickangle = -45
+          )
+        )
       
     }
   })
