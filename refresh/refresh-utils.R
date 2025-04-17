@@ -81,7 +81,7 @@ import_team_sheet <- function(myurl, team) {
              )) %>% 
       
       # Filter out sample rows
-      filter(PLAYER != "Roast, Brandon", PLAYER != "Huck, Charles") %>% 
+      #filter(PLAYER != "Roast, Brandon", PLAYER != "Huck, Charles") %>% 
       
       # Filter out unfinished rows
       filter(!is.na(M)) %>% 
