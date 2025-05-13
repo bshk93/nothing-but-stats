@@ -173,7 +173,8 @@ get_dpoy <- function() {
     'ANTETOKOUNMPO, GIANNIS', '20-21',
     'GOBERT, RUDY', '21-22',
     'DAVIS, ANTHONY', '22-23',
-    'WEMBANYAMA, VICTOR', '23-24'
+    'WEMBANYAMA, VICTOR', '23-24',
+    'WEMBANYAMA, VICTOR', '24-25'
   ) %>% 
     mutate(hand = "<img src='hand.png' height='20'></img>")
 }
@@ -185,7 +186,8 @@ get_roy <- function() {
     'BALL, LAMELO', '20-21',
     'BARNES, SCOTTIE', '21-22',
     'BANCHERO, PAOLO', '22-23',
-    'WEMBANYAMA, VICTOR', '23-24'
+    'WEMBANYAMA, VICTOR', '23-24',
+    'SARR, ALEX', '24-25'
   ) %>% 
     mutate(baby = "<img src='baby.png' height='20'></img>")
 }
@@ -196,7 +198,8 @@ get_6moy <- function() {
     'DINWIDDIE, SPENCER', '20-21',
     'ANTHONY, COLE', '21-22',
     'FULTZ, MARKELLE', '22-23',
-    'BANE, DESMOND', '23-24'
+    'BANE, DESMOND', '23-24',
+    'BRIDGES, MILES', '24-25'
   ) %>% 
     mutate(six = "<img src='six.png' height='20'></img>")
 }
@@ -207,7 +210,8 @@ get_mip <- function() {
     'WOOD, CHRISTIAN', '20-21',
     'GARLAND, DARIUS', '21-22',
     'BANE, DESMOND', '22-23',
-    'OKONGWU, ONYEKA', '23-24'
+    'OKONGWU, ONYEKA', '23-24',
+    'JOHNSON, JALEN', '24-25'
   ) %>% 
     mutate(chart = "<img src='chart.png', height='20'></img>")
 }
@@ -399,7 +403,8 @@ get_coty <- function() {
     'COTY (That1gal)', 'SAC', '20-21',
     'COTY (Kid Monotone)', 'IND', '21-22',
     'COTY (bryn and Q)', 'SAS', '22-23',
-    'COTY (Schu)', 'UTA', '23-24'
+    'COTY (Schu)', 'UTA', '23-24',
+    'COTY (CF)', 'MEM', '24-25'
   )
 }
 
@@ -409,7 +414,8 @@ get_foty <- function() {
     'ATL', '20-21', 'FOTY',
     'NOP', '21-22', 'FOTY',
     'SAS', '22-23', 'FOTY',
-    'UTA', '23-24', 'FOTY'
+    'UTA', '23-24', 'FOTY',
+    'MEM', '24-25', 'FOTY'
   )
 }
 
