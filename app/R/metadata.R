@@ -423,6 +423,25 @@ get_playoff_seeds <- function() {
   tribble(
     ~SEASON, ~CONF, ~SEED, ~TEAM,
     
+    # 24-25
+    '24-25 Playoffs', 'EAST', 1, 'BKN',
+    '24-25 Playoffs', 'EAST', 2, 'CHI',
+    '24-25 Playoffs', 'EAST', 3, 'MIL',
+    '24-25 Playoffs', 'EAST', 4, 'IND',
+    '24-25 Playoffs', 'EAST', 5, 'PHI',
+    '24-25 Playoffs', 'EAST', 6, 'NYK',
+    '24-25 Playoffs', 'EAST', 7, 'CLE',
+    '24-25 Playoffs', 'EAST', 8, 'ATL',
+    
+    '24-25 Playoffs', 'WEST', 1, 'SAS',
+    '24-25 Playoffs', 'WEST', 2, 'MEM',
+    '24-25 Playoffs', 'WEST', 3, 'UTA',
+    '24-25 Playoffs', 'WEST', 4, 'NOP',
+    '24-25 Playoffs', 'WEST', 5, 'PHX',
+    '24-25 Playoffs', 'WEST', 6, 'OKC',
+    '24-25 Playoffs', 'WEST', 7, 'SAC',
+    '24-25 Playoffs', 'WEST', 8, 'GSW',
+    
     # 23-24
     '23-24 Playoffs', 'EAST', 1, 'BKN',
     '23-24 Playoffs', 'EAST', 2, 'IND',
