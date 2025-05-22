@@ -161,7 +161,8 @@ get_mvp <- function() {
     'HARDEN, JAMES', '20-21',
     'JOKIC, NIKOLA', '21-22',
     'DONCIC, LUKA', '22-23',
-    'MITCHELL, DONOVAN', '23-24'
+    'MITCHELL, DONOVAN', '23-24',
+    'DONCIC, LUKA', '24-25'
   ) %>% 
     mutate(crown = "<img src='crown.png' height='20'></img>")
 }
@@ -241,7 +242,13 @@ get_allnbn1 <- function() {
     'BUTLER, JIMMY', '23-24',
     'JAMES, LEBRON', '23-24',
     'TATUM, JAYSON', '23-24',
-    'JOKIC, NIKOLA', '23-24'
+    'JOKIC, NIKOLA', '23-24',
+    
+    'ANTETOKOUNMPO, GIANNIS', '24-25',
+    'DONCIC, LUKA', '24-25',
+    'GILGEOUS-ALEXANDER, SHAI', '24-25',
+    'JOKIC, NIKOLA', '24-25',
+    'EMBIID, JOEL', '24-25'
   ) %>% 
     mutate(medal1 = "<img src='medal1.png' height='20'></img>")
 }
@@ -271,7 +278,13 @@ get_allnbn2 <- function() {
     'GILGEOUS-ALEXANDER, SHAI', '23-24',
     'ANTETOKOUNMPO, GIANNIS', '23-24',
     'HARDEN, JAMES', '23-24',
-    'CURRY, STEPHEN', '23-24'
+    'CURRY, STEPHEN', '23-24',
+    
+    'JAMES, LEBRON', '24-25',
+    'BRUNSON, JALEN', '24-25',
+    'CURRY, STEPHEN', '24-25',
+    'TATUM, JAYSON', '24-25',
+    'DAVIS, ANTHONY', '24-25'
   ) %>% 
     mutate(medal2 = "<img src='medal2.png' height='20'></img>")
 }
@@ -301,7 +314,13 @@ get_allnbn3 <- function() {
     'IRVING, KYRIE', '23-24',
     'DAVIS, ANTHONY', '23-24',
     'BOOKER, DEVIN', '23-24',
-    'GEORGE, PAUL', '23-24'
+    'GEORGE, PAUL', '23-24',
+    
+    'WEMBANYAMA, VICTOR', '24-25',
+    'DURANT, KEVIN', '24-25',
+    'MAXEY, TYRESE', '24-25',
+    'BOOKER, DEVIN', '24-25',
+    'WILLIAMSON, ZION', '24-25'
   ) %>% 
     mutate(medal3 = "<img src='medal3.png' height='20'></img>")
 }
@@ -352,7 +371,18 @@ get_alldef <- function() {
     'BALL, LONZO', '23-24',
     'JACKSON, JAREN', '23-24',
     'ANTETOKOUNMPO, GIANNIS', '23-24',
-    'HOLMGREN, CHET', '23-24'
+    'HOLMGREN, CHET', '23-24',
+    
+    'WEMBANYAMA, VICTOR', '24-25',
+    'DAVIS, ANTHONY', '24-25',
+    'TURNER, MYLES', '24-25',
+    'GILGEOUS-ALEXANDER, SHAI', '24-25',
+    'THOMPSON, AMEN', '24-25',
+    'BALL, LONZO', '24-25',
+    'ANTETOKOUNMPO, GIANNIS', '24-25',
+    'HOLIDAY, JRUE', '24-25',
+    'DANIELS, DYSON', '24-25',
+    'WILLIAMS, ROBERT', '24-25'
   ) %>% 
     mutate(fence = "<img src='fence.png' height='20'></img>")
 }
@@ -392,7 +422,18 @@ get_allrookie <- function() {
     'WHITMORE, CAM', '23-24',
     'HENDERSON, SCOOT', '23-24',
     'GEORGE, KEYONTE', '23-24',
-    'VEZENKOV, SASHA', '23-24'
+    'VEZENKOV, SASHA', '23-24',
+    
+    'SARR, ALEX', '24-25',
+    'MCCAIN, JARED', '24-25',
+    'WARE, KELEL', '24-25',
+    'CASTLE, STEPHON', '24-25',
+    'KNECHT, DALTON', '24-25',
+    'JACKSON, GG', '24-25',
+    'EDEY, ZACH', '24-25',
+    'CARRINGTON, CARLTON', '24-25',
+    'RISACHER, ZACHARIE', '24-25',
+    'CARTER, DEVIN', '24-25'
   ) %>% 
     mutate(seed = "<img src='seed.png' height='20'></img>")
 }
