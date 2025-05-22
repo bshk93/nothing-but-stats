@@ -753,7 +753,12 @@ function(input, output, session) {
       z <- y %>%
         filter((TEAM == t1 & OPP_RAW == t2) |
                  (TEAM == t2 & OPP_RAW == t1)) %>%
-        mutate(RESULT = str_c(WINNER, ' (', SERIES1, '-', SERIES2, ')')) %>%
+        mutate(SERIES_WINNER = case_when(
+          SERIES1 > SERIES2 ~ TEAM,
+          SERIES2 > SERIES1 ~ OPP_RAW,
+          TRUE ~ "TIED"
+        )) %>% 
+        mutate(RESULT = str_c(SERIES_WINNER, ' (', SERIES1, '-', SERIES2, ')')) %>%
         tail(1) %>%
         pull(RESULT)
       
@@ -765,9 +770,9 @@ function(input, output, session) {
       #   return(NA)
       # }
       
-      if (str_detect(z, '(\\b\\d\\b)-\\1')) {
-        return(str_replace(z, "^[A-Z]{3}", "TIED"))
-      }
+      # if (str_detect(z, '(\\b\\d\\b)-\\1')) {
+      #   return(str_replace(z, "^[A-Z]{3}", "TIED"))
+      # }
       
       z
     }
