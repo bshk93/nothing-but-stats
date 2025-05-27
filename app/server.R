@@ -1569,6 +1569,25 @@ function(input, output, session) {
   })
   #}, options = list(scrollX = TRUE))
   
+  #### League Champions ----
+  output$league_champs <- renderDT({
+    x <- champions %>% 
+      distinct(SEASON, CHAMPION = TEAM) %>% 
+      mutate(CHAMPION = get_logo(CHAMPION, height = 30))
+    
+    y <- get_runners_up() %>% 
+      mutate(
+        RUNNER_UP = get_logo(RUNNER_UP, height = 30),
+        EAST_RUNNER_UP = get_logo(EAST_RUNNER_UP, height = 30),
+        WEST_RUNNER_UP = get_logo(WEST_RUNNER_UP, height = 30)
+      )
+    
+    x %>% 
+      full_join(y, by = "SEASON") %>% 
+      arrange(SEASON) %>% 
+      format_as_datatable(escape = FALSE)
+  })
+  
   #### Season Awards History ----
   output$season_awards_history <- renderDT({
     x <- bind_rows(

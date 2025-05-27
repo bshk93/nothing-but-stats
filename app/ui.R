@@ -23,14 +23,21 @@ sidebar <- dashboardSidebar(
        icon = icon("dashboard")
     ),
     menuItem(
-      "NBN Trivia!",
-      tabName = "tab_trivia",
-      icon = icon("puzzle-piece")
-    ),
-    menuItem(
       "Playoff Archive",
       tabName = "tab_playoffs", 
       icon = icon("code-fork")
+    ),
+    menuItem(
+      "Hall of Fame & League History",
+      tabName = "tab_awards",
+      icon = icon("award")
+    ),
+    menuItem(
+      "League Stats & Records",
+      tabName = "tab_records", 
+      icon = icon("ranking-star")
+      # badgeLabel = "Prem",
+      # badgeColor = "yellow"
     ),
     menuItem(
       "Player Profiles",
@@ -45,18 +52,6 @@ sidebar <- dashboardSidebar(
       icon = icon("book")
       # badgeLabel = "Prem",
       # badgeColor = "yellow"
-    ),
-    menuItem(
-      "League Stats",
-      tabName = "tab_records", 
-      icon = icon("ranking-star")
-      # badgeLabel = "Prem",
-      # badgeColor = "yellow"
-    ),
-    menuItem(
-      "Hall of Fame and Awards",
-      tabName = "tab_awards",
-      icon = icon("award")
     ),
     menuItem(
       "Power Rankings",
@@ -94,6 +89,11 @@ sidebar <- dashboardSidebar(
       "Trade Machine",
       tabName = "tab_tm", 
       icon = icon("trademark")
+    ),
+    menuItem(
+      "NBN Trivia!",
+      tabName = "tab_trivia",
+      icon = icon("puzzle-piece")
     ),
     menuItem(
       "NBN Wall Street",
@@ -327,6 +327,9 @@ body <- dashboardBody(
       
       h2('NBN Hall-of-Fame Points'),
       DTOutput('hof_points'),
+      
+      h2('League Champions'),
+      DTOutput('league_champs'),
       
       h2('Season Awards History'),
       DTOutput('season_awards_history'),
