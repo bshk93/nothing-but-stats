@@ -708,6 +708,19 @@ function(input, output, session) {
     x
   }, options = list(pageLength = 50, scrollX = TRUE), rownames = FALSE)
   
+  #### Season All-NBN ----
+  output$season_allnbn <- renderDT({
+    bind_rows(
+      get_allnbn1(),
+      get_allnbn2(),
+      get_allnbn3()
+    ) %>% 
+      filter(SEASON == input$season2) %>% 
+      mutate(ALL_NBN = str_c(coalesce(medal1, ""), coalesce(medal2, ""), coalesce(medal3, ""))) %>% 
+      select(-starts_with("medal")) %>% 
+      format_as_datatable(escape = FALSE)
+  })
+  
   
   ### Playoff Archive ----
   output$playoff_bracket <- renderDT({

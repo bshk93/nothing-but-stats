@@ -166,7 +166,10 @@ body <- dashboardBody(
       
       h2("SEASON AWARDS"),
       h3("All-Stars"),
-      DTOutput("season_allstars")
+      DTOutput("season_allstars"),
+      
+      h3("All-NBN Teams"),
+      DTOutput("season_allnbn")
     ),
     
     ## Trivia ----
