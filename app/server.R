@@ -1582,6 +1582,22 @@ function(input, output, session) {
   })
   #}, options = list(scrollX = TRUE))
   
+  output$hof_plot_bar <- renderPlotly({
+    p <- calculate_hof_points(dfs_everything, dfs_playoffs, dfs, raw_data = TRUE) %>% 
+      filter(HOF_POINTS >= 100) %>% 
+      arrange(desc(HOF_POINTS)) %>% 
+      ggplot(aes(x = reorder(PLAYER, -HOF_POINTS), y = HOF_POINTS, color = PLAYER)) + 
+      geom_bar(stat = "identity") + 
+      theme_minimal()
+    
+    ggplotly(p) %>% 
+      layout(
+        xaxis = list(
+          tickangle = -45
+        )
+      )
+  })
+  
   output$hof_plot <- renderPlotly({
     x <- dfs_everything %>% 
       group_by(PLAYER) %>%

@@ -187,12 +187,18 @@ most_teams <- function(dfs_everything) {
 
 
 calculate_hof_points <- function(dfs_everything, dfs_playoffs, dfs,
-                                 team_filter = NULL) {
+                                 team_filter = NULL, raw_data = FALSE) {
   
   temp_everything <- dfs_everything
   temp_playoffs <- dfs_playoffs
   temp_non_playoffs <- dfs
   temp_champs <- get_champions(dfs_playoffs)
+  # temp_mvp <- get_mvp() %>% select(PLAYER, SEASON)
+  # temp_dpoy <- get_dpoy() %>% select(PLAYER, SEASON)
+  # temp_others <- get_roy() %>% 
+  #   bind_rows(get_6moy()) %>% 
+  #   bind_rows(get_mip()) %>% 
+  #   select(PLAYER, SEASON)
   
   if (!is.null(team_filter)) {
     temp_everything <- temp_everything %>% 
@@ -322,6 +328,7 @@ calculate_hof_points <- function(dfs_everything, dfs_playoffs, dfs,
       )
   }
   
+  if (raw_data) return(x)
   
   x %>% 
     

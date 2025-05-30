@@ -331,8 +331,8 @@ body <- dashboardBody(
       h2('NBN Hall-of-Fame Points'),
       p("HOF points are calculated using GMSC, wins, and playoff performance."),
       DTOutput('hof_points'),
-      # p("For any player with at least 130 HOF points, see how their legacy grew over time."),
-      # plotlyOutput('hof_plot'),
+      p("Players with at least 100 HOF points:"),
+      plotlyOutput('hof_plot_bar'),
       
       h2('League Champions'),
       DTOutput('league_champs'),
