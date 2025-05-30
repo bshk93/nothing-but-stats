@@ -49,7 +49,7 @@ allstats <- get_allstats(delete_before = delete_before_date) %>%
   check_allstats()
 inform(" * DONE")
 
-if (nrow(allstats$errors$games) > 0) {
+if (nrow(allstats$errors$games %>% filter(DATE <= drop_date)) > 0) {
   abort(c(
     "Found errors in the Sheets data.",
     str_c(
@@ -61,6 +61,21 @@ if (nrow(allstats$errors$games) > 0) {
     )
   ))
 }
+
+# # Refresh NBYen
+# read_csv("https://docs.google.com/spreadsheets/d/e/2PACX-1vQ5gjscoT5YzUb0xyLafidnkQDxF_8RfULxLSyZYIoXD6RPdHoi4dUoJhDBYwuD4zugcFl_LyBrL44K/pub?gid=0&single=true&output=csv",
+#          col_names = T, skip = 1) %>%
+#   transmute(
+#     date = mdy(Date),
+#     team = Team,
+#     nby = as.numeric(str_replace_all(Amount, "[^\\d-]", ""))
+#   ) %>% 
+#   filter(!is.na(team), team != "HOUSE") %>% 
+#   group_by(team) %>% 
+#   arrange(team, date) %>% 
+#   mutate(nby = cumsum(nby)) %>% 
+#   write_csv("app/data/nbyen.csv")
+
 
 inform("Building allstats....")
 built_allstats <- build_allstats(allstats$data %>% filter(DATE <= drop_date))
@@ -114,12 +129,22 @@ write_rds(get_newsfeed(dfs), 'app/data/news.rds')
 
 write_rds(dfs_playoffs, 'app/data/dfs_playoffs.rds')
 
+write_rds(calculate_team_offense_defense(dfs), 'app/data/team_ratings.rds')
+
+# start_time <- Sys.time()
+# inform("Parsing roster log....")
+# 
+# read_delim("app/data/roster-log.txt", delim = ";FARTS;", col_names = c("ts", "text")) %>% 
+#   transmute(DATE = as_date(ts), TEXT = toupper(text))
+# 
+# inform(glue(" * DONE [{round(Sys.time() - start_time, 1)}s]"))
+
 start_time <- Sys.time()
 inform("Calculating league stats....")
 # game highs
 dfs_everything %>% 
-  filter(P + R + A + S + B >= 20) %>% 
-  select(PLAYER, SEASON, DATE, OPP, P, R, A, S, B, `3PM`, TO, PF) %>% 
+  filter(pmax(P, R, A, S, B) >= 5) %>% 
+  select(PLAYER, SEASON, DATE, OPP, P, R, A, S, B, FGM, FGA, `3PM`, `3PA`, TO, PF) %>% 
   write_rds("app/data/game_high_player.rds")
 
 # season highs
@@ -144,16 +169,76 @@ dfs_everything %>%
   write_rds("app/data/game_high_team.rds")
 
 # team season highs
+x <- dfs_everything %>% 
+  distinct(TEAM, SEASON, TEAM_PTS, OPP_TEAM_PTS, DATE) %>% 
+  mutate(
+    W = if_else(TEAM_PTS > OPP_TEAM_PTS, 1, 0),
+    L = if_else(TEAM_PTS < OPP_TEAM_PTS, 1, 0)
+  ) %>% 
+  group_by(TEAM, SEASON) %>% 
+  summarize(
+    W = sum(W),
+    L = sum(L),
+    TEAM_PTS = sum(TEAM_PTS),
+    OPP_TEAM_PTS = sum(OPP_TEAM_PTS),
+    .groups = "drop"
+  ) %>% 
+  mutate(
+    RECORD = str_c(W, "-", L),
+    PCT = round(W / (W + L), 3)
+  )
 dfs_everything %>% 
   group_by(TEAM, SEASON) %>% 
   summarize(across(
-    c(P, R, A, S, B, `3PM`, TO, PF, TD, TEAM_PTS, OPP_TEAM_PTS), 
+    c(P, R, A, S, B, `3PM`, TO, PF, TD), 
     sum, 
     .names = "{.col}"
   ), .groups = "drop") %>% 
-  mutate(DIFF = TEAM_PTS - OPP_TEAM_PTS) %>% 
+  left_join(x, by = c("TEAM", "SEASON")) %>% 
+  mutate(DIFF = TEAM_PTS - OPP_TEAM_PTS,
+         MOV = round(DIFF / (W + L), 2)) %>% 
   select(-TEAM_PTS, -OPP_TEAM_PTS) %>% 
   write_rds("app/data/season_high_team.rds")
+
+# # worst seasons (at least 40 games)
+# dfs %>%
+#   select(PLAYER, SEASON, TEAM, M, P, R, OR, DR, A, S, B, TO, GMSC, FGM, FGA, `3PM`, `3PA`, FTM, FTA, PF, WL) %>%
+#   group_by(PLAYER, SEASON) %>%
+#   summarize(
+#     G = n(),
+#     TEAMS = str_c(unique(TEAM), collapse = ", "),
+#     foul_outs = sum(PF == 6),
+#     win_pct = round(sum(WL == "W")/n(), 3),
+#     across(-c(TEAM, TEAMS, foul_outs, WL, win_pct), sum),
+#     .groups = "drop"
+#   ) %>%
+#   filter(M > 1500) %>% 
+#   mutate(
+#     fg_missed = FGA - FGM,
+#     ft_missed = FTA - FTM,
+#     pts_missed = 2 * (fg_missed) + (ft_missed),
+#     turnovers = TO,
+#     possessions_wasted = FGA - FGM + TO - OR - S,
+#     GMSC_per_min = GMSC / M
+#   ) %>%
+#   select(
+#     PLAYER, SEASON, TEAMS, G, MP = M,
+#     win_pct,
+#     GMSC_per_min,
+#     fg_missed,
+#     ft_missed,
+#     pts_missed,
+#     turnovers,
+#     possessions_wasted,
+#     foul_outs
+#   ) %>%
+#   mutate(
+#     pts_missed_per_min = pts_missed / MP,
+#     possessions_wasted_per_min = possessions_wasted / MP,
+#     foul_outs_per_min = foul_outs / MP
+#   )
+
+
 
 inform(glue(" * DONE [{round(Sys.time() - start_time, 1)}s]"))
 
@@ -162,35 +247,102 @@ if (toupper(skip_achievements) %in% c("TRUE", "T")) {
 } else {
   start_time <- Sys.time()
   inform("Calculating achievements....")
+  
+  
   ach_metadata <- read_csv("app/data/metadata-achievements.csv", show_col_types = FALSE)
   
-  ach_game <- dfs %>% 
-    nest_by(PLAYER) %>% 
-    mutate(ach = list(get_achievements_game(
-      data,
-      ach_metadata
-    ))) %>% 
-    select(-data) %>% 
-    unnest(ach)
+  ach_game <- dfs %>%
+    group_split(PLAYER) %>%
+    map_dfr(~ {
+      player_data <- .x
+      player_ach <- get_achievements_game(player_data, ach_metadata)
+      return(player_ach)
+    })
   
   write_rds(ach_game, 'app/data/ach_game.rds')
   
-  ach_season <- dfs %>% 
-    nest_by(PLAYER) %>% 
-    mutate(ach = list(get_achievements_season(
-      data,
-      dfs,
-      PLAYER,
-      ach_metadata
-    ))) %>% 
-    select(-data) %>% 
-    unnest(ach) %>% 
-    ungroup()
+  ach_season <- dfs %>%
+    group_split(PLAYER) %>%
+    map_dfr(~ {
+      player_data <- .x
+      player_id <- player_data$PLAYER[1]
+      player_ach <- get_achievements_season(player_data, dfs, player_id, ach_metadata)
+      return(player_ach)
+    })
   
   write_rds(ach_season, 'app/data/ach_season.rds')
   
+  
+  # ach_metadata <- read_csv("app/data/metadata-achievements.csv", show_col_types = FALSE)
+  # 
+  # ach_game <- dfs %>% 
+  #   nest_by(PLAYER) %>% 
+  #   mutate(ach = list(get_achievements_game(
+  #     data,
+  #     ach_metadata
+  #   ))) %>% 
+  #   select(-data) %>% 
+  #   unnest(ach)
+  # 
+  # write_rds(ach_game, 'app/data/ach_game.rds')
+  # 
+  # ach_season <- dfs %>% 
+  #   nest_by(PLAYER) %>% 
+  #   mutate(ach = list(get_achievements_season(
+  #     data,
+  #     dfs,
+  #     PLAYER,
+  #     ach_metadata
+  #   ))) %>% 
+  #   select(-data) %>% 
+  #   unnest(ach) %>% 
+  #   ungroup()
+  # 
+  # write_rds(ach_season, 'app/data/ach_season.rds')
+  
   inform(glue(" * DONE [{round(Sys.time() - start_time, 1)}s]"))
 }
+
+
+# Update files in /var/www/stats.nbn.today/files/
+inform("Updating /files/...")
+  
+x <- dfs %>% 
+  filter(SEASON == max(SEASON)) %>% 
+  group_by(DATE, TEAM, OPP) %>%
+  summarize(TEAM_PTS = sum(P), .groups = 'drop') %>%
+  ungroup() %>%
+  mutate(OPP = str_replace(OPP, "@", ""))
+
+x %>%
+  left_join(
+    x %>%
+      select(DATE, OPP = TEAM, OPP_PTS = TEAM_PTS),
+    by = c('DATE', 'OPP')
+  ) %>%
+  group_by(TEAM) %>%
+  summarize(
+    W = sum(TEAM_PTS > OPP_PTS),
+    L = sum(TEAM_PTS < OPP_PTS),
+    PPG = mean(TEAM_PTS),
+    OPPG = mean(OPP_PTS),
+    .groups = 'drop'
+  ) %>%
+  mutate(PCT = round(W / (W+L), 3),
+         DIFF = round(PPG - OPPG, 1),
+         PPG = round(PPG, 1),
+         OPPG = round(OPPG, 1),
+         CONF = get_conference(TEAM)) %>%
+  group_by(CONF) %>%
+  mutate(GB = (max(W - L) - (W - L))/2) %>%
+  arrange(CONF, GB) %>%
+  mutate(SEED = str_c(CONF, "-", row_number())) %>%
+  ungroup() %>%
+  select(SEED, TEAM, GB, W, L, PCT, PPG, OPPG, DIFF) %>% 
+  write_csv("files/standings.csv")
+
+dfs_everything %>% 
+  write_csv("files/allstats.csv")
 
 
 

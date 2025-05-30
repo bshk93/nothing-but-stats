@@ -1,13 +1,16 @@
 # Load ----
+library(shinyjs)
 dfs <- read_rds('data/dfs.rds')
 dfs_playoffs <- read_rds('data/dfs_playoffs.rds')
 dfs_everything <- rbind(dfs, dfs_playoffs)
 news <- read_rds('data/news.rds')
 bios <- read_rds('data/bios.rds')
+team_ratings <- read_rds('data/team_ratings.rds')
 
 champions <- get_champions(dfs_playoffs)
 
 ach_metadata <- read_csv("data/metadata-achievements.csv", show_col_types = FALSE)
+nbyen <- read_csv("data/nbyen.csv")
 
 my_ranks <- get_ranks(dfs)
 
@@ -174,6 +177,52 @@ function(input, output, session) {
     choices = sort(unique(dfs$PLAYER)),
     server = TRUE
   )
+  
+  observe({
+    if (is.null(trivia_game_state$current_question)) {
+      trivia_game_state$current_question <- trivia_next_question()
+    }
+  })
+  
+  observeEvent(input$trivia_submit, {
+    req(input$trivia_user_answer, trivia_game_state$current_question) 
+    
+    correct <- trivia_game_state$current_question$correct_answer
+    if (input$trivia_user_answer == correct && !trivia_game_state$game_over) {
+      trivia_game_state$points <- trivia_game_state$points + trivia_game_state$current_question$difficulty
+      trivia_game_state$current_question <- NULL
+      trivia_game_state$current_question <- trivia_next_question()
+      output$trivia_result <- renderText({
+        paste("Correct! You have", trivia_game_state$points, "points.")
+      })
+      #print(trivia_game_state$current_question)
+    } else {
+      trivia_game_state$game_over <- TRUE
+      #trivia_save_score(trivia_game_state$streak)
+    }
+  })
+  
+  observeEvent(trivia_game_state$game_over, {
+    if (trivia_game_state$game_over) {
+      hide("trivia_submit")
+      show("trivia_restart")
+      output$trivia_result <- renderText({
+        paste("You lose! The answer was...", 
+              trivia_game_state$current_question$correct_answer,
+              "Your final score:", trivia_game_state$points)
+      })
+    }
+  })
+  
+  observeEvent(input$trivia_restart, {
+    trivia_game_state$points <- 0
+    trivia_game_state$game_over <- FALSE
+    trivia_game_state$current_question <- NULL
+    trivia_game_state$current_question <- trivia_next_question()
+    output$trivia_result <- renderText({""})
+    hide("trivia_restart")
+    show("trivia_submit")
+  })
 
   ## Reactives ----
   myPlayerData <- reactive({
@@ -214,6 +263,68 @@ function(input, output, session) {
       full_join(get_allrookie(), by = c("PLAYER", "SEASON")) %>%
       filter(PLAYER == input$name)
   })
+  
+  trivia_game_state <- reactiveValues(
+    current_question = NULL,
+    points = 0,
+    game_over = FALSE
+  )
+  
+  trivia_questions <- reactive({
+    # df <- tibble(
+    #   question = "This is a question?",
+    #   #choices = list(c("A" = "a", "B" = "b", "C" = "c")),
+    #   correct_answer = "A"
+    # ) %>% 
+    #   bind_rows(tibble(
+    #     question = "A different question?",
+    #     correct_answer = "ADAMS, STEVEN"
+    #   ))
+    
+    df <- dfs %>% 
+      group_by(PLAYER) %>% 
+      summarize(
+        FIRST_SEASON = min(SEASON),
+        LAST_SEASON = max(SEASON),
+        TEAMS = str_c(unique(TEAM), collapse = ', '),
+        HIGH = max(P),
+        G = n(),
+        M = mean(M) %>% round(1),
+        P = mean(P) %>% round(1),
+        R = mean(R) %>% round(1),
+        A = mean(A) %>% round(1),
+        FG = (sum(FGM)/sum(FGA)) %>% round(3),
+        `3PT` = (sum(`3PM`)/sum(`3PA`)) %>% round(3),
+        FT = (sum(FTM)/sum(FTA)) %>% round(3)
+      ) %>% 
+      filter(G >= 50) %>% 
+      mutate(difficulty = case_when(
+        G < 100 ~ 1000,
+        G < 200 ~ 500,
+        G < 300 ~ 250,
+        TRUE ~ 200
+      )) %>% 
+      mutate(question = str_c(
+        "Teams played for: ", TEAMS, "\n",
+        "First season: ", FIRST_SEASON, "\n",
+        "Last season: ", LAST_SEASON, "\n",
+        "Career games: ", G, "\n",
+        "Career high: ", HIGH, "\n",
+        "Career MPG: ", M, "\n",
+        "Career P/R/A: ", str_c(P, "/", R, "/", A), "\n",
+        "Career splits: ", str_c(FG, "/", `3PT`, "/", FT), "\n",
+        "(All regular season stats)", "\n",
+        "This question is worth ", difficulty, " points."
+      )) %>% 
+      select(question, difficulty, correct_answer = PLAYER)
+    
+    df
+  })
+  
+  trivia_next_question <- function() {
+    #req(!trivia_game_state$game_over)
+    sample_n(trivia_questions(), 1)
+  }
   
   ## Outputs ----
   ### Season Dashboard ----
@@ -597,6 +708,19 @@ function(input, output, session) {
     x
   }, options = list(pageLength = 50, scrollX = TRUE), rownames = FALSE)
   
+  #### Season All-NBN ----
+  output$season_allnbn <- renderDT({
+    bind_rows(
+      get_allnbn1(),
+      get_allnbn2(),
+      get_allnbn3()
+    ) %>% 
+      filter(SEASON == input$season2) %>% 
+      mutate(ALL_NBN = str_c(coalesce(medal1, ""), coalesce(medal2, ""), coalesce(medal3, ""))) %>% 
+      select(-starts_with("medal")) %>% 
+      format_as_datatable(escape = FALSE)
+  })
+  
   
   ### Playoff Archive ----
   output$playoff_bracket <- renderDT({
@@ -642,7 +766,12 @@ function(input, output, session) {
       z <- y %>%
         filter((TEAM == t1 & OPP_RAW == t2) |
                  (TEAM == t2 & OPP_RAW == t1)) %>%
-        mutate(RESULT = str_c(WINNER, ' (', SERIES1, '-', SERIES2, ')')) %>%
+        mutate(SERIES_WINNER = case_when(
+          SERIES1 > SERIES2 ~ TEAM,
+          SERIES2 > SERIES1 ~ OPP_RAW,
+          TRUE ~ "TIED"
+        )) %>% 
+        mutate(RESULT = str_c(SERIES_WINNER, ' (', SERIES1, '-', SERIES2, ')')) %>%
         tail(1) %>%
         pull(RESULT)
       
@@ -654,9 +783,9 @@ function(input, output, session) {
       #   return(NA)
       # }
       
-      if (str_detect(z, '(\\b\\d\\b)-\\1')) {
-        return(str_replace(z, "^[A-Z]{3}", "TIED"))
-      }
+      # if (str_detect(z, '(\\b\\d\\b)-\\1')) {
+      #   return(str_replace(z, "^[A-Z]{3}", "TIED"))
+      # }
       
       z
     }
@@ -990,6 +1119,11 @@ function(input, output, session) {
     x
   })
   
+  #### Transaction History ----
+  output$transaction_history <- renderDT({
+    read_delim()
+  })
+  
   #### Achievements - Season ----
   output$achievements_season <- renderDT({
     
@@ -1144,7 +1278,7 @@ function(input, output, session) {
   #### Franchise Offensive/Defensive Rating Plot ----
   output$franchise_history_scatter <- renderPlotly({
     
-    team_data <- calculate_team_offense_defense(dfs) %>%
+    team_data <- team_ratings %>%
       ungroup() %>%
       mutate(ids = str_c(SEASON, ' ', TEAM, '\nOFF: ', round(OFF_RTG, 2), '\nDEF: ', round(DEF_RTG, 2)),
              color = case_when(TEAM == input$team_history ~ 'red',
@@ -1393,34 +1527,29 @@ function(input, output, session) {
   
   #### Game Highs ----
   output$game_high_player <- renderDT({
-    begin <- Sys.time()
-    x <- format_as_datatable(game_high_player)
-    print(glue("[{sprintf('%.7f', round(Sys.time() - begin, 7))}] player game highs generated."))
-    x
+    format_as_datatable(game_high_player)
   })
   
   #### Season Highs ----
   output$season_high_player <- renderDT({
-    begin <- Sys.time()
-    x <- format_as_datatable(season_high_player)
-    print(glue("[{sprintf('%.7f', round(Sys.time() - begin, 7))}] player season highs generated."))
-    x
+    format_as_datatable(season_high_player)
   })
   
   #### Team Game Highs ----
   output$game_high_team <- renderDT({
-    begin <- Sys.time()
-    x <- format_as_datatable(game_high_team)
-    print(glue("[{sprintf('%.7f', round(Sys.time() - begin, 7))}] team game highs generated."))
-    x
+    format_as_datatable(game_high_team)
   })
   
   #### Team Season Highs ----
   output$season_high_team <- renderDT({
-    begin <- Sys.time()
-    x <- format_as_datatable(season_high_team)
-    print(glue("[{sprintf('%.7f', round(Sys.time() - begin, 7))}] team season highs generated."))
-    x
+    format_as_datatable(season_high_team)
+  })
+  
+  #### Team Offensive/Defensive Ratings ----
+  output$team_ratings <- renderDT({
+    team_ratings %>% 
+      mutate_if(is.numeric, round, 2) %>% 
+      format_as_datatable()
   })
   
   
@@ -1450,7 +1579,173 @@ function(input, output, session) {
   ### Hall of Fame + Awards ----
   output$hof_points <- renderDT({
     calculate_hof_points(dfs_everything, dfs_playoffs, dfs)
-  }, options = list(scrollX = TRUE))
+  })
+  #}, options = list(scrollX = TRUE))
+  
+  output$hof_plot_bar <- renderPlotly({
+    p <- calculate_hof_points(dfs_everything, dfs_playoffs, dfs, raw_data = TRUE) %>% 
+      filter(HOF_POINTS >= 100) %>% 
+      arrange(desc(HOF_POINTS)) %>% 
+      ggplot(aes(x = reorder(PLAYER, -HOF_POINTS), y = HOF_POINTS, color = PLAYER)) + 
+      geom_bar(stat = "identity") + 
+      theme_minimal()
+    
+    ggplotly(p) %>% 
+      layout(
+        xaxis = list(
+          tickangle = -45
+        )
+      )
+  })
+  
+  output$hof_plot <- renderPlotly({
+    x <- dfs_everything %>% 
+      group_by(PLAYER) %>%
+      mutate(
+        G = 1,
+        
+        GMSC_WGT_WL = case_when(
+          WL == 'W' ~ 1.25,
+          TRUE ~ 0.75
+        ),
+        GMSC_WGT_GAMETYPE = case_when(
+          ROUND == 1 ~ 2,
+          ROUND == 2 ~ 4,
+          ROUND == 3 ~ 8,
+          ROUND == 4 ~ 16,
+          TRUE ~ 1
+        ),
+        
+        GMSC_WEIGHTED = GMSC * GMSC_WGT_WL * GMSC_WGT_GAMETYPE
+      ) %>% 
+      arrange(PLAYER, DATE) %>% 
+      mutate(HOF_POINTS = cumsum(GMSC_WEIGHTED/100),
+             TOT_POINTS = sum(GMSC_WEIGHTED)/100) %>% 
+      filter(TOT_POINTS >= 130) %>% 
+      ungroup()
+    
+    x_dates <- x %>% 
+      distinct(DATE) %>% 
+      arrange(DATE) %>% 
+      mutate(date_index = row_number())
+    
+    # Plot without explicit ordering of SEASON, but removing gaps
+    p <- x %>%
+      left_join(x_dates, by = "DATE") %>% 
+      ggplot(aes(x = date_index, y = HOF_POINTS, group = PLAYER)) +
+      geom_line(aes(col = PLAYER)) +
+      #geom_point(aes(col = PLAYER), size = 0.5) +
+      #scale_y_continuous(labels = scales::dollar_format()) +
+      theme_minimal() +
+      theme(
+        axis.text.x = element_text(angle = 45, hjust = 1, size = 8),  # Smaller, angled labels
+        panel.grid.major.x = element_blank()  # Remove excessive gridlines
+      ) +
+      labs(x = "Date", y = "HOF Points", title = "")
+    
+    ggplotly(p) %>% 
+      layout(
+        xaxis = list(
+          title = "Date",
+          tickmode = "array",
+          tickvalues = unique(x_dates$date_index),
+          ticktext = unique(format(x_dates$DATE, "%b %d")),
+          tickangle = -45
+        )
+      )
+  })
+  
+  #### League Champions ----
+  output$league_champs <- renderDT({
+    x <- champions %>% 
+      distinct(SEASON, CHAMPION = TEAM) %>% 
+      mutate(CHAMPION = get_logo(CHAMPION, height = 30))
+    
+    y <- get_runners_up() %>% 
+      mutate(
+        RUNNER_UP = get_logo(RUNNER_UP, height = 30),
+        EAST_RUNNER_UP = get_logo(EAST_RUNNER_UP, height = 30),
+        WEST_RUNNER_UP = get_logo(WEST_RUNNER_UP, height = 30)
+      )
+    
+    x %>% 
+      full_join(y, by = "SEASON") %>% 
+      arrange(SEASON) %>% 
+      format_as_datatable(escape = FALSE)
+  })
+  
+  #### Season Awards History ----
+  output$season_awards_history <- renderDT({
+    x <- bind_rows(
+      get_mvp() %>% mutate(AWARD = "Most Valuable Player"),
+      get_dpoy() %>% mutate(AWARD = "Defensive Player of the Year"),
+      get_roy() %>% mutate(AWARD = "Rookie of the Year"),
+      get_6moy() %>% mutate(AWARD = "Sixth Man of the Year"),
+      get_mip() %>% mutate(AWARD = "Most Improved Player")
+    ) %>% 
+      select(AWARD, SEASON, PLAYER)
+    
+    y <- dfs %>% 
+      filter(PLAYER %in% x$PLAYER) %>% 
+      group_by(PLAYER, SEASON) %>% 
+      arrange(PLAYER, SEASON, DATE) %>% 
+      summarize(TEAM = last(TEAM), .groups = "drop") %>% 
+      mutate(TEAM = get_logo(TEAM, height = 30))
+    
+    x %>% 
+      left_join(
+        y,
+        by = c("PLAYER", "SEASON")
+      ) %>% 
+      mutate(PLAYER = str_c(PLAYER, " ", TEAM)) %>% 
+      select(-TEAM) %>% 
+      format_as_datatable(escape = FALSE)
+  })
+  
+  output$front_office_awards <- renderDT({
+    bind_rows(
+      get_foty(),
+      get_coty() %>% 
+        mutate(
+          x = str_extract(AWARD, "\\(.*\\)"),
+          AWARD = "COTY"
+        )
+    ) %>% 
+      arrange(SEASON, AWARD) %>% 
+      
+      mutate(
+        TEAM = str_c(TEAM, " ", get_logo(TEAM, height = 30), " ", coalesce(x, ""))
+      ) %>% 
+      
+      select(SEASON, AWARD, TEAM) %>% 
+      format_as_datatable(escape = FALSE)
+  })
+  
+  output$all_nbn <- renderDT({
+    x <- bind_rows(
+      get_allnbn1() %>% mutate(AWARD = "NBN FIRST TEAM"),
+      get_allnbn2() %>% mutate(AWARD = "NBN SECOND TEAM"),
+      get_allnbn3() %>% mutate(AWARD = "NBN THIRD TEAM")
+    ) %>% 
+      select(SEASON, AWARD, PLAYER) %>% 
+      arrange(SEASON, AWARD, PLAYER)
+    
+    y <- dfs %>% 
+      filter(PLAYER %in% x$PLAYER) %>% 
+      group_by(PLAYER, SEASON) %>% 
+      arrange(PLAYER, SEASON, DATE) %>% 
+      summarize(TEAM = last(TEAM), .groups = "drop") %>% 
+      mutate(TEAM = get_logo(TEAM, height = 30))
+    
+    x %>% 
+      left_join(
+        y,
+        by = c("PLAYER", "SEASON")
+      ) %>% 
+      mutate(PLAYER = str_c(PLAYER, " ", TEAM)) %>% 
+      select(-TEAM) %>% 
+      format_as_datatable(escape = FALSE, page_length = 15)
+  })
   
   
   ### Power Rankings ----
@@ -1514,6 +1809,18 @@ function(input, output, session) {
       highlight = TRUE,
       compact = TRUE
     )
+  })
+  
+  
+  ### Frivolities ----
+  output$stability <- renderPlotly({
+    roster_stability(dfs) %>% 
+      plot_roster_stability()
+  })
+  
+  output$most_teams <- renderDT({
+    most_teams(dfs_everything) %>% 
+      format_as_datatable(escape = FALSE)
   })
   
   
@@ -1743,6 +2050,59 @@ function(input, output, session) {
   output$tm_output <- renderDT({tm_inputs()})
   
   
+  ### Trivia ----
+  output$trivia_question <- renderText({
+    req(trivia_game_state$current_question)
+    trivia_game_state$current_question$question
+  })
+  
+  output$trivia_answer <- renderUI({
+    req(trivia_game_state$current_question)
+    #choices <- trivia_game_state$current_question$choices
+    #print(choices)
+    #radioButtons("trivia_user_answer", "Your answer: ", choices = choices)
+    selectizeInput(
+      'trivia_user_answer',
+      "Your answer: ",
+      unique(dfs$PLAYER)
+    )
+  })
+  
+  output$trivia_leaderboard <- renderDT({
+    tibble(still = "UNDER CONSTRUCTION")
+  })
+  
+  
+  ### NBYen ----
+  trivia_save_score <- function(streak) {
+    
+  }
+  
+  output$nbyen_plot <- renderPlotly({
+    nbyen %>% 
+      plot_ly(
+        x = ~date,
+        y = ~nby,
+        color = ~team,
+        type = "scatter",
+        mode = "lines"
+      )
+  })
+  
+  output$nbyen_table <- renderDT({
+    nbyen %>% 
+      group_by(team) %>% 
+      filter(date == max(date)) %>% 
+      ungroup() %>% 
+      select(team, nby) %>% 
+      arrange(desc(nby)) %>% 
+      format_as_datatable(
+        page_length = 30
+      ) %>% 
+      formatCurrency("nby", currency = "¥")
+  })
+  
+  
   ### NBN Wall Street ----
   output$ws_prices <- renderDT({
     
@@ -1772,6 +2132,11 @@ function(input, output, session) {
              N = str_c(SEASON, ' G', rn)) %>%
       ungroup()
     
+    diffs_dates <- diffs %>% 
+      distinct(DATE) %>% 
+      arrange(DATE) %>% 
+      mutate(date_index = row_number())
+    
     if (!is.null(input$ws_date_min)) {
       diffs <- diffs %>%
         filter(DATE >= input$ws_date_min)
@@ -1785,28 +2150,86 @@ function(input, output, session) {
     if (nrow(diffs) == 0) {
       NULL
     } else if (length(input$ws_teams) == 1) {
+      # 
+      # diffs %>%
+      #   
+      #   select(SEASON, TEAM, DATE, N, DIFF_DIFF, PCT_CHG, PRICE) %>%
+      #   group_by(TEAM) %>%
+      #   
+      #   ggplot(aes(x = DATE, y = PRICE)) +
+      #   geom_line() +
+      #   geom_point(aes(col = SEASON), size = 0.5) +
+      #   scale_y_continuous(
+      #     labels=scales::dollar_format()
+      #   ) +
+      #   #xlim(c(input$ws_date_min, input$ws_date_max)) +
+      #   ggtitle('Team Value')
       
-      diffs %>%
-        
-        select(SEASON, TEAM, DATE, N, DIFF_DIFF, PCT_CHG, PRICE) %>%
-        group_by(TEAM) %>%
-        
-        ggplot(aes(x = DATE, y = PRICE)) +
+      # diffs %>%
+      #   mutate(
+      #     # Custom ordering: Regular season comes before playoffs
+      #     SEASON = factor(SEASON, levels = unique(diffs %>%
+      #                                               arrange(DATE) %>%  # Ensure chronological order
+      #                                               pull(SEASON)), 
+      #                     ordered = TRUE)
+      #   ) %>%
+      #   mutate(
+      #     SEASON_DATE = paste(SEASON, DATE, sep = "_")  # Combine season and date
+      #   ) %>%
+      #   ggplot(aes(x = SEASON_DATE, y = PRICE, group = TEAM)) +
+      #   geom_line() +
+      #   geom_point(aes(col = SEASON), size = 0.5) +
+      #   scale_y_continuous(labels = scales::dollar_format()) +
+      #   scale_x_discrete(
+      #     breaks = function(x) x[seq(1, length(x), by = 30)],  # Show every 30th tick
+      #     labels = function(x) gsub(".*_(.*)", "\\1", x)  # Only display the date part
+      #   ) +
+      #   theme_minimal() +
+      #   theme(
+      #     axis.text.x = element_text(angle = 45, hjust = 1, size = 8),  # Smaller, angled labels
+      #     panel.grid.major.x = element_blank()  # Remove excessive gridlines
+      #   ) +
+      #   labs(x = "Date", y = "Price", title = "Price Trends by Season")
+      
+      # Plot without explicit ordering of SEASON, but removing gaps
+      p <- diffs %>%
+        left_join(diffs_dates, by = "DATE") %>% 
+        ggplot(aes(x = date_index, y = PRICE, group = TEAM)) +
         geom_line() +
         geom_point(aes(col = SEASON), size = 0.5) +
-        scale_y_continuous(
-          labels=scales::dollar_format()
+        scale_y_continuous(labels = scales::dollar_format()) +
+        # scale_x_date(
+        #   breaks = "1 month",  # Monthly breaks for better readability
+        #   date_labels = "%b %Y",  # Format the dates
+        #   expand = c(0, 0)  # Avoid padding
+        # ) +
+        theme_minimal() +
+        theme(
+          axis.text.x = element_text(angle = 45, hjust = 1, size = 8),  # Smaller, angled labels
+          panel.grid.major.x = element_blank()  # Remove excessive gridlines
         ) +
-        #xlim(c(input$ws_date_min, input$ws_date_max)) +
-        ggtitle('Team Value')
+        labs(x = "Date", y = "Price", title = "Price Trends by Season")
+      
+      ggplotly(p) %>% 
+        layout(
+          xaxis = list(
+            title = "Date",
+            tickmode = "array",
+            tickvalues = unique(diffs_dates$date_index),
+            ticktext = unique(format(diffs_dates$DATE, "%b %d")),
+            tickangle = -45
+          )
+        )
+      
       
     } else {
       
-      diffs %>%
+      p <- diffs %>%
+        left_join(diffs_dates, by = "DATE") %>% 
         
-        select(rn, SEASON, TEAM, DATE, DIFF_DIFF, PCT_CHG, PRICE) %>%
+        select(rn, SEASON, TEAM, DATE, DIFF_DIFF, PCT_CHG, PRICE, date_index) %>%
         
-        ggplot(aes(x = DATE, y = PRICE, color = TEAM)) +
+        ggplot(aes(x = date_index, y = PRICE, color = TEAM)) +
         #ggplot(aes(x = DATE, y = PRICE, color = COLOR)) +
         geom_line() +
         scale_y_continuous(
@@ -1814,6 +2237,17 @@ function(input, output, session) {
         ) +
         #xlim(c(input$ws_date_min, input$ws_date_max)) +
         ggtitle('Team Value')
+      
+      ggplotly(p) %>% 
+        layout(
+          xaxis = list(
+            title = "Date",
+            tickmode = "array",
+            tickvalues = unique(diffs_dates$date_index),
+            ticktext = unique(format(diffs_dates$DATE, "%b %d")),
+            tickangle = -45
+          )
+        )
       
     }
   })

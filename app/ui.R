@@ -28,6 +28,18 @@ sidebar <- dashboardSidebar(
       icon = icon("code-fork")
     ),
     menuItem(
+      "Hall of Fame & League History",
+      tabName = "tab_awards",
+      icon = icon("award")
+    ),
+    menuItem(
+      "League Stats & Records",
+      tabName = "tab_records", 
+      icon = icon("ranking-star")
+      # badgeLabel = "Prem",
+      # badgeColor = "yellow"
+    ),
+    menuItem(
       "Player Profiles",
       tabName = "tab_player", 
       icon = icon("user")
@@ -42,21 +54,14 @@ sidebar <- dashboardSidebar(
       # badgeColor = "yellow"
     ),
     menuItem(
-      "League Stats",
-      tabName = "tab_records", 
-      icon = icon("ranking-star")
-      # badgeLabel = "Prem",
-      # badgeColor = "yellow"
-    ),
-    menuItem(
-      "Hall of Fame and Awards",
-      tabName = "tab_awards",
-      icon = icon("award")
-    ),
-    menuItem(
       "Power Rankings",
       tabName = "tab_prs", 
       icon = icon("arrow-trend-up")
+    ),
+    menuItem(
+      "Frivolities",
+      tabName = "tab_frivolities",
+      icon = icon("face-laugh")
     ),
     menuItem(
       "Box Scores",
@@ -84,6 +89,11 @@ sidebar <- dashboardSidebar(
       "Trade Machine",
       tabName = "tab_tm", 
       icon = icon("trademark")
+    ),
+    menuItem(
+      "NBN Trivia!",
+      tabName = "tab_trivia",
+      icon = icon("puzzle-piece")
     ),
     menuItem(
       "NBN Wall Street",
@@ -156,8 +166,30 @@ body <- dashboardBody(
       
       h2("SEASON AWARDS"),
       h3("All-Stars"),
-      DTOutput("season_allstars")
+      DTOutput("season_allstars"),
+      
+      h3("All-NBN Teams"),
+      DTOutput("season_allnbn")
     ),
+    
+    ## Trivia ----
+    tabItem(
+      tabName = "tab_trivia",
+      verbatimTextOutput("trivia_question"),
+      uiOutput("trivia_answer"),
+      actionButton("trivia_submit", "Submit Answer"),
+      textOutput("trivia_streak"),
+      textOutput("trivia_result"),
+      actionButton("trivia_restart", "Start Over")#, style = "display:none;")#,
+      #tableOutput("trivia_leaderboard")
+    ),
+    
+    # ## NBYen ----
+    # tabItem(
+    #   tabName = "tab_nbyen",
+    #   DTOutput("nbyen_table"),
+    #   plotlyOutput("nbyen_plot")
+    # ),
     
     ## Playoff Archive ----
     tabItem(
@@ -165,7 +197,7 @@ body <- dashboardBody(
       selectizeInput(
         'seasonplayoffs',
         'Choose a Season:',
-        c("23-24", "22-23", "21-22", "20-21")
+        c("24-25", "23-24", "22-23", "21-22", "20-21")
       ),
       DTOutput("playoff_bracket"),
       DTOutput("playoff_series")
@@ -252,7 +284,7 @@ body <- dashboardBody(
       DTOutput("franchise_records"),
       
       h2('Game Highs'),
-      p("Includes any game in which a player's points, rebounds, assists, steals, and blocks add up to at least 20."),
+      p("Includes any game in which a player recorded at least 5 points, rebounds, assists, steals, or blocks."),
       DTOutput("game_high_player"),
       
       h2('Season Highs'),
@@ -263,6 +295,12 @@ body <- dashboardBody(
       
       h2('Team Season Highs'),
       DTOutput("season_high_team"),
+      
+      h2('Team Season Offensive/Defensive/Overall Ratings'),
+      p("Offensive rating == 'How many more points do they score than the opponent typically allows?'"),
+      p("Defensive rating == 'How many fewer points do they allow than the opponent typically scores?'"),
+      p("Overall rating == Offensive rating + Defensive rating"),
+      DTOutput("team_ratings"),
       
       h2('(Regular Season) Stat Race'),
       selectizeInput(
@@ -291,7 +329,22 @@ body <- dashboardBody(
       tabName = "tab_awards",
       
       h2('NBN Hall-of-Fame Points'),
-      DTOutput('hof_points')
+      p("HOF points are calculated using GMSC, wins, and playoff performance."),
+      DTOutput('hof_points'),
+      p("Players with at least 100 HOF points:"),
+      plotlyOutput('hof_plot_bar'),
+      
+      h2('League Champions'),
+      DTOutput('league_champs'),
+      
+      h2('Season Awards History'),
+      DTOutput('season_awards_history'),
+      
+      h2('Front Office Awards'),
+      DTOutput('front_office_awards'),
+      
+      h2('All-NBN Teams'),
+      DTOutput('all_nbn')
     ),
     
     ## Power Rankings ----
@@ -314,6 +367,16 @@ body <- dashboardBody(
       reactableOutput("power_rankings_table")
     ),
     
+    ## Frivolities ----
+    tabItem(
+      tabName = "tab_frivolities",
+      h2("Roster Stability"),
+      p("Values represent how many of the minutes played in season N went to players who were on the team in season N-1."),
+      plotlyOutput("stability"),
+      h2("Who They Played For"),
+      DTOutput("most_teams")
+    ),
+    
     ## Box Scores ----
     tabItem(
       tabName = "tab_box",
@@ -324,39 +387,6 @@ body <- dashboardBody(
       uiOutput('boxscore_input'),
       DTOutput('boxscore_selected')
     ),
-    
-    # ## Data Explorer ----
-    # tabItem(
-    #   tabName = "tab_explore",
-    #   selectizeInput(
-    #     'explore_type',
-    #     'I want to explore:',
-    #     c('The highest', 'The lowest'),
-    #     selected = 'The highest',
-    #     multiple = FALSE
-    #   ),
-    #   
-    #   selectizeInput(
-    #     'explore_var',
-    #     'Values of:',
-    #     c('G', 'M', 'GMSC', 
-    #       'P', 'R', 'A', 'S', 'B', 'TO', 
-    #       'FGM', 'FGA', #'FG_PCT',
-    #       '3PM', '3PA', #'3P_PCT',
-    #       'FTM', 'FTA', #'FT_PCT',
-    #       'OR', 'PF'),
-    #     selected = 'P',
-    #     multiple = FALSE
-    #   ),
-    #   
-    #   selectizeInput(
-    #     'explore_level',
-    #     '',
-    #     c('in a game', 'in a season (total)', 'in a season (avg)', 'in a career (total)', 'in a career (avg)')
-    #   ),
-    #   
-    #   DTOutput('explore_output')
-    # ),
     
     ## Player Compare ----
     tabItem(
@@ -512,6 +542,40 @@ body <- dashboardBody(
     ),
     
     ## Currently Unused Pages ----
+    
+    ### Data Explorer (Unserved) ----
+    tabItem(
+      tabName = "tab_explore",
+      selectizeInput(
+        'explore_type',
+        'I want to explore:',
+        c('The highest', 'The lowest'),
+        selected = 'The highest',
+        multiple = FALSE
+      ),
+
+      selectizeInput(
+        'explore_var',
+        'Values of:',
+        c('G', 'M', 'GMSC',
+          'P', 'R', 'A', 'S', 'B', 'TO',
+          'FGM', 'FGA', #'FG_PCT',
+          '3PM', '3PA', #'3P_PCT',
+          'FTM', 'FTA', #'FT_PCT',
+          'OR', 'PF'),
+        selected = 'P',
+        multiple = FALSE
+      ),
+
+      selectizeInput(
+        'explore_level',
+        '',
+        c('in a game', 'in a season (total)', 'in a season (avg)', 'in a career (total)', 'in a career (avg)')
+      ),
+
+      DTOutput('explore_output')
+    ),
+    
     ### The Lab ----
     tabItem(
       tabName = "tab_lab",

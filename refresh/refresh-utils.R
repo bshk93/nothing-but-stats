@@ -81,7 +81,7 @@ import_team_sheet <- function(myurl, team) {
              )) %>% 
       
       # Filter out sample rows
-      filter(PLAYER != "Roast, Brandon", PLAYER != "Huck, Charles") %>% 
+      #filter(PLAYER != "Roast, Brandon", PLAYER != "Huck, Charles") %>% 
       
       # Filter out unfinished rows
       filter(!is.na(M)) %>% 
@@ -126,14 +126,14 @@ check_allstats <- function(allstats) {
     filter(t_min != 240 & t_min != 265 & t_min != 290 & t_min != 315)
   
   if (nrow(bad_minute_games) > 0) {
-    warning(glue("There are {nrow(bad_minute_games)} game(s) where the total minutes doesn't make sense."))
+    warning(glue("There are {nrow(bad_minute_games)} game(s) where the total minutes doesn't make sense: {str_c(bad_minute_games$t_min, collapse = ', ')}"))
   }
   
   bad_sanity_checks <- allstats %>% 
     filter(OR > R | DR > R | FGM > FGA | `3PM` > `3PA` | FTM > FTA | PF > 6 | P != FTM + 2*FGM + 1*`3PM`)
   
   if (nrow(bad_sanity_checks) > 0) {
-    warning(glue("There are {nrow(bad_sanity_checks)} row(s) where the numbers don't make sense."))
+    warning(glue("There are {nrow(bad_sanity_checks)} row(s) where the numbers don't make sense: {str_c(bad_sanity_checks$PLAYER, collapse = ', ')}"))
   }
   
   bad_missing <- allstats %>% 
@@ -291,4 +291,13 @@ load_allstats <- function(playoffs = FALSE) {
         mutate(SEASON = str_c(tmp_season-1, "-", tmp_season, pstr)) %>% 
         filter(!is.na(SEASON))
     })
+}
+
+get_conference <- function(team) {
+  case_when(
+    team %in% c("MIL", "IND", "BOS", "BKN", "ATL", "ORL", "MIA", "PHI", "WAS", 
+                "TOR", "CHI", "CHA", "CLE", "NYK", "DET") ~ "East",
+    team %in% c("HOU", "SAC", "GSW", "LAL", "DAL", "LAC", "MIN", "POR", "DEN",
+                "NOP", "PHX", "OKC", "SAS", "UTA", "MEM") ~ "West"
+  )
 }

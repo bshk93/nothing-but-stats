@@ -51,6 +51,9 @@ git pull
 echo "Running preprocessing script..."
 Rscript "$PREPROCESS_SCRIPT" "$SEASON" "$PLAYOFF_DATE" "$DROP_DATE" "$SKIP_ACHIEVEMENTS"
 
+# copy files from files/ to /var/www/stats.nbn.today/files/
+find "$HOME/nothing-but-stats/files" -type f -exec cp {} /var/www/stats.nbn.today/files/ \;
+
 # check for git status updates
 if [[ -n $(git status --porcelain) ]]; then
   git add ..
@@ -70,5 +73,3 @@ sudo systemctl restart "$SERVICE_NAME"
 systemctl is-active "$SERVICE_NAME" || { echo "Service $SERVICE_NAME failed to restart."; exit 1; }
 
 echo "Update completed successfully at $(date)"
-
-trap "kill $(jobs -p)" EXIT
