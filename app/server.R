@@ -1582,6 +1582,63 @@ function(input, output, session) {
   })
   #}, options = list(scrollX = TRUE))
   
+  output$hof_plot <- renderPlotly({
+    x <- dfs_everything %>% 
+      group_by(PLAYER) %>%
+      mutate(
+        G = 1,
+        
+        GMSC_WGT_WL = case_when(
+          WL == 'W' ~ 1.25,
+          TRUE ~ 0.75
+        ),
+        GMSC_WGT_GAMETYPE = case_when(
+          ROUND == 1 ~ 2,
+          ROUND == 2 ~ 4,
+          ROUND == 3 ~ 8,
+          ROUND == 4 ~ 16,
+          TRUE ~ 1
+        ),
+        
+        GMSC_WEIGHTED = GMSC * GMSC_WGT_WL * GMSC_WGT_GAMETYPE
+      ) %>% 
+      arrange(PLAYER, DATE) %>% 
+      mutate(HOF_POINTS = cumsum(GMSC_WEIGHTED/100),
+             TOT_POINTS = sum(GMSC_WEIGHTED)/100) %>% 
+      filter(TOT_POINTS >= 130) %>% 
+      ungroup()
+    
+    x_dates <- x %>% 
+      distinct(DATE) %>% 
+      arrange(DATE) %>% 
+      mutate(date_index = row_number())
+    
+    # Plot without explicit ordering of SEASON, but removing gaps
+    p <- x %>%
+      left_join(x_dates, by = "DATE") %>% 
+      ggplot(aes(x = date_index, y = HOF_POINTS, group = PLAYER)) +
+      geom_line(aes(col = PLAYER)) +
+      #geom_point(aes(col = PLAYER), size = 0.5) +
+      #scale_y_continuous(labels = scales::dollar_format()) +
+      theme_minimal() +
+      theme(
+        axis.text.x = element_text(angle = 45, hjust = 1, size = 8),  # Smaller, angled labels
+        panel.grid.major.x = element_blank()  # Remove excessive gridlines
+      ) +
+      labs(x = "Date", y = "HOF Points", title = "")
+    
+    ggplotly(p) %>% 
+      layout(
+        xaxis = list(
+          title = "Date",
+          tickmode = "array",
+          tickvalues = unique(x_dates$date_index),
+          ticktext = unique(format(x_dates$DATE, "%b %d")),
+          tickangle = -45
+        )
+      )
+  })
+  
   #### League Champions ----
   output$league_champs <- renderDT({
     x <- champions %>% 

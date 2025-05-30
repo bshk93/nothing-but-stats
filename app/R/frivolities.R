@@ -206,7 +206,6 @@ calculate_hof_points <- function(dfs_everything, dfs_playoffs, dfs,
   }
   
   x <- temp_everything %>% 
-    group_by(PLAYER) %>%
     mutate(
       G = 1,
       
@@ -220,10 +219,20 @@ calculate_hof_points <- function(dfs_everything, dfs_playoffs, dfs,
         ROUND == 3 ~ 8,
         ROUND == 4 ~ 16,
         TRUE ~ 1
-      ),
-      
-      GMSC_WEIGHTED = GMSC * GMSC_WGT_WL * GMSC_WGT_GAMETYPE
+      )
     ) %>% 
+    
+    # normalize playoff games to 5.5 games per round
+    group_by(SEASON, TEAM, ROUND) %>% 
+    mutate(GMSC_WGT_ROUNDLEN = case_when(
+      GMSC_WGT_GAMETYPE == 1 ~ 1,
+      TRUE ~ 5.5/n_distinct(DATE)
+    )) %>% 
+    
+    ungroup() %>% 
+    mutate(GMSC_WEIGHTED = GMSC * GMSC_WGT_WL * GMSC_WGT_GAMETYPE * GMSC_WGT_ROUNDLEN) %>% 
+    
+    group_by(PLAYER) %>%
     summarize_at(
       vars(c('G', 'M', 'P', 'R', 'A', 'S', 'B', 'GMSC_WEIGHTED')), 
       sum
