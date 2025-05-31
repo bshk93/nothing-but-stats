@@ -331,8 +331,8 @@ body <- dashboardBody(
       h2('NBN Hall-of-Fame Points'),
       p("HOF points are calculated using GMSC, wins, and playoff performance."),
       DTOutput('hof_points'),
-      p("Players with at least 100 HOF points:"),
-      plotlyOutput('hof_plot_bar'),
+      # p("Players with at least 100 HOF points:"),
+      # plotlyOutput('hof_plot_bar'),
       
       h2('League Champions'),
       DTOutput('league_champs'),
@@ -374,7 +374,9 @@ body <- dashboardBody(
       p("Values represent how many of the minutes played in season N went to players who were on the team in season N-1."),
       plotlyOutput("stability"),
       h2("Who They Played For"),
-      DTOutput("most_teams")
+      DTOutput("most_teams"),
+      h2("Playoff Risers and Sinkers"),
+      DTOutput("playoff_risers")
     ),
     
     ## Box Scores ----

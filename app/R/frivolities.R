@@ -398,3 +398,36 @@ build_prices <- function(dfs_everything) {
            N = row_number(),
            DATE = as_date(DATE))
 }
+
+
+playoff_risers <- function(dfs_everything) {
+  dfs_everything %>% 
+    group_by(PLAYER, SEASON) %>% 
+    summarize(
+      G = n(),
+      GMSC = mean(GMSC),
+      .groups = "drop"
+    ) %>% 
+    mutate(
+      PLAYOFFS = str_detect(SEASON, "Playoffs"),
+      SEASON = str_extract(SEASON, "\\d{2}-\\d{2}")
+    ) %>% 
+    pivot_wider(
+      names_from = PLAYOFFS,
+      values_from = c(G, GMSC),
+      names_prefix = "PLAYOFFS_"
+    ) %>% 
+    filter(!is.na(G_PLAYOFFS_TRUE)) %>% 
+    mutate(
+      PLAYOFF_GMSC_DIFF = GMSC_PLAYOFFS_TRUE - GMSC_PLAYOFFS_FALSE
+    ) %>% 
+    group_by(PLAYER) %>% 
+    summarize(
+      AVERAGE_PLAYOFF_GMSC_DIFF = mean(PLAYOFF_GMSC_DIFF, na.rm = TRUE),
+      N_PLAYOFF_SEASONS = n(),
+      G_REGULAR = sum(G_PLAYOFFS_FALSE, na.rm = TRUE),
+      G_PLAYOFFS = sum(G_PLAYOFFS_TRUE, na.rm = TRUE)
+    ) %>% 
+    arrange(desc(AVERAGE_PLAYOFF_GMSC_DIFF)) %>% 
+    mutate(AVERAGE_PLAYOFF_GMSC_DIFF = round(AVERAGE_PLAYOFF_GMSC_DIFF, 2))
+}

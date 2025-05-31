@@ -1823,6 +1823,11 @@ function(input, output, session) {
       format_as_datatable(escape = FALSE)
   })
   
+  output$playoff_risers <- renderDT({
+    playoff_risers(dfs_everything) %>% 
+      format_as_datatable()
+  })
+  
   
   ### Box Scores ----
   output$boxscore_input <- renderUI({
