@@ -376,6 +376,8 @@ body <- dashboardBody(
       h2("Who They Played For"),
       DTOutput("most_teams"),
       h2("Playoff Risers and Sinkers"),
+      p("Career differences in GMSC per minute between regular season and postseason."),
+      p("Only includes: games where the player logged at least 5 minutes; players who have been the playoffs at least 3 times; and seasons in which the player made the postseason."),
       DTOutput("playoff_risers")
     ),
     

@@ -402,10 +402,11 @@ build_prices <- function(dfs_everything) {
 
 playoff_risers <- function(dfs_everything) {
   dfs_everything %>% 
+    filter(M >= 5) %>% 
     group_by(PLAYER, SEASON) %>% 
     summarize(
       G = n(),
-      GMSC = mean(GMSC),
+      GMSC_PER_MIN = sum(GMSC) / sum(M),
       .groups = "drop"
     ) %>% 
     mutate(
@@ -414,20 +415,21 @@ playoff_risers <- function(dfs_everything) {
     ) %>% 
     pivot_wider(
       names_from = PLAYOFFS,
-      values_from = c(G, GMSC),
+      values_from = c(G, GMSC_PER_MIN),
       names_prefix = "PLAYOFFS_"
     ) %>% 
     filter(!is.na(G_PLAYOFFS_TRUE)) %>% 
     mutate(
-      PLAYOFF_GMSC_DIFF = GMSC_PLAYOFFS_TRUE - GMSC_PLAYOFFS_FALSE
+      PLAYOFF_GMSCPM_DIFF = GMSC_PER_MIN_PLAYOFFS_TRUE - GMSC_PER_MIN_PLAYOFFS_FALSE
     ) %>% 
     group_by(PLAYER) %>% 
     summarize(
-      AVERAGE_PLAYOFF_GMSC_DIFF = mean(PLAYOFF_GMSC_DIFF, na.rm = TRUE),
+      AVERAGE_PLAYOFF_GMSCPM_DIFF = mean(PLAYOFF_GMSCPM_DIFF, na.rm = TRUE),
       N_PLAYOFF_SEASONS = n(),
       G_REGULAR = sum(G_PLAYOFFS_FALSE, na.rm = TRUE),
       G_PLAYOFFS = sum(G_PLAYOFFS_TRUE, na.rm = TRUE)
     ) %>% 
-    arrange(desc(AVERAGE_PLAYOFF_GMSC_DIFF)) %>% 
-    mutate(AVERAGE_PLAYOFF_GMSC_DIFF = round(AVERAGE_PLAYOFF_GMSC_DIFF, 2))
+    filter(N_PLAYOFF_SEASONS > 2) %>% 
+    arrange(desc(AVERAGE_PLAYOFF_GMSCPM_DIFF)) %>% 
+    mutate(AVERAGE_PLAYOFF_GMSCPM_DIFF = round(AVERAGE_PLAYOFF_GMSCPM_DIFF, 4))
 }
