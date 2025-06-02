@@ -73,7 +73,7 @@ get_newsfeed <- function(dfs, gmsc_thresh = 35) {
       if (var == 'P') {
         x <- filter(x, get(var) >= 30)
       } else if (var %in% c('A', 'R')) {
-        x <- filter(x, get(var) >= 11)
+        x <- filter(x, get(var) >= 15)
       } else {
         x <- filter(x, get(var) >= 6)
       }
@@ -101,7 +101,7 @@ get_newsfeed <- function(dfs, gmsc_thresh = 35) {
       career_var <- str_c('CAREER_', var)
       
       x <- career_totals %>% 
-        filter(floor(get(career_var) / 500) > coalesce(floor(lag(get(career_var))/ 500), 0)) %>% 
+        filter(floor(get(career_var) / 1000) > coalesce(floor(lag(get(career_var))/ 1000), 0)) %>% 
         filter(get(career_var) >= 1000) %>% 
         mutate(HEADLINE = str_c(
           PLAYER, " <img src='logo-", tolower(TEAM), ".png' height='20'></img>",
