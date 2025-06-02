@@ -71,11 +71,11 @@ get_newsfeed <- function(dfs, gmsc_thresh = 35) {
         ))
       
       if (var == 'P') {
-        x <- filter(x, get(var) >= 20)
+        x <- filter(x, get(var) >= 30)
       } else if (var %in% c('A', 'R')) {
-        x <- filter(x, get(var) >= 10)
+        x <- filter(x, get(var) >= 11)
       } else {
-        x <- filter(x, get(var) >= 5)
+        x <- filter(x, get(var) >= 6)
       }
       
       x %>% 
@@ -102,7 +102,7 @@ get_newsfeed <- function(dfs, gmsc_thresh = 35) {
       
       x <- career_totals %>% 
         filter(floor(get(career_var) / 500) > coalesce(floor(lag(get(career_var))/ 500), 0)) %>% 
-        filter(get(career_var) >= 500) %>% 
+        filter(get(career_var) >= 1000) %>% 
         mutate(HEADLINE = str_c(
           PLAYER, " <img src='logo-", tolower(TEAM), ".png' height='20'></img>",
           ' reached a milestone of ', get(career_var), ' career ', var, '.'
