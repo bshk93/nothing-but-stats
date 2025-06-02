@@ -248,57 +248,32 @@ if (toupper(skip_achievements) %in% c("TRUE", "T")) {
   start_time <- Sys.time()
   inform("Calculating achievements....")
   
-  
   ach_metadata <- read_csv("app/data/metadata-achievements.csv", show_col_types = FALSE)
-  
+
   ach_game <- dfs %>%
-    group_split(PLAYER) %>%
-    map_dfr(~ {
-      player_data <- .x
-      player_ach <- get_achievements_game(player_data, ach_metadata)
-      return(player_ach)
-    })
-  
+    nest_by(PLAYER) %>%
+    mutate(ach = list(get_achievements_game(
+      data,
+      ach_metadata
+    ))) %>%
+    select(-data) %>%
+    unnest(ach)
+
   write_rds(ach_game, 'app/data/ach_game.rds')
-  
+
   ach_season <- dfs %>%
-    group_split(PLAYER) %>%
-    map_dfr(~ {
-      player_data <- .x
-      player_id <- player_data$PLAYER[1]
-      player_ach <- get_achievements_season(player_data, dfs, player_id, ach_metadata)
-      return(player_ach)
-    })
-  
+    nest_by(PLAYER) %>%
+    mutate(ach = list(get_achievements_season(
+      data,
+      dfs,
+      PLAYER,
+      ach_metadata
+    ))) %>%
+    select(-data) %>%
+    unnest(ach) %>%
+    ungroup()
+
   write_rds(ach_season, 'app/data/ach_season.rds')
-  
-  
-  # ach_metadata <- read_csv("app/data/metadata-achievements.csv", show_col_types = FALSE)
-  # 
-  # ach_game <- dfs %>% 
-  #   nest_by(PLAYER) %>% 
-  #   mutate(ach = list(get_achievements_game(
-  #     data,
-  #     ach_metadata
-  #   ))) %>% 
-  #   select(-data) %>% 
-  #   unnest(ach)
-  # 
-  # write_rds(ach_game, 'app/data/ach_game.rds')
-  # 
-  # ach_season <- dfs %>% 
-  #   nest_by(PLAYER) %>% 
-  #   mutate(ach = list(get_achievements_season(
-  #     data,
-  #     dfs,
-  #     PLAYER,
-  #     ach_metadata
-  #   ))) %>% 
-  #   select(-data) %>% 
-  #   unnest(ach) %>% 
-  #   ungroup()
-  # 
-  # write_rds(ach_season, 'app/data/ach_season.rds')
   
   inform(glue(" * DONE [{round(Sys.time() - start_time, 1)}s]"))
 }
