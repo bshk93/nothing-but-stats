@@ -48,7 +48,6 @@ function(input, output, session) {
                            '">',
                            '<br>',
                            my_player_teams)),
-        #title = str_c(input_info, collapse = ';'),
         renderDataTable({
           summarize_per_game(
             dfs_everything %>%
@@ -195,10 +194,8 @@ function(input, output, session) {
       output$trivia_result <- renderText({
         paste("Correct! You have", trivia_game_state$points, "points.")
       })
-      #print(trivia_game_state$current_question)
     } else {
       trivia_game_state$game_over <- TRUE
-      #trivia_save_score(trivia_game_state$streak)
     }
   })
   
@@ -271,16 +268,6 @@ function(input, output, session) {
   )
   
   trivia_questions <- reactive({
-    # df <- tibble(
-    #   question = "This is a question?",
-    #   #choices = list(c("A" = "a", "B" = "b", "C" = "c")),
-    #   correct_answer = "A"
-    # ) %>% 
-    #   bind_rows(tibble(
-    #     question = "A different question?",
-    #     correct_answer = "ADAMS, STEVEN"
-    #   ))
-    
     df <- dfs %>% 
       group_by(PLAYER) %>% 
       summarize(
@@ -322,7 +309,6 @@ function(input, output, session) {
   })
   
   trivia_next_question <- function() {
-    #req(!trivia_game_state$game_over)
     sample_n(trivia_questions(), 1)
   }
   
