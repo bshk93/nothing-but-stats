@@ -4,7 +4,8 @@ get_champions <- function(dfs_playoffs) {
     '20-21 Playoffs', 'ATL',
     '21-22 Playoffs', 'ATL',
     '22-23 Playoffs', 'PHX',
-    '23-24 Playoffs', 'CLE'
+    '23-24 Playoffs', 'CLE',
+    '24-25 Playoffs', 'PHX'
   )
   
   dfs_playoffs %>% 
@@ -17,7 +18,8 @@ get_runners_up <- function() {
     '20-21 Playoffs', 'DAL', 'MIL', 'DEN',
     '21-22 Playoffs', 'NOP', 'WAS', 'GSW',
     '22-23 Playoffs', 'CLE', 'BKN', 'DEN',
-    '23-24 Playoffs', 'PHX', 'NYK', 'UTA'
+    '23-24 Playoffs', 'PHX', 'NYK', 'UTA',
+    '24-25 Playoffs', 'MIL', 'ATL', 'OKC'
   )
 }
 
@@ -578,6 +580,37 @@ get_playoff_seeds <- function() {
 get_owners <- function() {
   tribble(
     ~SEASON, ~TEAM, ~OWNER,
+    
+    '25-26', 'ATL', 'KVL',
+    '25-26', 'BOS', 'Adams17',
+    '25-26', 'BKN', 'Egghead',
+    '25-26', 'CHA', 'Imma',
+    '25-26', 'CHI', 'chitownloyalty',
+    '25-26', 'CLE', 'killerdawg7',
+    '25-26', 'DAL', 'Guy Fawkes',
+    '25-26', 'DEN', 'Darth Awn',
+    '25-26', 'DET', 'Ghost',
+    '25-26', 'GSW', 'Benson',
+    '25-26', 'HOU', 'Kamal',
+    '25-26', 'IND', 'KidMonotone',
+    '25-26', 'LAC', 'Mega',
+    '25-26', 'LAL', 'RJ',
+    '25-26', 'MEM', 'meem',
+    '25-26', 'MIA', 'Jaywalker7',
+    '25-26', 'MIL', 'Everinski',
+    '25-26', 'MIN', 'Jonny',
+    '25-26', 'NOP', 'JDDN',
+    '25-26', 'NYK', 'cheppywire',
+    '25-26', 'OKC', 'Rodney McDoom',
+    '25-26', 'ORL', 'hkd',
+    '25-26', 'PHI', 'Kman',
+    '25-26', 'PHX', 'chuck',
+    '25-26', 'POR', 'FlashThompson11',
+    '25-26', 'SAC', 'That1gal',
+    '25-26', 'SAS', 'bryn',
+    '25-26', 'TOR', 'Not Chris',
+    '25-26', 'UTA', 'Schu',
+    '25-26', 'WAS', 'Avatar',
     
     '24-25', 'ATL', 'KVL',
     '24-25', 'BOS', 'Adams17',
