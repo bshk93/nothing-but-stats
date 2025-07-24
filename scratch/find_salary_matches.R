@@ -1,7 +1,7 @@
 salary_sas <- c(53142264, 30360000, 2349578, 2349578, 2349578)
 salary_lac <- c(35000000, 31000000, 14262300, 12822000, 12400000, 7275600, 5168000, 2781053)
 
-salary_lac <- c(35000000, 31000000, 13642200)
+salary_lac <- c(35000000, 31000000, 17000000, 14262300, 13642200, 12400000)
 
 df_sas <- tibble(i_33000000 = c(T, F)) %>% 
   cross_join(tibble(i_2162606 = c(T, F))) %>% 
@@ -16,7 +16,11 @@ df_sas <- tibble(i_33000000 = c(T, F)) %>%
 
 df_lac <- cross_join(
   tibble(i_35000000 = c(T, F)),
-  tibble(i_31000000 = c(T, F))
+  tibble(i_31000000 = c(T, F)),
+  tibble(i_17000000 = c(T, F)),
+  tibble(i_14262300 = c(T, F)),
+  tibble(i_13642200 = c(T, F)),
+  tibble(i_12400000 = c(T, F))
 ) %>% 
   cross_join(tibble(i_13642200 = c(T, F))) %>% 
   cross_join(tibble(i_11600000 = c(T, F))) %>% 

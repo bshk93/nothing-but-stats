@@ -1,20 +1,3 @@
-# Load ----
-dfs <- read_rds('data/dfs.rds')
-dfs_playoffs <- read_rds('data/dfs_playoffs.rds')
-
-player_teams <- bind_rows(dfs, dfs_playoffs) %>% 
-  arrange(PLAYER, DATE) %>% 
-  group_by(PLAYER) %>% 
-  mutate(last_played = last(TEAM)) %>% 
-  ungroup() %>% 
-  mutate(NAME = str_c(PLAYER, ' (', last_played, ')')) %>% 
-  distinct(PLAYER, NAME)
-
-named_names <- player_teams$PLAYER %>% 
-  set_names(player_teams$NAME)
-
-# Dashboard Sidebar ----
-
 sidebar <- dashboardSidebar(
   sidebarMenu(
     menuItem(

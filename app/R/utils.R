@@ -1,24 +1,3 @@
-library(shiny)
-library(ggplot2)
-library(dplyr)
-library(tidyr)
-library(purrr)
-library(readr)
-library(stringr)
-library(lubridate)
-library(rlang)
-library(glue)
-library(DT)
-library(zoo)
-library(data.table)
-library(ggimage)
-library(plotly)
-library(reactable)
-library(shinyWidgets)
-library(bslib)
-library(shinydashboard)
-
-
 get_ranks <- function(dfs) {
   dfs %>% 
     group_by(PLAYER, SEASON) %>% 
