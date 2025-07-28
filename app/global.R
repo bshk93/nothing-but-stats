@@ -39,7 +39,7 @@ season_high_player <- read_rds("data/season_high_player.rds")
 game_high_team <- read_rds("data/game_high_team.rds")
 season_high_team <- read_rds("data/season_high_team.rds")
 
-player_teams <- bind_rows(dfs, dfs_playoffs) %>% 
+player_teams <- dfs_everything %>% 
   arrange(PLAYER, DATE) %>% 
   group_by(PLAYER) %>% 
   mutate(last_played = last(TEAM)) %>% 

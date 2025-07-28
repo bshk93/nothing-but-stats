@@ -167,13 +167,6 @@ body <- dashboardBody(
       #tableOutput("trivia_leaderboard")
     ),
     
-    # ## NBYen ----
-    # tabItem(
-    #   tabName = "tab_nbyen",
-    #   DTOutput("nbyen_table"),
-    #   plotlyOutput("nbyen_plot")
-    # ),
-    
     ## Playoff Archive ----
     tabItem(
       tabName = "tab_playoffs",
