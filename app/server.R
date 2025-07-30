@@ -160,7 +160,7 @@ function(input, output, session) {
     query <- parseQueryString(session$clientData$url_search)
     
     if (!is.null(query$tab)) {
-      updateTabItems(sesion, "tabs", selected = query$tab)
+      updateTabItems(session, "tabs", selected = query$tab)
     }
     
     if (!is.null(query$player)) {
