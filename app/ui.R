@@ -1,5 +1,5 @@
 sidebar <- dashboardSidebar(
-  sidebarMenu(
+  sidebarMenu(id = "tabs",
     menuItem(
       "Season Dashboard",
        tabName = "tab_dash", 

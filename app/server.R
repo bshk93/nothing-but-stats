@@ -157,6 +157,18 @@ function(input, output, session) {
   )
   
   observe({
+    query <- parseQueryString(session$clientData$url_search)
+    
+    if (!is.null(query$tab)) {
+      updateTabItems(sesion, "tabs", selected = query$tab)
+    }
+    
+    if (!is.null(query$player)) {
+      updateSelectInput(session, "name", selected = query$player)
+    }
+  })
+  
+  observe({
     if (is.null(trivia_game_state$current_question)) {
       trivia_game_state$current_question <- trivia_next_question()
     }
