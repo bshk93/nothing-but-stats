@@ -17,7 +17,7 @@ source("refresh/preprocess-utils.R")
 
 today <- Sys.Date()
 current_year <- as.numeric(format(today, "%Y"))
-cutoff_date <- as.Date(paste0(current_year, "-08-31"))
+cutoff_date <- as.Date(paste0(current_year, "-09-31"))
 
 # default for season
 if (season == "") {
