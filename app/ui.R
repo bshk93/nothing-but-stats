@@ -51,16 +51,6 @@ sidebar <- dashboardSidebar(
       tabName = "tab_box", 
       icon = icon("table")
     ),
-    # menuItem(
-    #   "The Lab (TM)",
-    #   tabName = "tab_lab",
-    #   icon = icon("microscope")
-    # ),
-    # menuItem(
-    #   "Data Explorer",
-    #   tabName = "tab_explore", 
-    #   icon = icon("magnifying-glass-chart")
-    # ),
     menuItem(
       "Player Compare",
       tabName = "tab_compare", 
@@ -110,7 +100,66 @@ body <- dashboardBody(
       width: 100%;
       height: 100%;
     }
+    
+    .custom-banner {
+      background-color: #a3bcd6;
+      color: #2c3e50;
+      padding: 15px;
+      font-size: 16px;
+      cursor: pointer;
+      border-radius: 4px;
+      margin-bottom: 10px;
+      transition: background-color 0.3s;
+    }
+    
+    .custom-banner:hover {
+      background-color: #92adc8;
+    }
+    
+    .custom-banner-content {
+      display: none;
+      background-color: #f7f9fb;
+      color: #2c3e50;
+      padding: 12px;
+      border-left: 4px solid #6b8ca4;
+      border-radius: 0 0 4px 4px;
+      margin-top: -8px;
+      margin-bottom: 10px;
+    }
+  
+    .custom-banner-content.show {
+      display: block;
+      animation: fadeIn 0.3s ease-in-out;
+    }
+  
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
   ")),
+  
+  tags$script(HTML("
+    $(document).on('shiny:connected', function() {
+      $('#custom-banner').on('click', function() {
+        $('#custom-banner-content').toggleClass('show');
+      });
+    });
+  ")),
+  
+  div(id = "custom-banner", class = "custom-banner", "The 2025-26 NBN Season is dedicated to the memory of KyleWTF <3"),
+  div(
+    id = "custom-banner-content", 
+    class = "custom-banner-content", 
+    HTML("
+      <p>KyleWTF was a longtime owner and member of the Board of Directors in the NBN. His passionate involvement in the league spans back to 2016.</p>
+      
+      <p>Kyle led the Oklahoma City Thunder through four season in the post-restart NBN, and played a critical role in establishing the league's security practices and laying down a foundation that will help the league thrive far into the future.</p>
+      
+      <p>Through the 2025-26 season and beyond, the NBN will remember Kyle, his love for the league and its community, and the impact he had on the NBN and all of the individuals that make up our community.</p>
+      
+      <p>RIP Kyle, and go Thunder!</p>
+    ")
+  ),
   
   tabItems(
     ## Season Dashboard ----
