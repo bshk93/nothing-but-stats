@@ -70,15 +70,10 @@ print(
     distinct(DATE, TEAM, OPP) %>% 
     group_by(DATE) %>% 
     mutate(n_sides = n()) %>% 
-    ungroup(),
+    ungroup() %>% 
+    arrange(DATE),
   n = 999
 )
-
-inform("Continue? (y/n): ")
-response <- tolower(trimws(readLines(con = stdin(), n = 1)))
-if (response != "y") {
-  abort("Aborting.")
-}
 
 
 inform("Building allstats....")
