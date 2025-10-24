@@ -62,23 +62,27 @@ if (nrow(allstats$errors$games %>% filter(DATE <= drop_date)) > 0) {
   ))
 }
 
-# # Refresh NBYen
-# read_csv("https://docs.google.com/spreadsheets/d/e/2PACX-1vQ5gjscoT5YzUb0xyLafidnkQDxF_8RfULxLSyZYIoXD6RPdHoi4dUoJhDBYwuD4zugcFl_LyBrL44K/pub?gid=0&single=true&output=csv",
-#          col_names = T, skip = 1) %>%
-#   transmute(
-#     date = mdy(Date),
-#     team = Team,
-#     nby = as.numeric(str_replace_all(Amount, "[^\\d-]", ""))
-#   ) %>% 
-#   filter(!is.na(team), team != "HOUSE") %>% 
-#   group_by(team) %>% 
-#   arrange(team, date) %>% 
-#   mutate(nby = cumsum(nby)) %>% 
-#   write_csv("app/data/nbyen.csv")
+allstats$data <- allstats$data %>% filter(DATE <= drop_date)
+inform("No errors detected in Sheets data. Printing number of games detected in last 5 days.")
+print(
+  allstats$data %>% 
+    filter(DATE %in% tail(sort(unique(DATE)), 5)) %>% 
+    distinct(DATE, TEAM, OPP) %>% 
+    group_by(DATE) %>% 
+    mutate(n_sides = n()) %>% 
+    ungroup(),
+  n = 999
+)
+
+inform("Continue? (y/n): ")
+response <- tolower(trimws(readLines(con = stdin(), n = 1)))
+if (response != "y") {
+  abort("Aborting.")
+}
 
 
 inform("Building allstats....")
-built_allstats <- build_allstats(allstats$data %>% filter(DATE <= drop_date))
+built_allstats <- build_allstats(allstats$data)
 
 if (playoff_date == "") {
   inform("No playoff_date provided, assuming no playoff data.")
