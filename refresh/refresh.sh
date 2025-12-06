@@ -29,10 +29,6 @@ while [[ "$#" -gt 0 ]]; do
       DROP_DATE="$2"
       shift 2
       ;;
-    --skip-achievements)
-      SKIP_ACHIEVEMENTS="$2"
-      shift 2
-      ;;
     *)
       echo "Unknown option: $1"
       exit 1
@@ -49,7 +45,7 @@ echo "Pulling latest changes from remote..."
 git pull
 
 echo "Running preprocessing script..."
-Rscript "$PREPROCESS_SCRIPT" "$SEASON" "$PLAYOFF_DATE" "$DROP_DATE" "$SKIP_ACHIEVEMENTS"
+Rscript "$PREPROCESS_SCRIPT" "$SEASON" "$PLAYOFF_DATE" "$DROP_DATE"
 
 # copy files from files/ to /var/www/stats.nbn.today/files/
 find "$HOME/nothing-but-stats/files" -type f -exec cp {} /var/www/stats.nbn.today/files/ \;
