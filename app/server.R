@@ -1,5 +1,7 @@
 # Server ----
 function(input, output, session) {
+  
+  myPassword = "krisdunn"
 
   popup <- function(input_info, type) {
 
@@ -913,6 +915,8 @@ function(input, output, session) {
   #### Season by Season ----
   output$tbl_season <- renderDT({
     
+    req(input$password == myPassword || myPassword == '')
+    
     begin <- Sys.time()
     
     champs <- champions %>%
@@ -977,7 +981,7 @@ function(input, output, session) {
   })
   
   output$gamelog_plot <- renderPlotly({
-    
+    req(input$password == myPassword || myPassword == '')
     begin <- Sys.time()
     
     p <- myGamelogPlot() %>%
@@ -1000,7 +1004,7 @@ function(input, output, session) {
   
   #### Game/Career Highs ----
   output$records <- renderDT({
-    
+    req(input$password == myPassword || myPassword == '')
     begin <- Sys.time()
     
     x <- myCombinedData() %>%
@@ -1034,10 +1038,10 @@ function(input, output, session) {
   
   #### All-Time Totals and Rankings ----
   output$rankings <- renderDT({
-    
+    req(input$password == myPassword || myPassword == '')
     begin <- Sys.time()
     
-    #req(input$password == myPassword || myPassword == '')
+    req(input$password == myPassword || myPassword == '')
     
     x <- my_ranks %>%
       filter(PLAYER == input$name) %>%
@@ -1096,12 +1100,6 @@ function(input, output, session) {
     x
   })
   
-  #### Transaction History ----
-  output$transaction_history <- renderDT({
-    read_delim()
-  })
-  
-  # #### Achievements - Season ----
   # output$achievements_season <- renderDT({
   #   
   #   begin <- Sys.time()
@@ -1117,7 +1115,6 @@ function(input, output, session) {
   # })
   # 
   # 
-  # #### Achievements - Game ----
   # output$achievements_game <- renderDT({
   #   
   #   begin <- Sys.time()
@@ -1137,6 +1134,8 @@ function(input, output, session) {
   
   #### Game log ----
   output$tbl <- renderDT({
+    
+    req(input$password == myPassword || myPassword == '')
     
     begin <- Sys.time()
     
@@ -1189,6 +1188,7 @@ function(input, output, session) {
   
   #### Season by Season ----
   output$franchise_history_yoy <- renderDT({
+    req(input$password == myPassword || myPassword == '')
     
     x <- dfs_everything %>%
       filter(TEAM == input$team_history)
@@ -1254,6 +1254,7 @@ function(input, output, session) {
   
   #### Franchise Offensive/Defensive Rating Plot ----
   output$franchise_history_scatter <- renderPlotly({
+    req(input$password == myPassword || myPassword == '')
     
     team_data <- team_ratings %>%
       ungroup() %>%
@@ -1308,7 +1309,7 @@ function(input, output, session) {
   #### Front Office Awards ----
   output$franchise_history_awards <- renderDT({
     
-    #req(input$password == myPassword || myPassword == '')
+    req(input$password == myPassword || myPassword == '')
     
     bind_rows(
       get_foty(),
@@ -1328,6 +1329,8 @@ function(input, output, session) {
   
   #### Team Legends ----
   output$franchise_history_legends <- renderDT({
+    req(input$password == myPassword || myPassword == '')
+    
     calculate_hof_points(
       dfs_everything,
       dfs_playoffs,
@@ -1338,6 +1341,7 @@ function(input, output, session) {
   
   #### Team Leaders ----
   output$franchise_history_leaders <- renderDT({
+    req(input$password == myPassword || myPassword == '')
     
     ctg <- input$stat_cat_team_history
     
@@ -1367,6 +1371,7 @@ function(input, output, session) {
   
   #### Franchise Cum Diff ----
   output$franchise_history_cum_diff <- renderPlot({
+    req(input$password == myPassword || myPassword == '')
     
     x <- dfs_everything %>%
       mutate(OPP_RAW = str_replace(OPP, "@", ""))
@@ -1398,6 +1403,8 @@ function(input, output, session) {
   ### League Stats ----
   #### Career Totals ----
   output$franchise_records <- renderDT({
+    req(input$password == myPassword || myPassword == '')
+    
     begin <- Sys.time()
     
     if (input$reg_flag && input$playoff_flag) {
@@ -1504,26 +1511,36 @@ function(input, output, session) {
   
   #### Game Highs ----
   output$game_high_player <- renderDT({
+    req(input$password == myPassword || myPassword == '')
+    
     format_as_datatable(game_high_player)
   })
   
   #### Season Highs ----
   output$season_high_player <- renderDT({
+    req(input$password == myPassword || myPassword == '')
+    
     format_as_datatable(season_high_player)
   })
   
   #### Team Game Highs ----
   output$game_high_team <- renderDT({
+    req(input$password == myPassword || myPassword == '')
+    
     format_as_datatable(game_high_team)
   })
   
   #### Team Season Highs ----
   output$season_high_team <- renderDT({
+    req(input$password == myPassword || myPassword == '')
+    
     format_as_datatable(season_high_team)
   })
   
   #### Team Offensive/Defensive Ratings ----
   output$team_ratings <- renderDT({
+    req(input$password == myPassword || myPassword == '')
+    
     team_ratings %>% 
       mutate_if(is.numeric, round, 2) %>% 
       format_as_datatable()
@@ -1532,6 +1549,8 @@ function(input, output, session) {
   
   #### Stat Race Plot ----
   output$stat_race_plot <- renderPlot({
+    req(input$password == myPassword || myPassword == '')
+    
     if (input$race_season == "ALL-TIME") {
       x <- dfs
     } else {
@@ -1883,7 +1902,7 @@ function(input, output, session) {
   ### Player Compare ----
   output$player_compare <- renderDT({
     
-    #req(input$password == myPassword || myPassword == '')
+    req(input$password == myPassword || myPassword == '')
     x <- dfs_everything %>%
       filter(PLAYER == input$playercomp1 | PLAYER == input$playercomp2)
     

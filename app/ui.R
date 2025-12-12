@@ -1,4 +1,5 @@
 sidebar <- dashboardSidebar(
+  passwordInput("password", "PREMIUM Password:"),
   sidebarMenu(id = "tabs",
     menuItem(
       "Season Dashboard",
@@ -18,23 +19,23 @@ sidebar <- dashboardSidebar(
     menuItem(
       "League Stats & Records",
       tabName = "tab_records", 
-      icon = icon("ranking-star")
-      # badgeLabel = "Prem",
-      # badgeColor = "yellow"
+      icon = icon("ranking-star"),
+      badgeLabel = "Prem",
+      badgeColor = "yellow"
     ),
     menuItem(
       "Player Profiles",
       tabName = "tab_player", 
-      icon = icon("user")
-      # badgeLabel = "Prem",
-      # badgeColor = "yellow"
+      icon = icon("user"),
+      badgeLabel = "Prem",
+      badgeColor = "yellow"
     ),
     menuItem(
       "Franchise Profiles",
       tabName = "tab_franchise",
-      icon = icon("book")
-      # badgeLabel = "Prem",
-      # badgeColor = "yellow"
+      icon = icon("book"),
+      badgeLabel = "Prem",
+      badgeColor = "yellow"
     ),
     menuItem(
       "Power Rankings",
@@ -54,9 +55,9 @@ sidebar <- dashboardSidebar(
     menuItem(
       "Player Compare",
       tabName = "tab_compare", 
-      icon = icon("user-group")
-      # badgeLabel = "Prem",
-      # badgeColor = "yellow"
+      icon = icon("user-group"),
+      badgeLabel = "Prem",
+      badgeColor = "yellow"
     ),
     menuItem(
       "Trade Machine",
