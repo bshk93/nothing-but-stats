@@ -452,7 +452,7 @@ function(input, output, session) {
       group_by(CONF) %>%
       arrange(CONF, desc(W), .by_group = TRUE) %>%
       mutate(
-        GB = (max(W) - W) / 2,
+        GB = (max(W - L) - (W - L))/2,
         SEED = row_number()
       ) %>%
       ungroup()
