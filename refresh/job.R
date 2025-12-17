@@ -63,16 +63,22 @@ if (nrow(allstats$errors$games %>% filter(DATE <= drop_date)) > 0) {
 
 allstats$data <- allstats$data %>% filter(DATE <= drop_date)
 inform("No errors detected in Sheets data. Printing number of games detected in last 5 days.")
+errchk <- allstats$data %>% 
+  distinct(DATE, TEAM, OPP) %>% 
+  group_by(DATE) %>% 
+  mutate(n_sides = n()) %>% 
+  ungroup() %>% 
+  arrange(DATE)
+
 print(
-  allstats$data %>% 
-    filter(DATE %in% tail(sort(unique(DATE)), 5)) %>% 
-    distinct(DATE, TEAM, OPP) %>% 
-    group_by(DATE) %>% 
-    mutate(n_sides = n()) %>% 
-    ungroup() %>% 
-    arrange(DATE),
+  errchk %>% 
+    filter(DATE %in% tail(sort(unique(DATE)), 5)),
   n = 999
 )
+
+if (nrow(errchk %>% filter(n_sides %% 2 == 1)) > 0) {
+  abort("Missing games detected (uneven number of sides on a day).")
+}
 
 
 inform("Building allstats....")
