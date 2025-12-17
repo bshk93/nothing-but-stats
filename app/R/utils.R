@@ -124,6 +124,17 @@ get_conference <- function(team) {
   )
 }
 
+get_division <- function(team) {
+  case_when(
+    team %in% c("NYK", "TOR", "BOS", "PHI", "BKN") ~ "Atlantic",
+    team %in% c("DET", "CLE", "MIL", "CHI", "IND") ~ "Central",
+    team %in% c("ORL", "ATL", "MIA", "CHA", "WAS") ~ "Southeast",
+    team %in% c("OKC", "DEN", "MIN", "UTA", "POR") ~ "Northwest",
+    team %in% c("LAL", "PHX", "GSW", "SAC", "LAC") ~ "Pacific",
+    team %in% c("SAS", "HOU", "MEM", "DAL", "NOP") ~ "Southwest"
+  )
+}
+
 get_last_played_for <- function(player, dfs) {
   
   dfs %>% 
