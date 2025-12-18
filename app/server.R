@@ -35,7 +35,7 @@ function(input, output, session) {
               filter(PLAYER == my_player) %>%
               group_by(PLAYER, SEASON)
           ) %>%
-            select(SEASON, G, MPG, PPG, RPG, APG, SPG, BPG, FG, `3P`, FT, GMSC) %>%
+            select(SEASON, G, MPG, PPG, RPG, APG, SPG, BPG, TOPG, FG, `3P`, FT, GMSC) %>%
             left_join(my_ranks %>%
                         filter(PLAYER == my_player) %>%
                         select(SEASON, G_RANK,
@@ -69,11 +69,11 @@ function(input, output, session) {
             ) %>%
             mutate(
               across(
-                c(G, MPG, PPG, RPG, APG, SPG, BPG, FG, `3P`, FT, GMSC),
+                c(G, MPG, PPG, RPG, APG, SPG, BPG, TOPG, FG, `3P`, FT, GMSC),
                 ~ str_c(., coalesce(get(str_c(cur_column(), '_RANK')), ''))
               )
             ) %>%
-            select(SEASON, G, MPG, PPG, RPG, APG, SPG, BPG, FG, `3P`, FT, GMSC)
+            select(SEASON, G, MPG, PPG, RPG, APG, SPG, BPG, TOPG, FG, `3P`, FT, GMSC)
         }, escape = FALSE, options = list(scrollX = TRUE)),
         #size = 'xl',
         easyClose = T,
@@ -1652,6 +1652,12 @@ function(input, output, session) {
       format_as_datatable()
   })
   
+  #### Team Win/Loss Streaks ----
+  output$wl_streaks <- renderDT({
+    req(input$password == myPassword || myPassword == '')
+    
+    format_as_datatable(wl_streaks)
+  })
   
   #### Stat Race Plot ----
   output$stat_race_plot <- renderPlot({

@@ -328,6 +328,10 @@ body <- dashboardBody(
       p("Overall rating == Offensive rating + Defensive rating"),
       DTOutput("team_ratings"),
       
+      h2('Team Win/Loss Streaks'),
+      p("Includes streaks of 10 or more games."),
+      DTOutput("wl_streaks"),
+      
       h2('(Regular Season) Stat Race'),
       selectizeInput(
         'race_var',
@@ -339,7 +343,7 @@ body <- dashboardBody(
         'race_players',
         'Select at least two players:',
         named_names,
-        selected = c("BEAL, BRADLEY", "CURRY, STEPHEN"),
+        selected = c("BEAL, BRADLEY", "DONCIC, LUKA"),
         multiple = TRUE
       ),
       selectizeInput(

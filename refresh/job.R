@@ -204,6 +204,13 @@ dfs_everything %>%
   select(-TEAM_PTS, -OPP_TEAM_PTS) %>% 
   write_rds("app/data/season_high_team.rds")
 
+# win/loss streaks
+get_win_streaks(dfs_everything) %>% 
+  select(-streak_group) %>% 
+  filter(streak >= 10) %>% 
+  arrange(desc(streak)) %>% 
+  write_rds("app/data/wl_streaks.rds")
+
 # # worst seasons (at least 40 games)
 # dfs %>%
 #   select(PLAYER, SEASON, TEAM, M, P, R, OR, DR, A, S, B, TO, GMSC, FGM, FGA, `3PM`, `3PA`, FTM, FTA, PF, WL) %>%

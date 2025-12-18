@@ -38,6 +38,7 @@ game_high_player <- read_rds("data/game_high_player.rds")
 season_high_player <- read_rds("data/season_high_player.rds")
 game_high_team <- read_rds("data/game_high_team.rds")
 season_high_team <- read_rds("data/season_high_team.rds")
+wl_streaks <- read_rds("data/wl_streaks.rds")
 
 player_teams <- dfs_everything %>% 
   arrange(PLAYER, DATE) %>% 
