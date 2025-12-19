@@ -985,6 +985,7 @@ function(input, output, session) {
       "Age: {round(time_length(interval(myBiosData() %>% pull(DOB), today()), 'years'), 2)}\n",
       "Height: {myBiosData() %>% pull(Height)}\n",
       "Weight: {myBiosData() %>% pull(Weight)}\n",
+      "Drafted: {myBiosData() %>% pull(`NBN D YR`)}: {myBiosData() %>% pull(`NBN D R`)}, {myBiosData() %>% pull(`NBN D P`)}\n",
       "From: {myBiosData() %>% pull(COLLEGE)}\n\n",
       "Awards:\n",
       "{if_else(nrow(get_allstars() %>% filter(PLAYER == input$name)) > 0, 
