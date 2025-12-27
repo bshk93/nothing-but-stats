@@ -9,12 +9,14 @@ get_ranks <- function(dfs) {
       A = sum(A),
       S = sum(S),
       B = sum(B),
+      TO = sum(TO),
       MPG = sum(M)/G,
       PPG = sum(P)/G,
       RPG = sum(R)/G,
       APG = sum(A)/G,
       SPG = sum(S)/G,
       BPG = sum(B)/G,
+      TOPG = sum(TO)/G,
       `3PM` = sum(`3PM`),
       FGPCT = sum(FGM)/sum(FGA),
       `3PPCT` = sum(`3PM`)/sum(`3PA`),
@@ -32,6 +34,7 @@ get_ranks <- function(dfs) {
       A_RANK = rank(desc(A), ties.method = "min"),
       S_RANK = rank(desc(S), ties.method = "min"),
       B_RANK = rank(desc(B), ties.method = "min"),
+      TO_RANK = rank(desc(TO), ties.method = "min"),
       `3PM_RANK` = rank(desc(`3PM`), ties.method = "min"),
       FGPCT_RANK = rank(desc(FGPCT), ties.method = "min", na.last = "keep"),
       `3PPCT_RANK` = rank(desc(`3PPCT`), ties.method = "min", na.last = "keep"),
@@ -42,6 +45,7 @@ get_ranks <- function(dfs) {
       APG_RANK = rank(desc(APG), ties.method = "min"),
       SPG_RANK = rank(desc(SPG), ties.method = "min"),
       BPG_RANK = rank(desc(BPG), ties.method = "min"),
+      TOPG_RANK = rank(desc(TOPG), ties.method = "min"),
       GMSC_RANK = rank(desc(GMSC), ties.method = "min")
     ) %>% 
     ungroup()
