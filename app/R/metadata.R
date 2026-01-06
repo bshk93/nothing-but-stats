@@ -589,7 +589,7 @@ get_owners <- function() {
     '25-26', 'CLE', 'killerdawg7',
     '25-26', 'DAL', 'Guy Fawkes',
     '25-26', 'DEN', 'Darth Awn',
-    '25-26', 'DET', 'Ghost',
+    '25-26', 'DET', 'Ghost - TimeToFly',
     '25-26', 'GSW', 'Benson',
     '25-26', 'HOU', 'Kamal',
     '25-26', 'IND', 'KidMonotone',
