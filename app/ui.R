@@ -176,9 +176,11 @@ body <- dashboardBody(
       DTOutput("newsfeed"),
 
       h2("REGULAR SEASON STANDINGS"),
+      p("Click a team to show season roster and stats."),
       DTOutput("standings"),
 
       h2("LEAGUE LEADERS"),
+      p("Click a name to see player profile."),
       DTOutput("leaders"),
 
       h2("TEAM STATS"),
@@ -189,6 +191,7 @@ body <- dashboardBody(
       DTOutput("rookie_report"),
       
       h2("MOST IMPROVED"),
+      p("Biggest GMSC increases this season compared to career average GMSC prior to this season."),
       DTOutput("most_improved"),
 
       h2("DRAFT LOTTERY PREVIEW"),

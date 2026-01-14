@@ -41,6 +41,7 @@ function(input, output, session) {
                         select(SEASON, G_RANK,
                                MPG_RANK, PPG_RANK, RPG_RANK,
                                APG_RANK, SPG_RANK, BPG_RANK,
+                               TOPG_RANK,
                                FG_RANK = FGPCT_RANK,
                                `3P_RANK` = `3PPCT_RANK`,
                                FT_RANK = FTPCT_RANK,
