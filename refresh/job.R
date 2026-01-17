@@ -126,7 +126,10 @@ dfs_playoffs <- load_allstats(playoffs = TRUE) %>%
   mutate(gametype = 'PLAYOFF',
          ROOKIE = NA)
 
-dfs_everything <- rbind(dfs, dfs_playoffs)
+# Helper function to combine dfs and dfs_playoffs on demand (avoids duplication)
+get_dfs_everything <- function() {
+  bind_rows(dfs, dfs_playoffs)
+}
 
 write_rds(dfs, 'app/data/dfs.rds')
 write_rds(get_newsfeed(dfs), 'app/data/news.rds')
@@ -153,13 +156,13 @@ inform(" * DONE")
 start_time <- Sys.time()
 inform("Calculating league stats....")
 # game highs
-dfs_everything %>% 
+get_dfs_everything() %>% 
   filter(pmax(P, R, A, S, B) >= 5) %>% 
   select(PLAYER, SEASON, DATE, OPP, P, R, A, S, B, FGM, FGA, `3PM`, `3PA`, TO, PF) %>% 
   write_rds("app/data/game_high_player.rds")
 
 # season highs
-dfs_everything %>% 
+get_dfs_everything() %>% 
   group_by(PLAYER, SEASON) %>% 
   summarize(across(
     c(M, P, R, A, S, B, `3PM`, TO, PF, TD), 
@@ -169,7 +172,7 @@ dfs_everything %>%
   write_rds("app/data/season_high_player.rds")
 
 # team game highs
-dfs_everything %>% 
+get_dfs_everything() %>% 
   group_by(TEAM, SEASON, DATE, OPP) %>% 
   mutate(DIFF = (TEAM_PTS - OPP_TEAM_PTS) / n()) %>% 
   summarize(across(
@@ -180,7 +183,7 @@ dfs_everything %>%
   write_rds("app/data/game_high_team.rds")
 
 # team season highs
-x <- dfs_everything %>% 
+x <- get_dfs_everything() %>% 
   distinct(TEAM, SEASON, TEAM_PTS, OPP_TEAM_PTS, DATE) %>% 
   mutate(
     W = if_else(TEAM_PTS > OPP_TEAM_PTS, 1, 0),
@@ -198,7 +201,7 @@ x <- dfs_everything %>%
     RECORD = str_c(W, "-", L),
     PCT = round(W / (W + L), 3)
   )
-dfs_everything %>% 
+get_dfs_everything() %>% 
   group_by(TEAM, SEASON) %>% 
   summarize(across(
     c(P, R, A, S, B, `3PM`, TO, PF, TD), 
@@ -212,7 +215,7 @@ dfs_everything %>%
   write_rds("app/data/season_high_team.rds")
 
 # win/loss streaks
-get_win_streaks(dfs_everything) %>% 
+get_win_streaks(get_dfs_everything()) %>% 
   select(-streak_group) %>% 
   filter(streak >= 10) %>% 
   arrange(desc(streak)) %>% 
@@ -467,7 +470,7 @@ final_standings %>%
 #   select(SEED, TEAM, GB, W, L, PCT, PPG, OPPG, DIFF) %>% 
 #   write_csv("files/standings.csv")
 
-dfs_everything %>% 
+get_dfs_everything() %>% 
   write_csv("files/allstats.csv")
 
 

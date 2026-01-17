@@ -23,7 +23,10 @@ walk(list.files("R/", full.names = T), source)
 
 dfs <- read_rds('data/dfs.rds')
 dfs_playoffs <- read_rds('data/dfs_playoffs.rds')
-dfs_everything <- rbind(dfs, dfs_playoffs)
+# Helper function to combine dfs and dfs_playoffs on demand (avoids duplication)
+get_dfs_everything <- function() {
+  bind_rows(dfs, dfs_playoffs)
+}
 news <- read_rds('data/news.rds')
 bios <- read_rds('data/bios.rds')
 team_ratings <- read_rds('data/team_ratings.rds')
@@ -46,7 +49,7 @@ game_high_team <- read_rds("data/game_high_team.rds")
 season_high_team <- read_rds("data/season_high_team.rds")
 wl_streaks <- read_rds("data/wl_streaks.rds")
 
-player_teams <- dfs_everything %>% 
+player_teams <- get_dfs_everything() %>% 
   arrange(PLAYER, DATE) %>% 
   group_by(PLAYER) %>% 
   mutate(last_played = last(TEAM)) %>% 

@@ -31,7 +31,7 @@ function(input, output, session) {
                            my_player_teams)),
         renderDataTable({
           summarize_per_game(
-            dfs_everything %>%
+            get_dfs_everything() %>%
               filter(PLAYER == my_player) %>%
               group_by(PLAYER, SEASON)
           ) %>%
@@ -85,7 +85,7 @@ function(input, output, session) {
       showModal(modalDialog(
         title = str_c(my_game[1], ': ', my_game[4]),
         renderDataTable({
-          get_box_score(dfs_everything, my_game[1], my_game[4])
+          get_box_score(get_dfs_everything(), my_game[1], my_game[4])
         }),
         #size = 'xl',
         easyClose = T,
@@ -1298,7 +1298,7 @@ function(input, output, session) {
   output$franchise_history_yoy <- renderDT({
     req(input$password == myPassword || myPassword == '')
     
-    x <- dfs_everything %>%
+    x <- get_dfs_everything() %>%
       filter(TEAM == input$team_history)
     
     x_leaders <- x %>%
@@ -1440,7 +1440,7 @@ function(input, output, session) {
     req(input$password == myPassword || myPassword == '')
     
     calculate_hof_points(
-      dfs_everything,
+      get_dfs_everything(),
       dfs_playoffs,
       dfs,
       team_filter = input$team_history
@@ -1453,7 +1453,7 @@ function(input, output, session) {
     
     ctg <- input$stat_cat_team_history
     
-    x <- dfs_everything %>%
+    x <- get_dfs_everything() %>%
       filter(TEAM == input$team_history) %>%
       mutate(G = 1) %>%
       select(PLAYER, DATE, ctg)
@@ -1481,7 +1481,7 @@ function(input, output, session) {
   output$franchise_history_cum_diff <- renderPlot({
     req(input$password == myPassword || myPassword == '')
     
-    x <- dfs_everything %>%
+    x <- get_dfs_everything() %>%
       mutate(OPP_RAW = str_replace(OPP, "@", ""))
     
     y <- x %>%
@@ -1688,12 +1688,12 @@ function(input, output, session) {
   
   ### Hall of Fame + Awards ----
   output$hof_points <- renderDT({
-    calculate_hof_points(dfs_everything, dfs_playoffs, dfs)
+    calculate_hof_points(get_dfs_everything(), dfs_playoffs, dfs)
   })
   #}, options = list(scrollX = TRUE))
   
   output$hof_plot_bar <- renderPlotly({
-    p <- calculate_hof_points(dfs_everything, dfs_playoffs, dfs, raw_data = TRUE) %>% 
+    p <- calculate_hof_points(get_dfs_everything(), dfs_playoffs, dfs, raw_data = TRUE) %>% 
       filter(HOF_POINTS >= 100) %>% 
       arrange(desc(HOF_POINTS)) %>% 
       ggplot(aes(x = reorder(PLAYER, -HOF_POINTS), y = HOF_POINTS, color = PLAYER)) + 
@@ -1709,7 +1709,7 @@ function(input, output, session) {
   })
   
   output$hof_plot <- renderPlotly({
-    x <- dfs_everything %>% 
+    x <- get_dfs_everything() %>% 
       group_by(PLAYER) %>%
       mutate(
         G = 1,
@@ -1929,12 +1929,12 @@ function(input, output, session) {
   })
   
   output$most_teams <- renderDT({
-    most_teams(dfs_everything) %>% 
+    most_teams(get_dfs_everything()) %>% 
       format_as_datatable(escape = FALSE)
   })
   
   output$playoff_risers <- renderDT({
-    playoff_risers(dfs_everything) %>% 
+    playoff_risers(get_dfs_everything()) %>% 
       format_as_datatable()
   })
   
@@ -1944,7 +1944,7 @@ function(input, output, session) {
     req(input$boxscoredate)
     selectInput('boxscore_output',
                 'Select game:',
-                dfs_everything %>%
+                get_dfs_everything() %>%
                   filter(DATE == input$boxscoredate) %>%
                   distinct(TEAM, OPP) %>%
                   filter(str_detect(OPP, '^@')) %>%
@@ -1955,12 +1955,12 @@ function(input, output, session) {
   output$boxscore_selected <- renderDT({
     req(input$boxscore_output)
     
-    get_box_score(dfs_everything, input$boxscoredate, input$boxscore_output)
+    get_box_score(get_dfs_everything(), input$boxscoredate, input$boxscore_output)
   }, rownames = FALSE)
   
   ### Data Explorer ----
   output$explore_output <- renderDT({
-    x <- dfs_everything %>% mutate(G = 1)
+    x <- get_dfs_everything() %>% mutate(G = 1)
     
     vars_to_summarize <- input$explore_var
     
@@ -2017,7 +2017,7 @@ function(input, output, session) {
   output$player_compare <- renderDT({
     
     req(input$password == myPassword || myPassword == '')
-    x <- dfs_everything %>%
+    x <- get_dfs_everything() %>%
       filter(PLAYER == input$playercomp1 | PLAYER == input$playercomp2)
     
     if (input$playercomp_season != 'CAREER') {
@@ -2221,7 +2221,7 @@ function(input, output, session) {
   ### NBN Wall Street ----
   output$ws_prices <- renderDT({
     
-    diffs <- build_prices(dfs_everything)
+    diffs <- build_prices(get_dfs_everything())
     
     diffs %>%
       mutate(
@@ -2239,7 +2239,7 @@ function(input, output, session) {
   
   output$wallstreet <- renderPlotly({
     
-    diffs <- build_prices(dfs_everything) %>%
+    diffs <- build_prices(get_dfs_everything()) %>%
       filter(TEAM %in% input$ws_teams) %>%
       group_by(TEAM, SEASON) %>%
       mutate(rn = row_number(),
@@ -2368,7 +2368,7 @@ function(input, output, session) {
   })
   
   output$ws_div <- renderPlotly({
-    x <- build_prices(dfs_everything) %>%
+    x <- build_prices(get_dfs_everything()) %>%
       ungroup() %>%
       mutate(CONF = toupper(get_conference(TEAM)),
              DIV = case_when(
@@ -2587,7 +2587,7 @@ function(input, output, session) {
   output$result_order <- renderText({temp_order()})
 
   output$ws_positions <- renderDT({
-    diffs <- build_prices(dfs_everything) %>%
+    diffs <- build_prices(get_dfs_everything()) %>%
       select(DATE, TEAM, PRICE)
 
     ws_orders %>%
@@ -2613,7 +2613,7 @@ function(input, output, session) {
 
   output$lab_team_season <- renderPlotly({
 
-    dfs_everything %>%
+    get_dfs_everything() %>%
       group_by(TEAM, SEASON) %>% 
       #summarize_team() %>%
       ungroup() %>%
@@ -2629,7 +2629,7 @@ function(input, output, session) {
 
   output$lab_player_season <- renderPlotly({
 
-    dfs_everything %>%
+    get_dfs_everything() %>%
       group_by(PLAYER, SEASON) %>%
       summarize_per_game(formatting = FALSE) %>%
       ungroup() %>%

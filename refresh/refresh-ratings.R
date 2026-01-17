@@ -35,9 +35,12 @@ dfs_playoffs <- load_allstats(playoffs = TRUE) %>%
   mutate(gametype = 'PLAYOFF',
          ROOKIE = NA)
 
-dfs_everything <- rbind(dfs, dfs_playoffs)
+# Helper function to combine dfs and dfs_playoffs on demand (avoids duplication)
+get_dfs_everything <- function() {
+  bind_rows(dfs, dfs_playoffs)
+}
 
-ratings <- dfs_everything %>% 
+ratings <- get_dfs_everything() %>% 
   distinct(PLAYER) %>% 
   head(100) %>% 
   mutate(url2k = tolower(str_c(

@@ -64,7 +64,10 @@ dfs_playoffs <- load_allstats(playoffs = TRUE) %>%
   mutate(gametype = 'PLAYOFF',
          ROOKIE = NA)
 
-dfs_everything <- rbind(dfs, dfs_playoffs)
+# Helper function to combine dfs and dfs_playoffs on demand (avoids duplication)
+get_dfs_everything <- function() {
+  bind_rows(dfs, dfs_playoffs)
+}
 
 write_rds(dfs, 'data/dfs.rds')
 write_rds(get_newsfeed(dfs), 'data/news.rds')
@@ -94,13 +97,13 @@ inform(glue(" * DONE [{round(Sys.time() - start_time, 1)}s]"))
 start_time <- Sys.time()
 inform("Calculating league stats....")
 # game highs
-dfs_everything %>% 
+get_dfs_everything() %>% 
   filter(P + R + A + S + B >= 20) %>% 
   select(PLAYER, SEASON, DATE, OPP, P, R, A, S, B, `3PM`, TO, PF) %>% 
   write_rds("data/game_high_player.rds")
 
 # season highs
-dfs_everything %>% 
+get_dfs_everything() %>% 
   group_by(PLAYER, SEASON) %>% 
   summarize(across(
     c(M, P, R, A, S, B, `3PM`, TO, PF, TD), 
@@ -110,7 +113,7 @@ dfs_everything %>%
   write_rds("data/season_high_player.rds")
 
 # team game highs
-dfs_everything %>% 
+get_dfs_everything() %>% 
   group_by(TEAM, SEASON, DATE, OPP) %>% 
   mutate(DIFF = (TEAM_PTS - OPP_TEAM_PTS) / n()) %>% 
   summarize(across(
@@ -121,7 +124,7 @@ dfs_everything %>%
   write_rds("data/game_high_team.rds")
 
 # team season highs
-dfs_everything %>% 
+get_dfs_everything() %>% 
   group_by(TEAM, SEASON) %>% 
   summarize(across(
     c(P, R, A, S, B, `3PM`, TO, PF, TD, TEAM_PTS, OPP_TEAM_PTS), 
