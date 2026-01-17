@@ -135,6 +135,13 @@ write_rds(dfs_playoffs, 'app/data/dfs_playoffs.rds')
 
 write_rds(calculate_team_offense_defense(dfs), 'app/data/team_ratings.rds')
 
+# Pre-compute my_ranks for performance
+inform("Calculating player ranks....")
+source("app/R/utils.R")
+my_ranks <- get_ranks(dfs)
+write_rds(my_ranks, 'app/data/my_ranks.rds')
+inform(" * DONE")
+
 # start_time <- Sys.time()
 # inform("Parsing roster log....")
 # 

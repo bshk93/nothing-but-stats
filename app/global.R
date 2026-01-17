@@ -32,7 +32,13 @@ champions <- get_champions(dfs_playoffs)
 
 ach_metadata <- read_csv("data/metadata-achievements.csv", show_col_types = FALSE)
 
-my_ranks <- get_ranks(dfs)
+# Load pre-computed ranks, or compute if file doesn't exist (fallback for initial setup)
+if (file.exists('data/my_ranks.rds')) {
+  my_ranks <- read_rds('data/my_ranks.rds')
+} else {
+  # Fallback: compute if file doesn't exist (should only happen before first refresh)
+  my_ranks <- get_ranks(dfs)
+}
 
 game_high_player <- read_rds("data/game_high_player.rds")
 season_high_player <- read_rds("data/season_high_player.rds")
