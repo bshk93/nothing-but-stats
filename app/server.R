@@ -330,143 +330,8 @@ function(input, output, session) {
   output$standings <- renderDT({
     begin <- Sys.time()
     
-    x <- mySeasonDF() %>%
-      group_by(DATE, TEAM, OPP) %>%
-      summarize(TEAM_PTS = sum(P), .groups = 'drop') %>%
-      ungroup() %>%
-      mutate(OPP = str_replace(OPP, "@", ""))
-    
-    games <- x %>%
-      left_join(
-        x %>%
-          select(DATE, OPP = TEAM, OPP_PTS = TEAM_PTS),
-        by = c("DATE", "OPP")
-      ) %>%
-      mutate(
-        WIN  = TEAM_PTS > OPP_PTS,
-        LOSS = TEAM_PTS < OPP_PTS,
-        CONF = get_conference(TEAM),
-        DIV  = get_division(TEAM),
-        OPP_CONF = get_conference(OPP),
-        OPP_DIV  = get_division(OPP)
-      )
-    
-    standings <- games %>%
-      group_by(TEAM) %>%
-      summarize(
-        W = sum(WIN),
-        L = sum(LOSS),
-        CONF = first(CONF),
-        DIV  = first(DIV),
-        CONF_W = sum(WIN & CONF == OPP_CONF),
-        CONF_L = sum(LOSS & CONF == OPP_CONF),
-        DIV_W  = sum(WIN & DIV == OPP_DIV),
-        DIV_L  = sum(LOSS & DIV == OPP_DIV),
-        PPG = mean(TEAM_PTS),
-        OPPG = mean(OPP_PTS),
-        .groups = "drop"
-      ) %>%
-      mutate(
-        PCT = W / (W + L),
-        CONF_PCT = CONF_W / (CONF_W + CONF_L),
-        DIV_PCT  = DIV_W / (DIV_W + DIV_L),
-        DIFF = PPG - OPPG
-      )
-    
-    h2h <- games %>%
-      group_by(TEAM, OPP) %>%
-      summarize(
-        W = sum(WIN),
-        L = sum(LOSS),
-        PCT = W / (W + L),
-        .groups = "drop"
-      )
-    
-    division_winners <- standings %>%
-      group_by(DIV) %>%
-      arrange(desc(PCT), desc(CONF_PCT), desc(DIFF)) %>%
-      slice(1) %>%
-      mutate(DIV_WINNER = TRUE) %>%
-      select(TEAM, DIV_WINNER)
-    
-    standings <- standings %>%
-      left_join(division_winners, by = "TEAM") %>%
-      mutate(DIV_WINNER = if_else(is.na(DIV_WINNER), FALSE, DIV_WINNER))
-    
-    resolve_nba_ties <- function(df, h2h) {
-      
-      if (nrow(df) == 1) return(df)
-      
-      teams <- df$TEAM
-      
-      h2h_tied <- h2h %>%
-        filter(TEAM %in% teams, OPP %in% teams) %>%
-        group_by(TEAM) %>%
-        summarize(H2H_PCT = mean(PCT, na.rm = TRUE), .groups = "drop")
-      
-      df2 <- df %>%
-        left_join(h2h_tied, by = "TEAM") %>%
-        mutate(H2H_PCT = replace_na(H2H_PCT, 0))
-      
-      ordering <- df2 %>%
-        arrange(
-          desc(H2H_PCT),
-          desc(DIV_WINNER),
-          desc(DIV_PCT),
-          desc(CONF_PCT),
-          desc(DIFF)
-        )
-      
-      # recursive elimination
-      top <- ordering[1, ]
-      
-      tied <- ordering %>%
-        filter(
-          H2H_PCT == top$H2H_PCT,
-          DIV_WINNER == top$DIV_WINNER,
-          DIV_PCT == top$DIV_PCT,
-          CONF_PCT == top$CONF_PCT,
-          DIFF == top$DIFF
-        )
-      
-      result <-
-        if (nrow(tied) == nrow(ordering)) {
-          ordering
-        } else {
-          bind_rows(
-            top,
-            resolve_nba_ties(
-              ordering[-1, ] %>% select(-H2H_PCT),
-              h2h
-            )
-          )
-        }
-      
-      # 🔑 CRITICAL: drop H2H_PCT before returning
-      result %>% select(-H2H_PCT)
-    }
-    
-    final_standings <- standings %>%
-      group_by(CONF, W, L) %>%
-      group_modify(~ resolve_nba_ties(.x, h2h)) %>%
-      ungroup() %>%
-      group_by(CONF) %>%
-      arrange(CONF, desc(W), .by_group = TRUE) %>%
-      mutate(
-        GB = (max(W - L) - (W - L))/2,
-        SEED = row_number()
-      ) %>%
-      ungroup()
-    
-    y <- final_standings %>%
-      transmute(
-        SEED = paste0(CONF, "-", SEED),
-        TEAM, GB, W, L,
-        PCT = round(PCT, 3),
-        PPG = round(PPG, 1),
-        OPPG = round(OPPG, 1),
-        DIFF = round(DIFF, 1)
-      ) %>%
+    # Use pre-computed standings for the selected season
+    y <- standings_precomputed[[input$season2]] %>%
       mutate(TEAM = str_c(TEAM, ' ', get_logo(TEAM, height = 20)))
     
     print(glue("[{sprintf('%.7f', round(Sys.time() - begin, 7))}] standings generated."))
@@ -588,21 +453,8 @@ function(input, output, session) {
   
   #### Team Stats ----
   team_stats <- reactive({
-    
-    mySeasonDF() %>%
-      group_by(TEAM, DATE) %>%
-      summarize(
-        P = sum(P), R = sum(R), A = sum(A), S = sum(S), B = sum(B),
-        TO = sum(TO), PF = sum(PF), `3PM` = sum(`3PM`), `3PA` = sum(`3PA`),
-        .groups = 'drop'
-      ) %>%
-      group_by(TEAM) %>%
-      summarize(
-        PPG = mean(P), RPG = mean(R), APG = mean(A), SPG = mean(S), BPG = mean(B),
-        TOPG = mean(TO), PFPG = mean(PF), `3PMPG` = mean(`3PM`), `3PAPG` = mean(`3PA`)
-      ) %>%
-      mutate_if(is.numeric, round, 2) %>%
-      mutate(`3PPCT` = round(`3PMPG`/`3PAPG`, 3)) %>%
+    # Use pre-computed team stats for the selected season
+    team_stats_precomputed[[input$season2]] %>%
       mutate(TEAM = str_c(TEAM, ' ', get_logo(TEAM, height = 20)))
   })
   

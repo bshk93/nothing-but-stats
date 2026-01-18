@@ -43,6 +43,22 @@ if (file.exists('data/my_ranks.rds')) {
   my_ranks <- get_ranks(dfs)
 }
 
+# Load pre-computed standings and team stats, or compute if files don't exist (fallback for initial setup)
+if (file.exists('data/standings.rds') && file.exists('data/team_stats.rds')) {
+  standings_precomputed <- read_rds('data/standings.rds')
+  team_stats_precomputed <- read_rds('data/team_stats.rds')
+} else {
+  # Fallback: compute if files don't exist (should only happen before first refresh)
+  standings_precomputed <- list()
+  team_stats_precomputed <- list()
+  seasons <- sort(unique(dfs$SEASON))
+  for (season in seasons) {
+    season_df <- dfs %>% filter(SEASON == season)
+    standings_precomputed[[season]] <- compute_standings(season_df)
+    team_stats_precomputed[[season]] <- compute_team_stats(season_df)
+  }
+}
+
 game_high_player <- read_rds("data/game_high_player.rds")
 season_high_player <- read_rds("data/season_high_player.rds")
 game_high_team <- read_rds("data/game_high_team.rds")

@@ -145,6 +145,24 @@ my_ranks <- get_ranks(dfs)
 write_rds(my_ranks, 'app/data/my_ranks.rds')
 inform(" * DONE")
 
+# Pre-compute standings and team stats for all seasons
+inform("Pre-computing standings and team stats for all seasons....")
+seasons <- sort(unique(dfs$SEASON))
+standings_list <- list()
+team_stats_list <- list()
+
+for (season in seasons) {
+  inform(glue("  Computing for season {season}..."))
+  season_df <- dfs %>% filter(SEASON == season)
+  
+  standings_list[[season]] <- compute_standings(season_df)
+  team_stats_list[[season]] <- compute_team_stats(season_df)
+}
+
+write_rds(standings_list, 'app/data/standings.rds')
+write_rds(team_stats_list, 'app/data/team_stats.rds')
+inform(" * DONE")
+
 # start_time <- Sys.time()
 # inform("Parsing roster log....")
 # 
