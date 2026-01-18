@@ -11,32 +11,33 @@ popup <- function(input_info, type) {
       .[3] %>%
       str_extract('[A-Z-]+, [A-Z-]+')
     
-    my_player_teams <- dfs %>%
+    # Get teams for each season in chronological order
+    player_season_teams <- get_dfs_everything() %>%
       filter(PLAYER == my_player) %>%
-      distinct(SEASON, TEAM) %>%
-      group_by(TEAM) %>%
-      arrange(TEAM, SEASON) %>%
-      summarize(SEASON = str_c(SEASON, collapse = ', ')) %>%
-      arrange(SEASON) %>%
-      mutate(SEASON = str_c(' (', SEASON, ')'),
-             TEAM = get_logo(TEAM, height = 30, align = 'left')) %>%
-      mutate(TXT = str_c(TEAM, SEASON)) %>%
-      pull(TXT) %>%
-      str_c(collapse = '<br>')
+      group_by(SEASON, TEAM) %>%
+      summarize(first_date = min(DATE), .groups = 'drop') %>%
+      group_by(SEASON) %>%
+      arrange(SEASON, first_date) %>%
+      summarize(TEAMS = str_c(get_logo(TEAM, height = 20), collapse = ''), .groups = 'drop')
     
     showModal(modalDialog(
       title = HTML(str_c('<img src="',
                          bios %>% filter(Name == my_player) %>% pull(`Img URL`),
-                         '">',
-                         '<br>',
-                         my_player_teams)),
+                         '">')),
       renderDataTable({
-        summarize_per_game(
+        data <- summarize_per_game(
           get_dfs_everything() %>%
             filter(PLAYER == my_player) %>%
             group_by(PLAYER, SEASON)
         ) %>%
           select(SEASON, G, MPG, PPG, RPG, APG, SPG, BPG, TOPG, FG, `3P`, FT, GMSC) %>%
+          # Add teams column with logos
+          left_join(player_season_teams, by = 'SEASON') %>%
+          # Add a column to identify regular season vs playoffs
+          mutate(SEASON_TYPE = case_when(
+            str_detect(SEASON, " Playoffs") ~ "PLAYOFFS",
+            TRUE ~ "REGULAR"
+          )) %>%
           left_join(my_ranks %>%
                       filter(PLAYER == my_player) %>%
                       select(SEASON, G_RANK,
@@ -75,8 +76,31 @@ popup <- function(input_info, type) {
               ~ str_c(., coalesce(get(str_c(cur_column(), '_RANK')), ''))
             )
           ) %>%
-          select(SEASON, G, MPG, PPG, RPG, APG, SPG, BPG, TOPG, FG, `3P`, FT, GMSC)
-      }, escape = FALSE, options = list(scrollX = TRUE)),
+          select(SEASON, TEAMS, G, MPG, PPG, RPG, APG, SPG, BPG, TOPG, FG, `3P`, FT, GMSC, SEASON_TYPE)
+        
+        # SEASON_TYPE is now the last column - easier to hide
+        season_type_idx <- ncol(data) - 1
+        
+        datatable(
+          data,
+          escape = FALSE,
+          rownames = FALSE,
+          options = list(
+            scrollX = TRUE,
+            columnDefs = list(
+              list(targets = season_type_idx, visible = FALSE)
+            )
+          )
+        ) %>%
+          formatStyle(
+            "SEASON_TYPE",
+            target = "row",
+            backgroundColor = styleEqual(
+              c("REGULAR", "PLAYOFFS"),
+              c("#f9f9f9", "#e8f4f8")
+            )
+          )
+      }),
       easyClose = T,
       footer = NULL))
   } else if (type == 'boxscores') {
