@@ -1,3 +1,7 @@
+# Global ----
+# Load libraries, data, and define global variables
+
+# Libraries ----
 library(shiny)
 library(ggplot2)
 library(dplyr)
@@ -19,23 +23,27 @@ library(bslib)
 library(shinydashboard)
 library(shinyjs)
 
+# Source utility functions ----
 walk(list.files("R/", full.names = T), source)
 
+# Load data files ----
 dfs <- read_rds('data/dfs.rds')
 dfs_playoffs <- read_rds('data/dfs_playoffs.rds')
-# Helper function to combine dfs and dfs_playoffs on demand (avoids duplication)
-get_dfs_everything <- function() {
-  bind_rows(dfs, dfs_playoffs)
-}
 news <- read_rds('data/news.rds')
 bios <- read_rds('data/bios.rds')
 team_ratings <- read_rds('data/team_ratings.rds')
 
-champions <- get_champions(dfs_playoffs)
+# Helper function to combine dfs and dfs_playoffs on demand (avoids duplication)
+get_dfs_everything <- function() {
+  bind_rows(dfs, dfs_playoffs)
+}
 
+# Derived data ----
+champions <- get_champions(dfs_playoffs)
 ach_metadata <- read_csv("data/metadata-achievements.csv", show_col_types = FALSE)
 
-# Load pre-computed ranks, or compute if file doesn't exist (fallback for initial setup)
+# Pre-computed data (with fallbacks for initial setup) ----
+# Load pre-computed ranks, or compute if file doesn't exist
 if (file.exists('data/my_ranks.rds')) {
   my_ranks <- read_rds('data/my_ranks.rds')
 } else {
@@ -43,7 +51,7 @@ if (file.exists('data/my_ranks.rds')) {
   my_ranks <- get_ranks(dfs)
 }
 
-# Load pre-computed standings and team stats, or compute if files don't exist (fallback for initial setup)
+# Load pre-computed standings and team stats, or compute if files don't exist
 if (file.exists('data/standings.rds') && file.exists('data/team_stats.rds')) {
   standings_precomputed <- read_rds('data/standings.rds')
   team_stats_precomputed <- read_rds('data/team_stats.rds')
@@ -59,12 +67,14 @@ if (file.exists('data/standings.rds') && file.exists('data/team_stats.rds')) {
   }
 }
 
+# Load pre-computed high stats and streaks
 game_high_player <- read_rds("data/game_high_player.rds")
 season_high_player <- read_rds("data/season_high_player.rds")
 game_high_team <- read_rds("data/game_high_team.rds")
 season_high_team <- read_rds("data/season_high_team.rds")
 wl_streaks <- read_rds("data/wl_streaks.rds")
 
+# Player name mappings ----
 player_teams <- get_dfs_everything() %>% 
   arrange(PLAYER, DATE) %>% 
   group_by(PLAYER) %>% 

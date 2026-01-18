@@ -337,3 +337,24 @@ compute_team_stats <- function(season_df) {
     mutate_if(is.numeric, round, 2) %>%
     mutate(`3PPCT` = round(`3PMPG`/`3PAPG`, 3))
 }
+
+# Helper function for league leaders
+leader_helper <- function(category, summary_df, dfs, min_games = 1) {
+  tmpvarname1 <- str_c(category, 'PG')
+  tmpvarname2 <- str_c('PLAYER_', category)
+  
+  x <- summary_df %>%
+    filter(G >= min_games) %>%
+    arrange_at(tmpvarname1) %>%
+    arrange(desc(row_number())) %>%
+    head(10)
+  
+  x <- x %>%
+    left_join(get_last_played_for_2(dfs), by = 'PLAYER')
+  
+  x %>%
+    mutate(PLAYER = str_c(PLAYER, ' ', get_logo(TEAM, height = 20))) %>%
+    select({{ tmpvarname2 }} := PLAYER, tmpvarname1) %>%
+    mutate(rn = row_number()) %>%
+    mutate({{ tmpvarname1 }} := round(get(tmpvarname1), 1))
+}
