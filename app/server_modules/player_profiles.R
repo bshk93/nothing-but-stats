@@ -70,6 +70,12 @@ output$tbl_season <- renderDT({
         summarize_per_game() %>%
         mutate(SEASON = "CAREER", TEAM = "")
     ) %>%
+    # Add a column to identify regular season vs playoffs before SEASON is modified
+    mutate(SEASON_TYPE = case_when(
+      SEASON == "CAREER" ~ "CAREER",
+      str_detect(SEASON, " Playoffs") ~ "PLAYOFFS",
+      TRUE ~ "REGULAR"
+    )) %>%
     left_join(myAwards(), by = c("SEASON")) %>%
     group_by(SEASON) %>%
     mutate(star    = case_when(row_number() == n() ~ star, TRUE ~ NA_character_),
@@ -91,15 +97,30 @@ output$tbl_season <- renderDT({
                           coalesce(baby, ""), coalesce(chart, ""), coalesce(medal1, ""),
                           coalesce(medal2, ""), coalesce(medal3, ""),
                           coalesce(fence, ""), coalesce(seed, ""))) %>%
-    select(SEASON, everything(), -PLAYER, -star, -ring, -crown, -hand, -six, -baby, -chart,
+    select(SEASON, SEASON_TYPE, everything(), -PLAYER, -star, -ring, -crown, -hand, -six, -baby, -chart,
            -starts_with("medal"), -fence, -seed) %>%
-    format_as_datatable(
-      escape = FALSE
-    ) %>%
+    {
+      season_type_col <- which(names(.) == "SEASON_TYPE") - 1
+      format_as_datatable(
+        .,
+        escape = FALSE,
+        column_defs = list(
+          list(visible = FALSE, targets = season_type_col)
+        )
+      )
+    } %>%
     formatStyle(
       "SEASON",
       target = "row",
       fontWeight = styleEqual(c("CAREER "), "bold", default = "normal")
+    ) %>%
+    formatStyle(
+      "SEASON_TYPE",
+      target = "row",
+      backgroundColor = styleEqual(
+        c("REGULAR", "PLAYOFFS", "CAREER"),
+        c("#f9f9f9", "#e8f4f8", "white")
+      )
     )
   
   print(glue("[{sprintf('%.7f', round(Sys.time() - begin, 7))}] player per-season stats generated."))
