@@ -73,6 +73,11 @@ sidebar <- dashboardSidebar(
       "NBN Wall Street",
       tabName = "tab_ws", 
       icon = icon("dollar-sign")
+    ),
+    menuItem(
+      "Owner Stats",
+      tabName = "tab_owner_stats",
+      icon = icon("users")
     )
   )
 )
@@ -577,6 +582,14 @@ body <- dashboardBody(
       ),
       plotlyOutput("wallstreet"),
       plotlyOutput("ws_div")
+    ),
+    
+    ## Owner Stats ----
+    tabItem(
+      tabName = "tab_owner_stats",
+      h2("Owner Statistics"),
+      p("Win-loss records for all team owners based on games played during their ownership periods."),
+      DTOutput("owner_stats")
     ),
     
     ## Currently Unused Pages ----
