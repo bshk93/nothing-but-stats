@@ -106,7 +106,8 @@ output$tbl_season <- renderDT({
         escape = FALSE,
         column_defs = list(
           list(visible = FALSE, targets = season_type_col)
-        )
+        ),
+        page_length = 1000
       )
     } %>%
     formatStyle(

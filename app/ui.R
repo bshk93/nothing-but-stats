@@ -366,12 +366,6 @@ body <- dashboardBody(
     tabItem(
       tabName = "tab_awards",
       
-      h2('NBN Hall-of-Fame Points'),
-      p("HOF points are calculated using GMSC, wins, and playoff performance."),
-      DTOutput('hof_points'),
-      # p("Players with at least 100 HOF points:"),
-      # plotlyOutput('hof_plot_bar'),
-      
       h2('League Champions'),
       DTOutput('league_champs'),
       
@@ -382,7 +376,11 @@ body <- dashboardBody(
       DTOutput('front_office_awards'),
       
       h2('All-NBN Teams'),
-      DTOutput('all_nbn')
+      DTOutput('all_nbn'),
+      
+      h2('NBN Hall-of-Fame Points'),
+      p("HOF points are calculated using GMSC, wins, and playoff performance."),
+      DTOutput('hof_points')
     ),
     
     ## Power Rankings ----
@@ -590,69 +588,6 @@ body <- dashboardBody(
       h2("Owner Statistics"),
       p("Win-loss records for all team owners based on games played during their ownership periods."),
       DTOutput("owner_stats")
-    ),
-    
-    ## Currently Unused Pages ----
-    
-    ### Data Explorer (Unserved) ----
-    tabItem(
-      tabName = "tab_explore",
-      selectizeInput(
-        'explore_type',
-        'I want to explore:',
-        c('The highest', 'The lowest'),
-        selected = 'The highest',
-        multiple = FALSE
-      ),
-
-      selectizeInput(
-        'explore_var',
-        'Values of:',
-        c('G', 'M', 'GMSC',
-          'P', 'R', 'A', 'S', 'B', 'TO',
-          'FGM', 'FGA', #'FG_PCT',
-          '3PM', '3PA', #'3P_PCT',
-          'FTM', 'FTA', #'FT_PCT',
-          'OR', 'PF'),
-        selected = 'P',
-        multiple = FALSE
-      ),
-
-      selectizeInput(
-        'explore_level',
-        '',
-        c('in a game', 'in a season (total)', 'in a season (avg)', 'in a career (total)', 'in a career (avg)')
-      ),
-
-      DTOutput('explore_output')
-    ),
-    
-    ### The Lab ----
-    tabItem(
-      tabName = "tab_lab",
-      
-      h2("Team Stats By Season"),
-      selectizeInput(
-        'lab_team_season_var',
-        'Choose a var:',
-        c('GMSC', 'PPG', 'RPG', 'APG', 'SPG', 'BPG', 'FG', '3P', 'FT', 'TS')
-      ),
-      plotlyOutput("lab_team_season"),
-      
-      h2("Individual Stats By Season"),
-      selectizeInput(
-        'lab_player_season_var',
-        'Choose a var:',
-        c('GMSC', 'PPG', 'RPG', 'APG', 'SPG', 'BPG', 'FG', '3P', 'FT', 'TS')
-      ),
-      plotlyOutput("lab_player_season")
-    ),
-    
-    ### About ----
-    tabItem(
-      tabName = "tab_about",
-      h2("Why Premium?"),
-      htmlOutput("premiumfaq")
     )
   )
 )

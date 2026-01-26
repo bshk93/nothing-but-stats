@@ -79,7 +79,7 @@ output$leaders <- renderDT({
 },
 escape = FALSE,
 selection = list(mode = 'single', target = 'cell'),
-options = list(scrollX = TRUE)
+options = list(pageLength = 15, scrollX = TRUE)
 )
 
 #### Team Stats ----
@@ -125,7 +125,7 @@ output$rookie_report <- renderDT({
     select(-TEAM, -c('FGAPG', 'FGMPG', '3PAPG', '3PMPG', 'FTAPG', 'FTMPG')) %>%
     format_as_datatable(
       escape = FALSE,
-      page_length = 10,
+      page_length = 15,
       selection = list(mode = 'single', target = 'cell')
     )
   
@@ -162,7 +162,7 @@ output$most_improved <- renderDT({
     arrange(desc(GMSC_DIFF)) %>% 
     format_as_datatable(
       escape = FALSE, 
-      page_length = 10,
+      page_length = 15,
       selection = list(mode = 'single', target = 'cell')
     )
   
