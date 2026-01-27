@@ -38,6 +38,11 @@ sidebar <- dashboardSidebar(
       badgeColor = "yellow"
     ),
     menuItem(
+      "Franchise H2H",
+      tabName = "tab_head_to_head",
+      icon = icon("handshake")
+    ),
+    menuItem(
       "Power Rankings",
       tabName = "tab_prs", 
       icon = icon("arrow-trend-up")
@@ -78,11 +83,6 @@ sidebar <- dashboardSidebar(
       "Owner Stats",
       tabName = "tab_owner_stats",
       icon = icon("users")
-    ),
-    menuItem(
-      "Head to Head",
-      tabName = "tab_head_to_head",
-      icon = icon("handshake")
     )
   )
 )
