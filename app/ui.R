@@ -78,6 +78,11 @@ sidebar <- dashboardSidebar(
       "Owner Stats",
       tabName = "tab_owner_stats",
       icon = icon("users")
+    ),
+    menuItem(
+      "Head to Head",
+      tabName = "tab_head_to_head",
+      icon = icon("handshake")
     )
   )
 )
@@ -381,6 +386,38 @@ body <- dashboardBody(
       h2('NBN Hall-of-Fame Points'),
       p("HOF points are calculated using GMSC, wins, and playoff performance."),
       DTOutput('hof_points')
+    ),
+    
+    ## Head to Head ----
+    tabItem(
+      tabName = "tab_head_to_head",
+      h2("Head to Head"),
+      fluidRow(
+        column(6,
+               selectizeInput(
+                 'h2h_team1',
+                 'Team 1:',
+                 allteams,
+                 selected = NULL,
+                 multiple = FALSE
+               )
+        ),
+        column(6,
+               selectizeInput(
+                 'h2h_team2',
+                 'Team 2:',
+                 allteams,
+                 selected = NULL,
+                 multiple = FALSE
+               )
+        )
+      ),
+      h3("All-Time Record"),
+      DTOutput("h2h_alltime"),
+      h3("Playoff Series Record"),
+      DTOutput("h2h_playoff_series"),
+      h3("Playoff Series Details"),
+      uiOutput("h2h_playoff_details")
     ),
     
     ## Power Rankings ----
