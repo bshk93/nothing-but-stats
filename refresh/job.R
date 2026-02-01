@@ -461,8 +461,6 @@ final_standings %>%
   ) %>%
   write_csv("files/standings.csv")
 
-write_lines(format(Sys.Date(), "%Y-%m-%d"), "files/last_updated.txt")
-
 # x %>%
 #   left_join(
 #     x %>%
