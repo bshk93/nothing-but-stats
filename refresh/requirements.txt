@@ -1,0 +1,5 @@
+# Python deps for refresh/post_discord.py (Discord standings/games/news post)
+discord.py>=2.0
+requests>=2.28
+feedparser>=6.0
+pandas>=1.5
