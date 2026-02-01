@@ -41,6 +41,13 @@ echo "Season: $SEASON, Playoff Date: $PLAYOFF_DATE, Drop Date: $DROP_DATE"
 
 cd "$REFRESH_DIR" || { echo "Failed to navigate to $REFRESH_DIR"; exit 1; }
 
+# load env (e.g. DISCORD_BOT_TOKEN) from refresh/.env if present
+if [[ -f "$REFRESH_DIR/.env" ]]; then
+  set -a
+  source "$REFRESH_DIR/.env"
+  set +a
+fi
+
 echo "Pulling latest changes from remote..."
 git pull
 
@@ -49,6 +56,14 @@ Rscript "$PREPROCESS_SCRIPT" "$SEASON" "$PLAYOFF_DATE" "$DROP_DATE"
 
 # copy files from files/ to /var/www/stats.nbn.today/files/
 find "$HOME/nothing-but-stats/files" -type f -exec cp {} /var/www/stats.nbn.today/files/ \;
+
+# post standings/games/news to Discord (optional; do not fail pipeline on error)
+if command -v python3 &> /dev/null; then
+  if [[ -n "${DISCORD_BOT_TOKEN:-}" ]]; then
+    export LAST_UPDATED_FILE="$HOME/nothing-but-stats/files/last_updated.txt"
+    python3 "$REFRESH_DIR/post_discord.py" || true
+  fi
+fi
 
 # check for git status updates
 if [[ -n $(git status --porcelain) ]]; then
