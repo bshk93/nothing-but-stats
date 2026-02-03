@@ -7,8 +7,9 @@ TM_MAX_ASSETS <- 15L
 tm_asset_counts <- reactiveValues()
 tm_validation_result <- reactiveValues(results = NULL)
 
-# Helper to build a single asset row
+# Helper to build a single asset row (dest_choices = character vector of team codes, e.g. c("LAL", "OKC"))
 tm_build_asset_row <- function(team_idx, asset_idx, dest_choices) {
+  if (length(dest_choices) == 0L) dest_choices <- c("(select team first)" = "")
   div(
     id = paste0("tm_asset_row_", team_idx, "_", asset_idx),
     fluidRow(
@@ -34,11 +35,18 @@ tm_build_asset_row <- function(team_idx, asset_idx, dest_choices) {
   )
 }
 
-# Helper to get destination choices for a team
-tm_get_dest_choices <- function(team_idx, n_teams) {
-  team_labels <- paste("Team", seq_len(n_teams))
-  other_choices <- setNames(as.character(seq_len(n_teams)), team_labels)
-  other_choices[-team_idx]
+# Helper to get destination choices for a team (other teams in the trade)
+tm_get_dest_choices <- function(team_idx, selected_teams) {
+  others <- selected_teams[-team_idx]
+  others[!is.na(others) & others != ""]
+}
+
+# Get selected teams for slots 1..n
+tm_get_selected_teams <- function(n) {
+  vapply(seq_len(n), function(i) {
+    val <- input[[paste0("tm_team_", i, "_select")]]
+    if (is.null(val) || identical(val, "")) NA_character_ else as.character(val)
+  }, character(1))
 }
 
 # When number of teams changes, rebuild the panels (this resets everything)
@@ -64,9 +72,9 @@ lapply(1:4, function(i) {
     new_idx <- current + 1L
     tm_asset_counts[[key]] <- new_idx
 
-    dest_choices <- tm_get_dest_choices(i, n)
+    selected_teams <- tm_get_selected_teams(n)
+    dest_choices <- tm_get_dest_choices(i, selected_teams)
     insertUI(
-
       selector = paste0("#tm_assets_container_", i),
       where = "beforeEnd",
       ui = tm_build_asset_row(i, new_idx, dest_choices)
@@ -86,23 +94,60 @@ lapply(1:4, function(i) {
   })
 })
 
+# Update destination dropdowns when team selection changes
+observe({
+  n <- as.integer(input$tm_num_teams)
+  if (is.na(n) || n < 2L || n > 4L) return()
+
+  selected_teams <- tm_get_selected_teams(n)
+  for (i in seq_len(n)) {
+    dest_choices <- tm_get_dest_choices(i, selected_teams)
+    n_assets <- tm_asset_counts[[paste0("team_", i)]] %||% 1L
+    for (j in seq_len(n_assets)) {
+      choices <- if (length(dest_choices) > 0L) dest_choices else c("(select team first)" = "")
+      tryCatch(
+        updateSelectInput(
+          session,
+          paste0("tm_team_", i, "_asset_", j, "_dest"),
+          choices = choices
+        ),
+        error = function(e) NULL
+      )
+    }
+  }
+})
+
 # Dynamic team panels - only rebuilds when number of teams changes
 output$tm_team_panels <- renderUI({
   n <- as.integer(req(input$tm_num_teams))
   req(n >= 2L, n <= 4L)
 
+  # For each slot, filter out teams already selected in other slots
   panels <- lapply(seq_len(n), function(i) {
-    dest_choices <- tm_get_dest_choices(i, n)
+    selected_teams <- tm_get_selected_teams(n)
+    dest_choices <- tm_get_dest_choices(i, selected_teams)
     # Start with one asset row
     initial_asset <- tm_build_asset_row(i, 1L, dest_choices)
+
+    slot_title <- if (!is.na(selected_teams[i]) && selected_teams[i] != "") {
+      selected_teams[i]
+    } else {
+      paste("Slot", i)
+    }
 
     column(
       width = 12 / n,
       box(
-        title = paste("Team", i),
+        title = slot_title,
         width = NULL,
         solidHeader = TRUE,
         status = "primary",
+        selectInput(
+          paste0("tm_team_", i, "_select"),
+          "Team",
+          choices = allteams,
+          selected = selected_teams[i]
+        ),
         numericInput(
           paste0("tm_team_", i, "_salary"),
           "Guaranteed Salary ($)",
@@ -153,7 +198,13 @@ observeEvent(input$tm_validate, {
     apron2     = as.numeric(req(input$tm_apron2))
   )
 
-  team_labels <- paste("Team", seq_len(n))
+  selected_teams <- tm_get_selected_teams(n)
+  # Use team codes for results; fall back to "Slot i" if not selected
+  team_labels <- ifelse(
+    !is.na(selected_teams) & selected_teams != "",
+    selected_teams,
+    paste("Slot", seq_len(n))
+  )
   results <- character(n)
   names(results) <- team_labels
 
@@ -169,15 +220,15 @@ observeEvent(input$tm_validate, {
   for (i in seq_len(n)) {
     n_assets <- tm_asset_counts[[paste0("team_", i)]] %||% 1L
     for (j in seq_len(n_assets)) {
-      dest_id <- input[[paste0("tm_team_", i, "_asset_", j, "_dest")]]
-      if (is.null(dest_id) || dest_id == "") next
-      dest <- as.integer(dest_id)
+      dest_team <- input[[paste0("tm_team_", i, "_asset_", j, "_dest")]]
+      if (is.null(dest_team) || dest_team == "") next
+      dest_slot <- match(dest_team, selected_teams)
       sal <- input[[paste0("tm_team_", i, "_asset_", j, "_sal")]]
       sal_val <- if (is.na(sal) || is.null(sal) || identical(sal, "")) 0 else as.numeric(sal)
 
-      if (dest != i && dest >= 1L && dest <= n) {
+      if (!is.na(dest_slot) && dest_slot != i) {
         outgoing[[i]] <- c(outgoing[[i]], sal_val)
-        incoming[[dest]] <- c(incoming[[dest]], sal_val)
+        incoming[[dest_slot]] <- c(incoming[[dest_slot]], sal_val)
       }
     }
   }

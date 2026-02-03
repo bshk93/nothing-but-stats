@@ -224,9 +224,9 @@ body <- dashboardBody(
       h2("Trade Machine"),
 
       fluidRow(
-        column(4, numericInput("tm_salary_cap", "Salary Cap ($)", value = 136021000, min = 0, step = 100000)),
-        column(4, numericInput("tm_apron1", "First Apron ($)", value = 172346000, min = 0, step = 100000)),
-        column(4, numericInput("tm_apron2", "Second Apron ($)", value = 182794000, min = 0, step = 100000))
+        column(4, numericInput("tm_salary_cap", "Salary Cap ($)", value = 136021000, min = 0, step = 1)),
+        column(4, numericInput("tm_apron1", "First Apron ($)", value = 172346000, min = 0, step = 1)),
+        column(4, numericInput("tm_apron2", "Second Apron ($)", value = 182794000, min = 0, step = 1))
       ),
 
       fluidRow(
