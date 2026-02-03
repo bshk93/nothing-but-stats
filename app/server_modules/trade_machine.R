@@ -7,23 +7,70 @@ TM_MAX_ASSETS <- 15L
 tm_asset_counts <- reactiveValues()
 tm_validation_result <- reactiveValues(results = NULL)
 
-# Initialize asset counts when number of teams changes
+# Helper to build a single asset row
+tm_build_asset_row <- function(team_idx, asset_idx, dest_choices) {
+  div(
+    id = paste0("tm_asset_row_", team_idx, "_", asset_idx),
+    fluidRow(
+      column(4, textInput(
+        paste0("tm_team_", team_idx, "_asset_", asset_idx, "_desc"),
+        NULL,
+        placeholder = "Player or pick"
+      )),
+      column(3, numericInput(
+        paste0("tm_team_", team_idx, "_asset_", asset_idx, "_sal"),
+        NULL,
+        value = NA,
+        min = 0,
+        step = 100000
+      )),
+      column(4, selectInput(
+        paste0("tm_team_", team_idx, "_asset_", asset_idx, "_dest"),
+        NULL,
+        choices = dest_choices,
+        selected = if (length(dest_choices) == 1L) dest_choices else NULL
+      ))
+    )
+  )
+}
+
+# Helper to get destination choices for a team
+tm_get_dest_choices <- function(team_idx, n_teams) {
+  team_labels <- paste("Team", seq_len(n_teams))
+  other_choices <- setNames(as.character(seq_len(n_teams)), team_labels)
+  other_choices[-team_idx]
+}
+
+# When number of teams changes, rebuild the panels (this resets everything)
 observeEvent(input$tm_num_teams, {
   n <- as.integer(req(input$tm_num_teams))
-  for (i in seq_len(n)) {
-    key <- paste0("team_", i)
-    if (is.null(tm_asset_counts[[key]])) {
-      tm_asset_counts[[key]] <- 1L
-    }
+  # Reset asset counts for all teams
+
+  for (i in 1:4) {
+    tm_asset_counts[[paste0("team_", i)]] <- 1L
   }
 }, ignoreNULL = TRUE)
 
 # Add Asset button handlers (teams 1-4)
 lapply(1:4, function(i) {
   observeEvent(input[[paste0("tm_add_asset_", i)]], {
+    n <- as.integer(req(input$tm_num_teams))
+    if (i > n) return()
+
     key <- paste0("team_", i)
     current <- tm_asset_counts[[key]] %||% 1L
-    tm_asset_counts[[key]] <- min(TM_MAX_ASSETS, current + 1L)
+    if (current >= TM_MAX_ASSETS) return()
+
+    new_idx <- current + 1L
+    tm_asset_counts[[key]] <- new_idx
+
+    dest_choices <- tm_get_dest_choices(i, n)
+    insertUI(
+
+      selector = paste0("#tm_assets_container_", i),
+      where = "beforeEnd",
+      ui = tm_build_asset_row(i, new_idx, dest_choices)
+    )
   })
 })
 
@@ -32,44 +79,22 @@ lapply(1:4, function(i) {
   observeEvent(input[[paste0("tm_remove_asset_", i)]], {
     key <- paste0("team_", i)
     current <- tm_asset_counts[[key]] %||% 1L
-    tm_asset_counts[[key]] <- max(0L, current - 1L)
+    if (current <= 0L) return()
+
+    removeUI(selector = paste0("#tm_asset_row_", i, "_", current))
+    tm_asset_counts[[key]] <- current - 1L
   })
 })
 
-# Dynamic team panels
+# Dynamic team panels - only rebuilds when number of teams changes
 output$tm_team_panels <- renderUI({
   n <- as.integer(req(input$tm_num_teams))
   req(n >= 2L, n <= 4L)
 
-  team_labels <- paste("Team", seq_len(n))
-  other_choices <- setNames(as.character(seq_len(n)), team_labels)
-
   panels <- lapply(seq_len(n), function(i) {
-    n_assets <- tm_asset_counts[[paste0("team_", i)]] %||% 1L
-    dest_choices <- other_choices[-i]
-
-    asset_rows <- lapply(seq_len(n_assets), function(j) {
-      fluidRow(
-        column(4, textInput(
-          paste0("tm_team_", i, "_asset_", j, "_desc"),
-          NULL,
-          placeholder = "Player or pick"
-        )),
-        column(3, numericInput(
-          paste0("tm_team_", i, "_asset_", j, "_sal"),
-          NULL,
-          value = NA,
-          min = 0,
-          step = 100000
-        )),
-        column(4, selectInput(
-          paste0("tm_team_", i, "_asset_", j, "_dest"),
-          NULL,
-          choices = dest_choices,
-          selected = if (length(dest_choices) == 1L) dest_choices else NULL
-        ))
-      )
-    })
+    dest_choices <- tm_get_dest_choices(i, n)
+    # Start with one asset row
+    initial_asset <- tm_build_asset_row(i, 1L, dest_choices)
 
     column(
       width = 12 / n,
@@ -97,7 +122,7 @@ output$tm_team_panels <- renderUI({
           column(3, strong("Salary ($)")),
           column(4, strong("Destination"))
         ),
-        tagList(asset_rows),
+        div(id = paste0("tm_assets_container_", i), initial_asset),
         fluidRow(
           column(6, actionButton(
             paste0("tm_add_asset_", i),
