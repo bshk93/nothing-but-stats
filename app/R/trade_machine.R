@@ -1,3 +1,6 @@
+# Trade Machine Validation Logic ----
+# Financial environment and legality checks for NBA-style trades
+
 # 1. Define the Financial Environment (Update these annually)
 # Values for 2026-27 Season Projections
 nba_config <- list(
@@ -7,12 +10,12 @@ nba_config <- list(
 )
 
 # 2. The Legality Function
-is_trade_legal <- function(outgoing_sal, incoming_sal, current_guaranteed, 
+is_trade_legal <- function(outgoing_sal, incoming_sal, current_guaranteed,
                            hard_cap, config = nba_config) {
-  
+
   # Calculate salary after the trade
   post_trade_salary <- current_guaranteed - sum(outgoing_sal, na.rm = TRUE) + sum(incoming_sal, na.rm = TRUE)
-  
+
   if (hard_cap == "Second Apron") {
     if (post_trade_salary > config$apron2) {
         return("FAIL: Team is hard capped at the second apron.")
@@ -25,37 +28,40 @@ is_trade_legal <- function(outgoing_sal, incoming_sal, current_guaranteed,
     }
   }
   # DETERMINE STATUS BASED ON POST-TRADE SALARY
-  
+
+  out_sum <- sum(outgoing_sal, na.rm = TRUE)
+  in_sum  <- sum(incoming_sal, na.rm = TRUE)
+
   # TIER 1: SECOND APRON TEAM
   if (post_trade_salary > config$apron2) {
     if (sum(!is.na(outgoing_sal)) > 1) {
       return("FAIL: Second Apron teams cannot combine multiple player salaries (aggregation) to match a larger incoming salary.")
     }
-    if (incoming_sal > outgoing_sal) {
+    if (in_sum > out_sum) {
       return("FAIL: Second Apron teams cannot take back more salary than they send out (must be <= 100%).")
     }
     return("PASS")
   }
-  
+
   # TIER 2: FIRST APRON TEAM
   else if (post_trade_salary > config$apron1) {
-    if (incoming_sal > outgoing_sal) {
+    if (in_sum > out_sum) {
       return("FAIL: First Apron teams cannot take back more salary than they send out (must be <= 100%).")
     }
     return("PASS")
   }
-  
+
   # TIER 3: NON-APRON TEAM (Standard Matching Brackets)
   else {
-    if (outgoing_sal <= 7250000) {
-      max_incoming <- (outgoing_sal * 2.00) + 250000
-    } else if (outgoing_sal <= 29000000) {
-      max_incoming <- outgoing_sal + 7500000
+    if (out_sum <= 7250000) {
+      max_incoming <- (out_sum * 2.00) + 250000
+    } else if (out_sum <= 29000000) {
+      max_incoming <- out_sum + 7500000
     } else {
-      max_incoming <- (outgoing_sal * 1.25) + 250000
+      max_incoming <- (out_sum * 1.25) + 250000
     }
-    
-    if (incoming_sal > max_incoming) {
+
+    if (in_sum > max_incoming) {
       return(paste("FAIL: Salary matching exceeded. Max allowed is", max_incoming))
     }
     return("PASS")

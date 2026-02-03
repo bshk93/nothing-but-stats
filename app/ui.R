@@ -217,7 +217,29 @@ body <- dashboardBody(
       h3("All-NBN Teams"),
       DTOutput("season_allnbn")
     ),
-    
+
+    ## Trade Machine ----
+    tabItem(
+      tabName = "tab_tm",
+      h2("Trade Machine"),
+
+      fluidRow(
+        column(4, numericInput("tm_salary_cap", "Salary Cap ($)", value = 136021000, min = 0, step = 100000)),
+        column(4, numericInput("tm_apron1", "First Apron ($)", value = 172346000, min = 0, step = 100000)),
+        column(4, numericInput("tm_apron2", "Second Apron ($)", value = 182794000, min = 0, step = 100000))
+      ),
+
+      fluidRow(
+        column(12, selectInput("tm_num_teams", "Number of teams", choices = 2:4, selected = 2))
+      ),
+
+      uiOutput("tm_team_panels"),
+
+      actionButton("tm_validate", "Validate Trade"),
+
+      uiOutput("tm_results")
+    ),
+
     ## Trivia ----
     tabItem(
       tabName = "tab_trivia",
