@@ -17,7 +17,6 @@ function(input, output, session) {
   source("server_modules/frivolities.R", local = TRUE)
   source("server_modules/box_scores.R", local = TRUE)
   source("server_modules/player_compare.R", local = TRUE)
-  source("server_modules/trade_machine.R", local = TRUE)
   source("server_modules/trivia.R", local = TRUE)
   source("server_modules/nbyen.R", local = TRUE)
   source("server_modules/nbn_wall_street.R", local = TRUE)

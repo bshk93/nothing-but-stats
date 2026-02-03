@@ -8,11 +8,22 @@ nba_config <- list(
 
 # 2. The Legality Function
 is_trade_legal <- function(outgoing_sal, incoming_sal, current_guaranteed, 
-                           config = nba_config) {
+                           hard_cap, config = nba_config) {
   
   # Calculate salary after the trade
   post_trade_salary <- current_guaranteed - sum(outgoing_sal, na.rm = TRUE) + sum(incoming_sal, na.rm = TRUE)
   
+  if (hard_cap == "Second Apron") {
+    if (post_trade_salary > config$apron2) {
+        return("FAIL: Team is hard capped at the second apron.")
+    }
+  }
+
+  if (hard_cap == "First Apron") {
+    if (post_trade_salary > config$apron1) {
+        return("FAIL: Team is hard capped at the first apron.")
+    }
+  }
   # DETERMINE STATUS BASED ON POST-TRADE SALARY
   
   # TIER 1: SECOND APRON TEAM
