@@ -23,5 +23,6 @@ function(input, output, session) {
   source("server_modules/owner_stats.R", local = TRUE)
   source("server_modules/head_to_head.R", local = TRUE)
   source("server_modules/trade_machine.R", local = TRUE)
+  source("server_modules/player_selection.R", local = TRUE)
 
 }

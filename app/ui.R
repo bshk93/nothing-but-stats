@@ -70,6 +70,11 @@ sidebar <- dashboardSidebar(
       icon = icon("trademark")
     ),
     menuItem(
+      "Ballots",
+      tabName = "tab_player_selection",
+      icon = icon("list-check")
+    ),
+    menuItem(
       "NBN Trivia!",
       tabName = "tab_trivia",
       icon = icon("puzzle-piece")
@@ -238,6 +243,31 @@ body <- dashboardBody(
       actionButton("tm_validate", "Validate Trade"),
 
       uiOutput("tm_results")
+    ),
+
+    ## Player Ballots ----
+    tabItem(
+      tabName = "tab_player_selection",
+      h2("Ballots"),
+      p("This page helps you build ballots for season awards and All-Star voting."),
+      p("Click a player's name to add them to your ballot. Compare stats for chosen players side by side below."),
+
+      selectizeInput(
+        "player_selection_season",
+        "Season",
+        choices = c("25-26", "24-25", "23-24", "22-23", "21-22", "20-21"),
+        selected = "25-26"
+      ),
+
+      h3("Player Bank"),
+      p("Click a row to add that player to your list."),
+      DTOutput("player_bank"),
+
+      h3("Selected Players"),
+      uiOutput("selected_players_list"),
+
+      h3("Stats Comparison"),
+      uiOutput("selected_stats_ui")
     ),
 
     ## Trivia ----
