@@ -1,7 +1,7 @@
 # Server Initialization ----
 # Shared reactives, observers, and helper functions used across modules
 
-myPassword <- "gortat"
+myPassword <- ""
 
 # Helper function for popups ----
 popup <- function(input_info, type) {
