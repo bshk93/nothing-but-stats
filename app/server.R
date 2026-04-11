@@ -13,7 +13,7 @@ function(input, output, session) {
   source("server_modules/franchise_profiles.R", local = TRUE)
   source("server_modules/league_stats.R", local = TRUE)
   source("server_modules/hall_of_fame.R", local = TRUE)
-  source("server_modules/power_rankings.R", local = TRUE)
+  #source("server_modules/power_rankings.R", local = TRUE)
   source("server_modules/frivolities.R", local = TRUE)
   source("server_modules/box_scores.R", local = TRUE)
   source("server_modules/player_compare.R", local = TRUE)

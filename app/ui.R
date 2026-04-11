@@ -42,11 +42,11 @@ sidebar <- dashboardSidebar(
       tabName = "tab_head_to_head",
       icon = icon("handshake")
     ),
-    menuItem(
-      "Power Rankings",
-      tabName = "tab_prs", 
-      icon = icon("arrow-trend-up")
-    ),
+    # menuItem(
+    #   "Power Rankings",
+    #   tabName = "tab_prs", 
+    #   icon = icon("arrow-trend-up")
+    # ),
     menuItem(
       "Frivolities",
       tabName = "tab_frivolities",
@@ -472,25 +472,25 @@ body <- dashboardBody(
       uiOutput("h2h_playoff_details")
     ),
     
-    ## Power Rankings ----
-    tabItem(
-      tabName = "tab_prs",
-      selectizeInput(
-        'pr_season',
-        'Choose a Season',
-        c("25-26", "24-25", "23-24", "22-23", "21-22", "20-21")
-      ),
-      # selectizeInput(
-      #   'pr_teams',
-      #   'Select at least one team:',
-      #   allteams,
-      #   selected = FALSE,
-      #   multiple = TRUE
-      # ),
-      # plotOutput("power_rankings", width = "130%"),
-      
-      reactableOutput("power_rankings_table")
-    ),
+    # ## Power Rankings ----
+    # tabItem(
+    #   tabName = "tab_prs",
+    #   selectizeInput(
+    #     'pr_season',
+    #     'Choose a Season',
+    #     c("25-26", "24-25", "23-24", "22-23", "21-22", "20-21")
+    #   ),
+    #   # selectizeInput(
+    #   #   'pr_teams',
+    #   #   'Select at least one team:',
+    #   #   allteams,
+    #   #   selected = FALSE,
+    #   #   multiple = TRUE
+    #   # ),
+    #   # plotOutput("power_rankings", width = "130%"),
+    #   
+    #   reactableOutput("power_rankings_table")
+    # ),
     
     ## Frivolities ----
     tabItem(
