@@ -54,14 +54,20 @@ observeEvent(input$player_bank_cell_clicked, {
   }
 })
 
-# Remove button observers (one per possible index, up to 50)
-lapply(1:50, function(i) {
-  observeEvent(input[[paste0("remove_player_", i)]], {
-    if (i >= 1L && i <= length(selected_players$players)) {
-      selected_players$players <- selected_players$players[-i]
-    }
-  })
+# Remove by player name (from JS button click)
+observeEvent(input$remove_player_name, {
+  name <- input$remove_player_name
+  selected_players$players <- selected_players$players[selected_players$players != name]
 })
+
+# Sync drag order
+observeEvent(input$player_rank_order, {
+  new_order <- input$player_rank_order
+  valid <- intersect(new_order, selected_players$players)
+  if (length(valid) == length(selected_players$players)) {
+    selected_players$players <- valid
+  }
+}, ignoreNULL = TRUE, ignoreInit = TRUE)
 
 # Selected players list with remove buttons
 output$selected_players_list <- renderUI({
@@ -69,7 +75,7 @@ output$selected_players_list <- renderUI({
   if (length(players) == 0L) {
     return(p("No players selected. Click a row in the player bank above to add players."))
   }
-
+  
   season_df <- player_selection_season_df()
   team_lookup <- season_df %>%
     group_by(PLAYER) %>%
@@ -77,25 +83,58 @@ output$selected_players_list <- renderUI({
     slice(n()) %>%
     ungroup() %>%
     select(PLAYER, TEAM)
-
-  tags <- lapply(seq_along(players), function(i) {
-    p <- players[i]
-    team_row <- team_lookup %>% filter(PLAYER == p)
-    team <- if (nrow(team_row) > 0L) team_row$TEAM[1] else ""
-    team_logo <- if (nzchar(team)) get_logo(team, height = 24) else ""
-    span(
-      style = "display: inline-block; margin-right: 10px; margin-bottom: 8px;",
-      span(HTML(str_c(p, " ", team_logo)), style = "margin-right: 6px;"),
-      actionButton(
-        paste0("remove_player_", i),
-        label = NULL,
-        icon = icon("times"),
-        style = "padding: 2px 6px;"
+  
+  items_html <- paste(
+    sapply(seq_along(players), function(i) {
+      p_name <- players[i]
+      team <- team_lookup$TEAM[team_lookup$PLAYER == p_name][1]
+      team <- if (!is.na(team) && nzchar(team)) team else ""
+      logo  <- if (nzchar(team)) get_logo(team, height = 24) else ""
+      sprintf(
+        '<div class="drag-item" data-player="%s" style="display:flex;align-items:center;gap:8px;padding:6px 10px;margin-bottom:4px;background:#f5f5f5;border:1px solid #ddd;border-radius:4px;cursor:grab;">
+           <span style="color:#aaa;">☰</span>
+           <span style="min-width:24px;font-weight:bold;color:#888;">#%d</span>
+           <span>%s %s</span>
+           <button onclick="removePlayer(\'%s\')" style="margin-left:auto;border:none;background:none;cursor:pointer;color:#999;">✕</button>
+         </div>',
+        p_name, i, p_name, logo, p_name
       )
-    )
-  })
-
-  tagList(tags)
+    }),
+    collapse = "\n"
+  )
+  
+  # Inject sortable.js from CDN + glue logic
+  tagList(
+    tags$head(
+      tags$script(src = "https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js")
+    ),
+    HTML(paste0(
+      '<div id="drag-list">', items_html, '</div>',
+      '<script>
+        // Destroy existing Sortable instance if present
+        if (window._playerSortable) {
+          window._playerSortable.destroy();
+        }
+        var el = document.getElementById("drag-list");
+        window._playerSortable = Sortable.create(el, {
+          animation: 150,
+          ghostClass: "drag-ghost",
+          onEnd: function() {
+            var order = Array.from(el.querySelectorAll(".drag-item"))
+                             .map(function(d) { return d.getAttribute("data-player"); });
+            Shiny.setInputValue("player_rank_order", order, {priority: "event"});
+            el.querySelectorAll(".drag-item").forEach(function(d, idx) {
+              d.querySelectorAll("span")[1].textContent = "#" + (idx + 1);
+            });
+          }
+        });
+      
+        function removePlayer(name) {
+          Shiny.setInputValue("remove_player_name", name, {priority: "event"});
+        }
+      </script>'
+    ))
+  )
 })
 
 # Stats comparison: side-by-side (one column per player, one row per stat)

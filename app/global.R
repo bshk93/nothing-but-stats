@@ -22,6 +22,7 @@ library(shinyWidgets)
 library(bslib)
 library(shinydashboard)
 library(shinyjs)
+library(sortable)
 
 # Source utility functions ----
 walk(list.files("R/", full.names = T), source)

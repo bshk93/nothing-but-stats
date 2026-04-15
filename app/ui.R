@@ -264,6 +264,7 @@ body <- dashboardBody(
       DTOutput("player_bank"),
 
       h3("Selected Players"),
+      p("Drag to reorder. Click ✕ to remove."),
       uiOutput("selected_players_list"),
 
       h3("Stats Comparison"),
