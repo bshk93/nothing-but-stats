@@ -4,3 +4,11 @@
 .Ruserdata
 .Rproj
 
+# Generated data files — stored in /home/skim/nbs-data, not in the repo
+app/data/*.rds
+app/data/allstats-*.csv
+app/data/allstats-playoffs-*.csv
+app/data/player-bio-database.csv
+files/allstats.csv
+files/standings.csv
+

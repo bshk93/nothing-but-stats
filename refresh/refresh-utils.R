@@ -272,23 +272,22 @@ clean_allstats <- function(dfs) {
   dfs_bind
 }
 
-load_allstats <- function(playoffs = FALSE) {
+load_allstats <- function(playoffs = FALSE, data_dir = Sys.getenv("NBS_DATA_DIR", "/home/skim/nbs-data")) {
   ptrn <- "allstats-\\d"
   pstr <- ""
   if (playoffs) {
     ptrn <- "allstats-playoffs"
     pstr <- " Playoffs"
   }
-  
-  # Find all allstats files in R/ directory
-  list.files("app/data/", ptrn) %>% 
+
+  list.files(data_dir, ptrn) %>%
     map(function(fp) {
       tmp_season <- as.numeric(str_extract(fp, "\\d{2}\\."))
-      
-      data.table::fread(str_c('app/data/', fp)) %>% 
-        tibble() %>% 
-        mutate_if(is.numeric, as.numeric) %>% 
-        mutate(SEASON = str_c(tmp_season-1, "-", tmp_season, pstr)) %>% 
+
+      data.table::fread(file.path(data_dir, fp)) %>%
+        tibble() %>%
+        mutate_if(is.numeric, as.numeric) %>%
+        mutate(SEASON = str_c(tmp_season-1, "-", tmp_season, pstr)) %>%
         filter(!is.na(SEASON))
     })
 }
