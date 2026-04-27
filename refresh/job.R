@@ -461,7 +461,7 @@ final_standings %>%
     OPPG = round(OPPG, 1),
     DIFF = round(DIFF, 1)
   ) %>%
-  write_csv("files/standings.csv")
+  write_csv(file.path(DATA_DIR, "standings.csv"))
 
 # x %>%
 #   left_join(
@@ -491,7 +491,7 @@ final_standings %>%
 #   write_csv("files/standings.csv")
 
 get_dfs_everything() %>% 
-  write_csv("files/allstats.csv")
+  write_csv(file.path(DATA_DIR, "allstats.csv"))
 
 
 

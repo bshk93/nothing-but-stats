@@ -47,8 +47,9 @@ git pull
 echo "Running preprocessing script..."
 Rscript "$PREPROCESS_SCRIPT" "$SEASON" "$PLAYOFF_DATE" "$DROP_DATE"
 
-# copy files from files/ to /var/www/stats.nbn.today/files/
-find "$HOME/nothing-but-stats/files" -type f -exec cp {} /var/www/stats.nbn.today/files/ \;
+# copy public CSVs from DATA_DIR to /var/www/stats.nbn.today/files/
+NBS_DATA_DIR="${NBS_DATA_DIR:-/home/skim/nbs-data}"
+find "$NBS_DATA_DIR" -maxdepth 1 -name "*.csv" -exec cp {} /var/www/stats.nbn.today/files/ \;
 
 # check for git status updates
 if [[ -n $(git status --porcelain) ]]; then
