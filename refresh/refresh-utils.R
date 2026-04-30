@@ -287,6 +287,7 @@ load_allstats <- function(playoffs = FALSE, data_dir = Sys.getenv("NBS_DATA_DIR"
       data.table::fread(file.path(data_dir, fp)) %>%
         tibble() %>%
         mutate_if(is.numeric, as.numeric) %>%
+        mutate(DATE = as.Date(DATE)) %>%
         mutate(SEASON = str_c(tmp_season-1, "-", tmp_season, pstr)) %>%
         filter(!is.na(SEASON))
     })
