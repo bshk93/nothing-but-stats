@@ -114,14 +114,9 @@ output$rookie_report <- renderDT({
     filter(ROOKIE) %>%
     summarize_player() %>%
     arrange(desc(GMSC))
-  
-  x <- x %>% 
-    left_join(get_last_played_for_2(mySeasonDF()), by = 'PLAYER')
-  
+
   y <- x %>%
-    mutate(PLAYER = str_c(
-      PLAYER, ' ', get_logo(TEAM, height = 20)
-    )) %>%
+    annotate_player_team(mySeasonDF()) %>%
     select(-TEAM, -c('FGAPG', 'FGMPG', '3PAPG', '3PMPG', 'FTAPG', 'FTMPG')) %>%
     format_as_datatable(
       escape = FALSE,
@@ -140,25 +135,20 @@ output$most_improved <- renderDT({
   
   begin <- Sys.time()
   
-  x <- mySeasonDF() %>% 
-    summarize_player()
-  
-  x <- x %>% 
-    left_join(get_last_played_for_2(mySeasonDF()), by = 'PLAYER')
-  
-  y <- dfs %>% 
-    filter(SEASON < input$season2) %>% 
-    summarize_player() %>% 
+  x <- mySeasonDF() %>%
+    summarize_player() %>%
+    annotate_player_team(mySeasonDF())
+
+  y <- dfs %>%
+    filter(SEASON < input$season2) %>%
+    summarize_player() %>%
     select(PLAYER, G_CAREER = G, GMSC_CAREER = GMSC)
-  
-  z <- x %>% 
-    select(PLAYER, TEAM, G, GMSC) %>% 
-    inner_join(y, by = "PLAYER") %>% 
-    mutate(PLAYER = str_c(
-      PLAYER, ' ', get_logo(TEAM, height = 20)
-    )) %>% 
-    mutate(GMSC_DIFF = round(GMSC - GMSC_CAREER, 2)) %>% 
-    select(-TEAM) %>% 
+
+  z <- x %>%
+    select(PLAYER, TEAM, G, GMSC) %>%
+    inner_join(y, by = "PLAYER") %>%
+    mutate(GMSC_DIFF = round(GMSC - GMSC_CAREER, 2)) %>%
+    select(-TEAM) %>%
     arrange(desc(GMSC_DIFF)) %>% 
     format_as_datatable(
       escape = FALSE, 

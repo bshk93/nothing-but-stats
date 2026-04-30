@@ -6,6 +6,14 @@ output$headshot <- renderText({
 })
 
 output$player_summary <- renderText({
+  player_awards <- get_all_player_awards(input$name)
+
+  award_line <- function(type, label, count = TRUE) {
+    n <- nrow(filter(player_awards, AWARD == type))
+    if (n == 0) return("")
+    if (count) str_c(n, "x ", label, "\n") else str_c(label, "\n")
+  }
+
   glue(
     "{input$name} ({myBiosData() %>% pull(`Combo Pos.`)}):\n",
     "DOB: {myBiosData() %>% pull(DOB)}\n",
@@ -15,34 +23,17 @@ output$player_summary <- renderText({
     "Drafted: {myBiosData() %>% pull(`NBN D YR`)}: {myBiosData() %>% pull(`NBN D R`)}, {myBiosData() %>% pull(`NBN D P`)}\n",
     "From: {myBiosData() %>% pull(COLLEGE)}\n\n",
     "Awards:\n",
-    "{if_else(nrow(get_allstars() %>% filter(PLAYER == input$name)) > 0, 
-              str_c(nrow(get_allstars() %>% filter(PLAYER == input$name)), 'x All-Star\n'),
-              '')}",
-    "{if_else(nrow(get_mvp() %>% filter(PLAYER == input$name)) > 0, 
-              str_c(nrow(get_mvp() %>% filter(PLAYER == input$name)), 'x Most Valuable Player\n'),
-              '')}",
-    "{if_else(nrow(get_dpoy() %>% filter(PLAYER == input$name)) > 0, 
-              str_c(nrow(get_dpoy() %>% filter(PLAYER == input$name)), 'x Defensive Player of the Year\n'),
-              '')}",
-    "{if_else(nrow(get_6moy() %>% filter(PLAYER == input$name)) > 0, 
-              str_c(nrow(get_6moy() %>% filter(PLAYER == input$name)), 'x Sixth Man of the Year\n'),
-              '')}",
-    "{if_else(nrow(get_roy() %>% filter(PLAYER == input$name)) > 0, 
-              'Rookie of the Year\n',
-              '')}",
-    "{if_else(nrow(get_mip() %>% filter(PLAYER == input$name)) > 0, 
-              str_c(nrow(get_mip() %>% filter(PLAYER == input$name)), 'x Most Improved\n'),
-              '')}",
-    "{if_else(nrow(bind_rows(get_allnbn1(), get_allnbn2(), get_allnbn3()) %>% filter(PLAYER == input$name)) > 0, 
-              str_c(nrow(bind_rows(get_allnbn1(), get_allnbn2(), get_allnbn3()) %>% filter(PLAYER == input$name)), 'x All-NBN\n'),
-              '')}",
-    "{if_else(nrow(get_alldef() %>% filter(PLAYER == input$name)) > 0, 
-              str_c(nrow(get_alldef() %>% filter(PLAYER == input$name)), 'x All-Defense\n'),
-              '')}",
-    "{if_else(nrow(get_allrookie() %>% filter(PLAYER == input$name)) > 0, 
-              str_c(nrow(get_allrookie() %>% filter(PLAYER == input$name)), 'x All-Rookie\n'),
-              '')}"
-    
+    "{award_line('All-Star', 'All-Star')}",
+    "{award_line('Most Valuable Player', 'Most Valuable Player')}",
+    "{award_line('Defensive Player of the Year', 'Defensive Player of the Year')}",
+    "{award_line('Sixth Man of the Year', 'Sixth Man of the Year')}",
+    "{award_line('Rookie of the Year', 'Rookie of the Year', count = FALSE)}",
+    "{award_line('Most Improved Player', 'Most Improved')}",
+    "{award_line('All-NBN First Team', 'All-NBN First Team')}",
+    "{award_line('All-NBN Second Team', 'All-NBN Second Team')}",
+    "{award_line('All-NBN Third Team', 'All-NBN Third Team')}",
+    "{award_line('All-Defense', 'All-Defense')}",
+    "{award_line('All-Rookie', 'All-Rookie')}"
   )
 })
 

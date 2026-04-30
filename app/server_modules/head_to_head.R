@@ -36,10 +36,8 @@ output$h2h_alltime <- renderDT({
   losses <- sum(games_with_scores$LOSS, na.rm = TRUE)
   
   # Split by regular season and playoffs
-  regular_games <- games_with_scores %>%
-    filter(!str_detect(SEASON, " Playoffs"))
-  playoff_games <- games_with_scores %>%
-    filter(str_detect(SEASON, " Playoffs"))
+  regular_games <- filter_regular(games_with_scores)
+  playoff_games <- filter_playoffs(games_with_scores)
   
   regular_wins <- sum(regular_games$WIN, na.rm = TRUE)
   regular_losses <- sum(regular_games$LOSS, na.rm = TRUE)
@@ -157,34 +155,21 @@ output$h2h_playoff_details <- renderUI({
     season <- first(series_df$SEASON)
     round <- first(series_df$ROUND)
     
-    # Get top performers for each game in this series
+    # Get top performers for each game in this series (from pre-computed table)
     game_details <- map_dfr(1:nrow(series_df), function(i) {
       game_row <- series_df[i, ]
-      
-      # Get player stats for this specific game
-      game_players <- dfs_playoffs %>%
+
+      game_players <- playoff_top_performers %>%
         filter(
           SEASON == game_row$SEASON,
           ROUND == game_row$ROUND,
           GAME == game_row$GAME,
           DATE == game_row$DATE,
-          (TEAM == team1 | TEAM == team2)
-        ) %>%
-        group_by(TEAM, PLAYER) %>%
-        summarize(
-          GMSC = sum(GMSC),
-          P = sum(P),
-          R = sum(R),
-          A = sum(A),
-          .groups = 'drop'
+          TEAM %in% c(team1, team2)
         )
-      
-      # Top 3 for each team
-      team1_top <- game_players %>%
-        filter(TEAM == team1) %>%
-        arrange(desc(GMSC)) %>%
-        head(3)
-      
+
+      team1_top <- game_players %>% filter(TEAM == team1)
+
       team1_top_str <- if (nrow(team1_top) > 0) {
         team1_top %>%
           mutate(
@@ -196,10 +181,7 @@ output$h2h_playoff_details <- renderUI({
         "N/A"
       }
       
-      team2_top <- game_players %>%
-        filter(TEAM == team2) %>%
-        arrange(desc(GMSC)) %>%
-        head(3)
+      team2_top <- game_players %>% filter(TEAM == team2)
       
       team2_top_str <- if (nrow(team2_top) > 0) {
         team2_top %>%

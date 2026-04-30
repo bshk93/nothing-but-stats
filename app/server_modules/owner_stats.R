@@ -1,19 +1,24 @@
 # Owner Stats Module ----
 # All outputs for the Owner Stats tab
 
+# Cache the owner CSV fetch for the session — avoids a live HTTP call on every render
+owner_raw_cache <- reactiveVal(NULL)
+
 output$owner_stats <- renderDT({
-  
+
   tryCatch({
-    # Read owner data from CSV
-    owner_data <- read_csv(
-      "https://docs.google.com/spreadsheets/d/e/2PACX-1vTB86fJGOAig-7Oh4J8D-0Vq0W2n8r63MxY5fuWWMJz-cCZNU5i384I7_iLSOiA057nmtLMnosXCPO3/pub?gid=0&single=true&output=csv",
-      show_col_types = FALSE
-    ) %>%
-      mutate(
-        start_date = mdy(start_date),
-        TEAM = toupper(team)
-      ) %>%
-      select(-team)
+    # Fetch once per session, then reuse the cached data frame
+    if (is.null(owner_raw_cache())) {
+      owner_raw_cache(
+        read_csv(
+          "https://docs.google.com/spreadsheets/d/e/2PACX-1vTB86fJGOAig-7Oh4J8D-0Vq0W2n8r63MxY5fuWWMJz-cCZNU5i384I7_iLSOiA057nmtLMnosXCPO3/pub?gid=0&single=true&output=csv",
+          show_col_types = FALSE
+        ) %>%
+          mutate(start_date = mdy(start_date), TEAM = toupper(team)) %>%
+          select(-team)
+      )
+    }
+    owner_data <- owner_raw_cache()
     
     # Calculate end dates for each ownership period
     # End date is the day before the next owner's start date, or today if it's the current owner

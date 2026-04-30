@@ -22,6 +22,7 @@ library(shinyWidgets)
 library(bslib)
 library(shinydashboard)
 library(shinyjs)
+library(shinycssloaders)
 
 # Source utility functions ----
 walk(list.files("R/", full.names = T), source)
@@ -35,10 +36,9 @@ news <- read_rds(file.path(DATA_DIR, 'news.rds'))
 bios <- read_rds(file.path(DATA_DIR, 'bios.rds'))
 team_ratings <- read_rds(file.path(DATA_DIR, 'team_ratings.rds'))
 
-# Helper function to combine dfs and dfs_playoffs on demand (avoids duplication)
-get_dfs_everything <- function() {
-  bind_rows(dfs, dfs_playoffs)
-}
+# Pre-combine once at startup; get_dfs_everything() returns this cached object
+dfs_all <- bind_rows(dfs, dfs_playoffs)
+get_dfs_everything <- function() dfs_all
 
 # Derived data ----
 champions <- get_champions(dfs_playoffs)
@@ -76,8 +76,20 @@ game_high_team <- read_rds(file.path(DATA_DIR, "game_high_team.rds"))
 season_high_team <- read_rds(file.path(DATA_DIR, "season_high_team.rds"))
 wl_streaks <- read_rds(file.path(DATA_DIR, "wl_streaks.rds"))
 
+if (file.exists(file.path(DATA_DIR, "cum_diff.rds"))) {
+  cum_diff_precomputed <- read_rds(file.path(DATA_DIR, "cum_diff.rds"))
+} else {
+  cum_diff_precomputed <- tibble()
+}
+
+if (file.exists(file.path(DATA_DIR, "playoff_top_performers.rds"))) {
+  playoff_top_performers <- read_rds(file.path(DATA_DIR, "playoff_top_performers.rds"))
+} else {
+  playoff_top_performers <- tibble()
+}
+
 # Player name mappings ----
-player_teams <- get_dfs_everything() %>% 
+player_teams <- dfs_all %>%
   arrange(PLAYER, DATE) %>% 
   group_by(PLAYER) %>% 
   mutate(last_played = last(TEAM)) %>% 

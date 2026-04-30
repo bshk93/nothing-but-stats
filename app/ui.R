@@ -352,7 +352,7 @@ body <- dashboardBody(
       ),
       DTOutput("franchise_history_leaders"),
       h2("CUMULATIVE POINT DIFFERENTIAL"),
-      plotOutput("franchise_history_cum_diff")
+      withSpinner(plotOutput("franchise_history_cum_diff"))
     ),
     
     ## League Stats ----
@@ -373,7 +373,7 @@ body <- dashboardBody(
       checkboxInput("reg_flag", "Include Regular Season", value = TRUE),
       checkboxInput("playoff_flag", "Include Playoffs", value = FALSE),
       checkboxInput("per_36_flag", "Per 36", value = FALSE),
-      DTOutput("franchise_records"),
+      withSpinner(DTOutput("franchise_records")),
       
       h2('Game Highs'),
       p("Includes any game in which a player recorded at least 5 points, rebounds, assists, steals, or blocks."),
@@ -417,7 +417,7 @@ body <- dashboardBody(
         'Choose a Season:',
         c("ALL-TIME", "25-26", "24-25", "23-24", "22-23", "21-22", "20-21")
       ),
-      plotOutput("stat_race_plot")
+      withSpinner(plotOutput("stat_race_plot"))
     ),
     
     ## Hall of Fame + Awards ----
@@ -470,7 +470,7 @@ body <- dashboardBody(
       h3("Playoff Series Record"),
       DTOutput("h2h_playoff_series"),
       h3("Playoff Series Details"),
-      uiOutput("h2h_playoff_details")
+      withSpinner(uiOutput("h2h_playoff_details"))
     ),
     
     # ## Power Rankings ----

@@ -98,13 +98,9 @@ output$league_champs <- renderDT({
   })
   
 output$season_awards_history <- renderDT({
-    x <- bind_rows(
-      get_mvp() %>% mutate(AWARD = "Most Valuable Player"),
-      get_dpoy() %>% mutate(AWARD = "Defensive Player of the Year"),
-      get_roy() %>% mutate(AWARD = "Rookie of the Year"),
-      get_6moy() %>% mutate(AWARD = "Sixth Man of the Year"),
-      get_mip() %>% mutate(AWARD = "Most Improved Player")
-    ) %>% 
+    x <- get_all_player_awards() %>%
+      filter(AWARD %in% c("Most Valuable Player", "Defensive Player of the Year",
+                           "Rookie of the Year", "Sixth Man of the Year", "Most Improved Player")) %>%
       select(AWARD, SEASON, PLAYER)
     
     y <- dfs %>% 

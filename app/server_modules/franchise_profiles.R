@@ -210,31 +210,12 @@ output$franchise_history_leaders <- renderDT({
   
 output$franchise_history_cum_diff <- renderPlot({
     req(input$password == myPassword || myPassword == '')
-    
-    x <- get_dfs_everything() %>%
-      mutate(OPP_RAW = str_replace(OPP, "@", ""))
-    
-    y <- x %>%
-      group_by(SEASON, TEAM, OPP, OPP_RAW, DATE) %>%
-      summarize(P = sum(P)) %>%
-      ungroup()
-    
-    z <- y %>%
+
+    cum_diff_precomputed %>%
       filter(TEAM == input$team_history) %>%
-      inner_join(
-        y %>% select(OPP_RAW = TEAM, DATE, OPP_P = P),
-        by = c('OPP_RAW', 'DATE')
-      ) %>%
-      mutate(DIFF = P - OPP_P) %>%
-      arrange(DATE) %>%
-      mutate(CUM_DIFF = cumsum(DIFF),
-             G = row_number())
-    
-    z %>%
       ggplot(aes(x = G, y = CUM_DIFF)) +
       geom_line() +
       geom_point(aes(col = SEASON))
-    
   })
   
   

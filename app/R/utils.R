@@ -189,11 +189,7 @@ compute_standings <- function(season_df) {
     mutate(OPP = str_replace(OPP, "@", ""))
   
   games <- x %>%
-    left_join(
-      x %>%
-        select(DATE, OPP = TEAM, OPP_PTS = TEAM_PTS),
-      by = c("DATE", "OPP")
-    ) %>%
+    join_opponent_scores() %>%
     mutate(
       WIN  = TEAM_PTS > OPP_PTS,
       LOSS = TEAM_PTS < OPP_PTS,
@@ -338,6 +334,29 @@ compute_team_stats <- function(season_df) {
     mutate(`3PPCT` = round(`3PMPG`/`3PAPG`, 3))
 }
 
+# Common filter helpers ----
+filter_regular <- function(df) filter(df, !str_detect(SEASON, " Playoffs"))
+filter_playoffs <- function(df) filter(df, str_detect(SEASON, " Playoffs"))
+
+# Join a game-level df to itself to get the opposing team's score.
+# df must have columns TEAM, TEAM_PTS, and the columns named in join_by.
+# join_by must include "OPP" as the key that will be matched against TEAM.
+join_opponent_scores <- function(df, join_by = c("DATE", "OPP")) {
+  df %>%
+    left_join(
+      df %>% select(all_of(setdiff(join_by, "OPP")), OPP = TEAM, OPP_PTS = TEAM_PTS),
+      by = join_by
+    )
+}
+
+# Join the most-recent team for each player in dfs_source and append a logo to
+# the PLAYER name column.  The TEAM column is retained; callers can select(-TEAM).
+annotate_player_team <- function(df, dfs_source, height = 20) {
+  df %>%
+    left_join(get_last_played_for_2(dfs_source), by = "PLAYER") %>%
+    mutate(PLAYER = str_c(PLAYER, " ", get_logo(TEAM, height = height)))
+}
+
 # Helper function for league leaders
 leader_helper <- function(category, summary_df, dfs, min_games = 1) {
   tmpvarname1 <- str_c(category, 'PG')
@@ -349,11 +368,8 @@ leader_helper <- function(category, summary_df, dfs, min_games = 1) {
     arrange(desc(row_number())) %>%
     head(10)
   
-  x <- x %>%
-    left_join(get_last_played_for_2(dfs), by = 'PLAYER')
-  
   x %>%
-    mutate(PLAYER = str_c(PLAYER, ' ', get_logo(TEAM, height = 20))) %>%
+    annotate_player_team(dfs) %>%
     select({{ tmpvarname2 }} := PLAYER, tmpvarname1) %>%
     mutate(rn = row_number()) %>%
     mutate({{ tmpvarname1 }} := round(get(tmpvarname1), 1))

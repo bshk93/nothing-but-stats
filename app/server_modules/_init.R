@@ -297,14 +297,7 @@ gamelist <- reactive({
     summarize(TEAM_PTS = sum(P), .groups = 'drop') %>%
     ungroup() %>%
     filter(!str_detect(OPP, "@")) %>%
-    left_join(
-      mySeasonDF() %>%
-        group_by(DATE, TEAM, OPP) %>%
-        summarize(TEAM_PTS = sum(P), .groups = 'drop') %>%
-        ungroup() %>%
-        select(DATE, OPP = TEAM, OPP_PTS = TEAM_PTS),
-      by = c('DATE', 'OPP')
-    ) %>%
+    join_opponent_scores() %>%
     mutate(RESULT = glue("{TEAM} {TEAM_PTS} - {OPP_PTS} {OPP}")) %>%
     select(DATE, TEAM, OPP, RESULT) %>%
     arrange(desc(DATE))

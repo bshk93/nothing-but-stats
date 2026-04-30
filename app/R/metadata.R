@@ -824,5 +824,24 @@ get_retired_jerseys <- function() {
     'HOU', 'HARDEN, JAMES', '2024-02-09', 13,
     'SAC', 'POKUSEVSKI, ALEKSEJ', '2024-02-10', 17
   )
-  
+
+}
+
+# Consolidated helper — returns all individual player awards with AWARD label.
+# Pass player to filter; omit for the full league-wide table.
+get_all_player_awards <- function(player = NULL) {
+  x <- bind_rows(
+    get_allstars()  %>% select(PLAYER, SEASON) %>% mutate(AWARD = "All-Star"),
+    get_mvp()       %>% select(PLAYER, SEASON) %>% mutate(AWARD = "Most Valuable Player"),
+    get_dpoy()      %>% select(PLAYER, SEASON) %>% mutate(AWARD = "Defensive Player of the Year"),
+    get_6moy()      %>% select(PLAYER, SEASON) %>% mutate(AWARD = "Sixth Man of the Year"),
+    get_roy()       %>% select(PLAYER, SEASON) %>% mutate(AWARD = "Rookie of the Year"),
+    get_mip()       %>% select(PLAYER, SEASON) %>% mutate(AWARD = "Most Improved Player"),
+    get_allnbn1()   %>% select(PLAYER, SEASON) %>% mutate(AWARD = "All-NBN First Team"),
+    get_allnbn2()   %>% select(PLAYER, SEASON) %>% mutate(AWARD = "All-NBN Second Team"),
+    get_allnbn3()   %>% select(PLAYER, SEASON) %>% mutate(AWARD = "All-NBN Third Team"),
+    get_alldef()    %>% select(PLAYER, SEASON) %>% mutate(AWARD = "All-Defense"),
+    get_allrookie() %>% select(PLAYER, SEASON) %>% mutate(AWARD = "All-Rookie")
+  )
+  if (!is.null(player)) x %>% filter(PLAYER == player) else x
 }
