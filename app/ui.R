@@ -289,7 +289,7 @@ body <- dashboardBody(
       selectizeInput(
         'seasonplayoffs',
         'Choose a Season:',
-        c("24-25", "23-24", "22-23", "21-22", "20-21")
+        c("25-26", "24-25", "23-24", "22-23", "21-22", "20-21")
       ),
       DTOutput("playoff_bracket"),
       DTOutput("playoff_series")
@@ -535,7 +535,7 @@ body <- dashboardBody(
         'playercomp_season',
         'Choose Season:',
         c('CAREER', 
-          '25-26',
+          '25-26', '25-26 Playoffs',
           '24-25', '24-25 Playoffs', 
           '23-24', '23-24 Playoffs',
           '22-23', '22-23 Playoffs',
