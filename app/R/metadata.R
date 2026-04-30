@@ -509,8 +509,8 @@ get_playoff_seeds <- function() {
     '25-26 Playoffs', 'EAST', 4, 'TOR',
     '25-26 Playoffs', 'EAST', 5, 'PHI',
     '25-26 Playoffs', 'EAST', 6, 'CLE',
-    '25-26 Playoffs', 'EAST', 7, '',
-    '25-26 Playoffs', 'EAST', 8, '',
+    '25-26 Playoffs', 'EAST', 7, 'MIA',
+    '25-26 Playoffs', 'EAST', 8, 'MYK',
     
     '25-26 Playoffs', 'WEST', 1, 'PHX',
     '25-26 Playoffs', 'WEST', 2, 'LAL',
@@ -518,8 +518,8 @@ get_playoff_seeds <- function() {
     '25-26 Playoffs', 'WEST', 4, 'OKC',
     '25-26 Playoffs', 'WEST', 5, 'SAC',
     '25-26 Playoffs', 'WEST', 6, 'SAS',
-    '25-26 Playoffs', 'WEST', 7, '',
-    '25-26 Playoffs', 'WEST', 8, '',
+    '25-26 Playoffs', 'WEST', 7, 'GSW',
+    '25-26 Playoffs', 'WEST', 8, 'MEM',
     
     # 24-25
     '24-25 Playoffs', 'EAST', 1, 'BKN',
