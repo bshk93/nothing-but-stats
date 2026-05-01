@@ -510,7 +510,7 @@ get_playoff_seeds <- function() {
     '25-26 Playoffs', 'EAST', 5, 'PHI',
     '25-26 Playoffs', 'EAST', 6, 'CLE',
     '25-26 Playoffs', 'EAST', 7, 'MIA',
-    '25-26 Playoffs', 'EAST', 8, 'MYK',
+    '25-26 Playoffs', 'EAST', 8, 'NYK',
     
     '25-26 Playoffs', 'WEST', 1, 'PHX',
     '25-26 Playoffs', 'WEST', 2, 'LAL',
