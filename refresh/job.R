@@ -109,9 +109,10 @@ current_reg_raw %>%
 
 if (!is.null(current_playoff_raw) && nrow(current_playoff_raw) > 0) {
   inform("Some of these are playoff stats. Exporting.")
+  season_suffix <- str_extract(season, "\\d{2}$")
   current_playoff_raw %>%
     mutate(gametype = "PLAYOFF") %>%
-    write_csv(file.path(DATA_DIR, glue("allstats-playoffs-{str_extract(season, '\\d{2}$')}.csv")))
+    write_csv(file.path(DATA_DIR, glue("allstats-playoffs-{season_suffix}.csv")))
 }
 
 # Post-processing: load historical seasons from disk, inject current season from memory
