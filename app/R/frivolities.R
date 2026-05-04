@@ -400,35 +400,45 @@ build_prices <- function(dfs_everything) {
 }
 
 
-build_prices_winloss <- function(dfs_everything) {
-  dfs_everything %>%
-    distinct(TEAM, SEASON, DATE, WL) %>%
+build_prices_raw_margin <- function(dfs_everything) {
+  x <- dfs_everything %>%
+    mutate(OPP_RAW = str_replace(OPP, "@", "")) %>%
+    group_by(SEASON, TEAM, OPP_RAW, DATE) %>%
+    summarize(P = sum(P), .groups = "drop")
+
+  x %>%
+    inner_join(
+      x %>% select(OPP_RAW = TEAM, DATE, OPP_P = P),
+      by = c("OPP_RAW", "DATE")
+    ) %>%
+    mutate(DIFF = P - OPP_P) %>%
     group_by(TEAM) %>%
     arrange(TEAM, DATE) %>%
     mutate(
-      PCT_CHG = case_when(WL == "W" ~ 1.010, WL == "L" ~ 0.990, TRUE ~ 1.000),
+      PCT_CHG = coalesce(1 + (DIFF / 1000), 1),
       PRICE   = round(cumprod(PCT_CHG) * 100, 2),
       N       = row_number()
     )
 }
 
 
-build_prices_talent <- function(dfs_everything) {
-  dfs_everything %>%
-    mutate(
-      gametype_weight = case_when(
-        ROUND == 4 ~ 16, ROUND == 3 ~ 8, ROUND == 2 ~ 4, ROUND == 1 ~ 2, TRUE ~ 1
-      ),
-      wl_weight   = if_else(WL == "W", 1.25, 0.75),
-      hof_contrib = GMSC * wl_weight * gametype_weight / 100
+build_prices_gmsc <- function(dfs_everything) {
+  x <- dfs_everything %>%
+    mutate(OPP_RAW = str_replace(OPP, "@", "")) %>%
+    group_by(SEASON, TEAM, OPP_RAW, DATE) %>%
+    summarize(TEAM_GMSC = sum(GMSC, na.rm = TRUE), .groups = "drop")
+
+  x %>%
+    inner_join(
+      x %>% select(OPP_RAW = TEAM, DATE, OPP_GMSC = TEAM_GMSC),
+      by = c("OPP_RAW", "DATE")
     ) %>%
-    group_by(TEAM, SEASON, DATE) %>%
-    summarize(daily_hof = sum(hof_contrib, na.rm = TRUE), .groups = "drop") %>%
+    mutate(DIFF = TEAM_GMSC - OPP_GMSC) %>%
     group_by(TEAM) %>%
     arrange(TEAM, DATE) %>%
     mutate(
-      PRICE   = round(cumsum(daily_hof) + 100, 2),
-      PCT_CHG = PRICE / lag(PRICE, default = 100),
+      PCT_CHG = coalesce(1 + (DIFF / 1000), 1),
+      PRICE   = round(cumprod(PCT_CHG) * 100, 2),
       N       = row_number()
     )
 }
@@ -436,14 +446,14 @@ build_prices_talent <- function(dfs_everything) {
 
 PRICING_MODELS <- list(
   "SOS Point Differential" = build_prices,
-  "Win/Loss Compounding"   = build_prices_winloss,
-  "Roster Talent (HOF)"    = build_prices_talent
+  "Raw Point Margin"        = build_prices_raw_margin,
+  "Game Score Differential" = build_prices_gmsc
 )
 
 PRICING_MODEL_DESCRIPTIONS <- list(
   "SOS Point Differential" = "Price compounds each game based on point differential adjusted for strength of opponent. Beating a strong team counts more than beating a weak one.",
-  "Win/Loss Compounding"   = "Simple model: +1% per win, −1% per loss. No strength-of-schedule adjustment — all wins and losses are treated equally.",
-  "Roster Talent (HOF)"    = "Price reflects the cumulative HOF points earned by your players (weighted GMSC, with bonuses for playoff games and wins). Measures talent invested rather than outcomes achieved."
+  "Raw Point Margin"        = "Same compounding as SOS Point Differential, but with no opponent adjustment — every game is taken at face value. More volatile; useful for comparing to the SOS model to see how much schedule strength matters.",
+  "Game Score Differential" = "Price compounds based on the difference in team Game Score (GMSC) each game. GMSC rewards efficient shooting, rebounding, and playmaking while penalizing turnovers and fouls — so a team can lose ground even on a win if their players played sloppily."
 )
 
 
