@@ -21,14 +21,19 @@ No automated test suite, linter, or CI/CD pipeline exists.
 The pipeline pulls all 30 team Google Sheets, rebuilds pre-computed RDS files, and restarts the live service:
 
 ```bash
-# Full automated refresh (from repo root)
+# Full automated refresh (from repo root) — downloads Sheets, rebuilds RDS, deploys
 bash refresh/refresh.sh --season 25-26 --playoff-date 2025-04-16 --drop-date 2025-04-25
+
+# Code-only deploy — skips data pipeline, just commits/pushes any local changes and restarts
+bash refresh/deploy.sh
 
 # R preprocessing only
 Rscript refresh/job.R "25-26" "2025-04-16" "2025-04-25"
 ```
 
-The shell script: git pulls → R preprocessing → copies CSVs to `/var/www/stats.nbn.today/files/` → commits/pushes data → pulls into `/srv/shiny/nothing-but-stats` → restarts `shiny-release.service`.
+`refresh.sh`: git pulls → R preprocessing → copies CSVs to `/var/www/stats.nbn.today/files/` → commits/pushes data → pulls into `/srv/shiny/nothing-but-stats` → restarts `shiny-release.service`.
+
+`deploy.sh`: commits/pushes any local changes → pulls into `/srv/shiny/nothing-but-stats` → restarts `shiny-release.service`. Use this after UI or code-only changes when the data hasn't changed.
 
 ## Architecture
 

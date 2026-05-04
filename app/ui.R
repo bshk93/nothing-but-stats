@@ -152,6 +152,16 @@ body <- dashboardBody(
       from { opacity: 0; }
       to { opacity: 1; }
     }
+
+    #champion-logos {
+      position: absolute !important;
+      left: 260px;
+      top: 0;
+      height: 50px;
+      display: flex !important;
+      align-items: center;
+      padding: 0 10px;
+    }
   ")),
   
   tags$script(HTML("
@@ -591,8 +601,8 @@ dashboardPage(
       ))),
     titleWidth = 250,
     tags$li(
+      id = "champion-logos",
       class = "dropdown",
-      style = "display:flex;align-items:center;padding:0 10px;",
       HTML(champion_logos_html)
     )
   ),
