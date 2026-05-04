@@ -550,6 +550,13 @@ body <- dashboardBody(
     ## NBN Wall Street ----
     tabItem(
       tabName = "tab_ws",
+      selectInput(
+        "ws_pricing_model",
+        "Pricing Model:",
+        choices = names(PRICING_MODELS),
+        selected = "SOS Point Differential"
+      ),
+      uiOutput("ws_model_description"),
       DTOutput("ws_prices"),
       
       h2("Price Charts"),

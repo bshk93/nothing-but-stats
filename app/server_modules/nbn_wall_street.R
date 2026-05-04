@@ -1,9 +1,17 @@
 # NBN Wall Street Module ----
 # All outputs for the NBN Wall Street tab
 
+ws_prices_data <- reactive({
+  PRICING_MODELS[[input$ws_pricing_model]](get_dfs_everything())
+})
+
+output$ws_model_description <- renderUI({
+  helpText(PRICING_MODEL_DESCRIPTIONS[[input$ws_pricing_model]])
+})
+
 output$ws_prices <- renderDT({
-    
-    diffs <- build_prices(get_dfs_everything())
+
+    diffs <- ws_prices_data()
     
     diffs %>%
       mutate(
@@ -21,7 +29,7 @@ output$ws_prices <- renderDT({
   
 output$wallstreet <- renderPlotly({
     
-    diffs <- build_prices(get_dfs_everything()) %>%
+    diffs <- ws_prices_data() %>%
       filter(TEAM %in% input$ws_teams) %>%
       group_by(TEAM, SEASON) %>%
       mutate(rn = row_number(),
@@ -124,7 +132,7 @@ output$wallstreet <- renderPlotly({
       p <- diffs %>%
         left_join(diffs_dates, by = "DATE") %>% 
         
-        select(rn, SEASON, TEAM, DATE, DIFF_DIFF, PCT_CHG, PRICE, date_index) %>%
+        select(rn, SEASON, TEAM, DATE, PCT_CHG, PRICE, date_index) %>%
         
         ggplot(aes(x = date_index, y = PRICE, color = TEAM)) +
         #ggplot(aes(x = DATE, y = PRICE, color = COLOR)) +
@@ -150,7 +158,7 @@ output$wallstreet <- renderPlotly({
   })
   
 output$ws_div <- renderPlotly({
-    x <- build_prices(get_dfs_everything()) %>%
+    x <- ws_prices_data() %>%
       ungroup() %>%
       mutate(CONF = toupper(get_conference(TEAM)),
              DIV = case_when(
