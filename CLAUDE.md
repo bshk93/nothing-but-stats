@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-Nothing But Stats (NBS) is an R Shiny dashboard for a private simulation basketball league (NBN — Nothing But Nothin'). 30 team owners enter real NBA player stats into individual Google Sheets; this app aggregates and displays them. Hosted at `https://stats.nbn.today` on a Linux server running Shiny Server.
+Nothing But Stats is an R Shiny dashboard for a private simulation basketball league (NBN — Nothing But Net). 30 team owners enter real NBA player stats into individual Google Sheets; this app aggregates and displays them. Hosted at `https://stats.nbn.today` on a Linux server running Shiny Server.
 
 ## Running the App
 
