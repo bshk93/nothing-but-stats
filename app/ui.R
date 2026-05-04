@@ -593,7 +593,7 @@ dashboardPage(
     titleWidth = 250,
     tags$li(
       class = "dropdown",
-      style = "display:flex;align-items:center;padding:0 10px;",
+      style = "display:flex;align-items:center;padding:0 10px;height:50px;",
       HTML(champion_logos_html)
     )
   ),
