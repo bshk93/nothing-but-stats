@@ -589,7 +589,12 @@ dashboardPage(
       "{prettyNum(18*(nrow(dfs)+nrow(dfs_playoffs)), big.mark=',')} stats entered and counting<br/>",
       "Last updated: {max(max(dfs$DATE), max(dfs_playoffs$DATE))}"
       ))),
-    titleWidth = 250
+    titleWidth = 250,
+    tags$li(
+      class = "dropdown",
+      style = "display:flex;align-items:center;padding:0 10px;",
+      HTML(champion_logos_html)
+    )
   ),
   
   sidebar,

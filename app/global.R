@@ -44,6 +44,20 @@ get_dfs_everything <- function() dfs_all
 champions <- get_champions(dfs_playoffs)
 ach_metadata <- read_csv("data/metadata-achievements.csv", show_col_types = FALSE)
 
+champion_logos_html <- get_champion_list() %>%
+  mutate(YEAR = as.integer(paste0("20", str_extract(SEASON, "(?<=-)[0-9]{2}(?= )")))) %>%
+  arrange(YEAR) %>%
+  group_by(TEAM) %>%
+  mutate(COUNT = row_number()) %>%
+  ungroup() %>%
+  mutate(FRAG = paste0(
+    "<span title='", YEAR, ": ", TEAM, " (#", COUNT, ")' style='cursor:default;margin:0 3px;'>",
+    get_logo(TEAM, height = "32"),
+    "</span>"
+  )) %>%
+  pull(FRAG) %>%
+  paste(collapse = "")
+
 # Pre-computed data (with fallbacks for initial setup) ----
 # Load pre-computed ranks, or compute if file doesn't exist
 if (file.exists(file.path(DATA_DIR, 'my_ranks.rds'))) {

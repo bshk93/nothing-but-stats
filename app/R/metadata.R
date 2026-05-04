@@ -1,5 +1,5 @@
-get_champions <- function(dfs_playoffs) {
-  x <- tribble(
+get_champion_list <- function() {
+  tribble(
     ~SEASON, ~TEAM,
     '20-21 Playoffs', 'ATL',
     '21-22 Playoffs', 'ATL',
@@ -7,9 +7,11 @@ get_champions <- function(dfs_playoffs) {
     '23-24 Playoffs', 'CLE',
     '24-25 Playoffs', 'PHX'
   )
-  
-  dfs_playoffs %>% 
-    inner_join(x, by = c("SEASON", "TEAM"))
+}
+
+get_champions <- function(dfs_playoffs) {
+  dfs_playoffs %>%
+    inner_join(get_champion_list(), by = c("SEASON", "TEAM"))
 }
 
 get_runners_up <- function() {
