@@ -134,9 +134,17 @@ output$season_high_team <- renderDT({
   
 output$team_ratings <- renderDT({
     req(input$password == myPassword || myPassword == '')
-    
-    team_ratings %>% 
-      mutate_if(is.numeric, round, 2) %>% 
+
+    wl <- dfs %>%
+      distinct(TEAM, SEASON, DATE, WL) %>%
+      group_by(TEAM, SEASON) %>%
+      summarize(W = sum(WL == "W"), L = sum(WL == "L"), .groups = "drop") %>%
+      mutate(PCT = round(W / (W + L), 3))
+
+    team_ratings %>%
+      left_join(wl, by = c("TEAM", "SEASON")) %>%
+      select(TEAM, SEASON, W, L, PCT, OFF_RTG, DEF_RTG, TOT_RTG) %>%
+      mutate_if(is.numeric, round, 2) %>%
       format_as_datatable()
   })
   
