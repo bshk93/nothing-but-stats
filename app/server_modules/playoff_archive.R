@@ -39,6 +39,12 @@ output$playoff_bracket <- renderDT({
       pull(TEAM)
   }
 
+  with_logo <- function(x) {
+    if (is.na(x)) return(NA_character_)
+    code <- str_extract(x, "^[A-Z]{3}")
+    str_c("<img src='logo-", tolower(code), ".png' height='24'> ", x)
+  }
+
   series <- function(t1, t2) {
     if (is.na(t1) || is.na(t2)) return(NA_character_)
     t1c <- str_extract(t1, "^[A-Z]{3}")
@@ -85,25 +91,26 @@ output$playoff_bracket <- renderDT({
   finals <- series(wcf, ecf)
 
   tribble(
-    ~WEST_R1,  ~WEST_R2,   ~WCF,     ~WCF_CHAMP, ~FINALS, ~ECF_CHAMP, ~ECF,     ~EAST_R2,   ~EAST_R1,
-    w[[1]],    NA,         NA,        NA,          NA,      NA,         NA,        NA,         e[[1]],
-    NA,        wr1$top,    NA,        NA,          NA,      NA,         NA,        er1$top,    NA,
-    w[[8]],    NA,         NA,        NA,          NA,      NA,         NA,        NA,         e[[8]],
-    NA,        NA,         wr2_top,   NA,          NA,      NA,         er2_top,   NA,         NA,
-    w[[4]],    NA,         NA,        NA,          NA,      NA,         NA,        NA,         e[[4]],
-    NA,        wr1$mid1,   NA,        NA,          NA,      NA,         NA,        er1$mid1,   NA,
-    w[[5]],    NA,         NA,        NA,          NA,      NA,         NA,        NA,         e[[5]],
-    NA,        NA,         NA,        wcf,         finals,  ecf,        NA,        NA,         NA,
-    w[[3]],    NA,         NA,        NA,          NA,      NA,         NA,        NA,         e[[3]],
-    NA,        wr1$mid2,   NA,        NA,          NA,      NA,         NA,        er1$mid2,   NA,
-    w[[6]],    NA,         NA,        NA,          NA,      NA,         NA,        NA,         e[[6]],
-    NA,        NA,         wr2_bot,   NA,          NA,      NA,         er2_bot,   NA,         NA,
-    w[[2]],    NA,         NA,        NA,          NA,      NA,         NA,        NA,         e[[2]],
-    NA,        wr1$bot,    NA,        NA,          NA,      NA,         NA,        er1$bot,    NA,
-    w[[7]],    NA,         NA,        NA,          NA,      NA,         NA,        NA,         e[[7]]
+    ~WEST_R1,             ~WEST_R2,            ~WCF,                ~WCF_CHAMP,      ~FINALS,         ~ECF_CHAMP,      ~ECF,                ~EAST_R2,            ~EAST_R1,
+    with_logo(w[[1]]),    NA,                  NA,                  NA,              NA,              NA,              NA,                  NA,                  with_logo(e[[1]]),
+    NA,                   with_logo(wr1$top),  NA,                  NA,              NA,              NA,              NA,                  with_logo(er1$top),  NA,
+    with_logo(w[[8]]),    NA,                  NA,                  NA,              NA,              NA,              NA,                  NA,                  with_logo(e[[8]]),
+    NA,                   NA,                  with_logo(wr2_top),  NA,              NA,              NA,              with_logo(er2_top),  NA,                  NA,
+    with_logo(w[[4]]),    NA,                  NA,                  NA,              NA,              NA,              NA,                  NA,                  with_logo(e[[4]]),
+    NA,                   with_logo(wr1$mid1), NA,                  NA,              NA,              NA,              NA,                  with_logo(er1$mid1), NA,
+    with_logo(w[[5]]),    NA,                  NA,                  NA,              NA,              NA,              NA,                  NA,                  with_logo(e[[5]]),
+    NA,                   NA,                  NA,                  with_logo(wcf),  with_logo(finals), with_logo(ecf), NA,                 NA,                  NA,
+    with_logo(w[[3]]),    NA,                  NA,                  NA,              NA,              NA,              NA,                  NA,                  with_logo(e[[3]]),
+    NA,                   with_logo(wr1$mid2), NA,                  NA,              NA,              NA,              NA,                  with_logo(er1$mid2), NA,
+    with_logo(w[[6]]),    NA,                  NA,                  NA,              NA,              NA,              NA,                  NA,                  with_logo(e[[6]]),
+    NA,                   NA,                  with_logo(wr2_bot),  NA,              NA,              NA,              with_logo(er2_bot),  NA,                  NA,
+    with_logo(w[[2]]),    NA,                  NA,                  NA,              NA,              NA,              NA,                  NA,                  with_logo(e[[2]]),
+    NA,                   with_logo(wr1$bot),  NA,                  NA,              NA,              NA,              NA,                  with_logo(er1$bot),  NA,
+    with_logo(w[[7]]),    NA,                  NA,                  NA,              NA,              NA,              NA,                  NA,                  with_logo(e[[7]])
   ) %>%
     mutate(across(everything(), ~replace(., is.na(.), ""))) %>%
     datatable(
+      escape = FALSE,
       rownames = FALSE,
       selection = list(mode = "single", target = "cell"),
       options = list(
