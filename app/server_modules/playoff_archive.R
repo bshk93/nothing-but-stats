@@ -57,9 +57,9 @@ output$playoff_bracket <- renderDT({
   }
 
   with_logo <- function(x) {
-    if (is.na(x)) return(NA_character_)
-    code <- str_extract(x, "^[A-Z]{3}")
-    str_c("<img src='logo-", tolower(code), ".png' height='24'> ", x)
+    ifelse(is.na(x), NA_character_,
+      str_c("<img src='logo-", tolower(str_extract(x, "^[A-Z]{3}")), ".png' height='24'> ", x)
+    )
   }
 
   # Extract 3-letter team code; returns NA for ties/missing
