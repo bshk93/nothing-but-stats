@@ -135,21 +135,19 @@ output$most_improved <- renderDT({
   
   begin <- Sys.time()
   
-  x <- mySeasonDF() %>%
-    summarize_player() %>%
-    annotate_player_team(mySeasonDF())
-
   y <- dfs %>%
     filter(SEASON < input$season2) %>%
     summarize_player() %>%
     select(PLAYER, G_CAREER = G, GMSC_CAREER = GMSC)
 
-  z <- x %>%
-    select(PLAYER, TEAM, G, GMSC) %>%
+  z <- mySeasonDF() %>%
+    summarize_player() %>%
+    select(PLAYER, G, GMSC) %>%
     inner_join(y, by = "PLAYER") %>%
     mutate(GMSC_DIFF = round(GMSC - GMSC_CAREER, 2)) %>%
+    arrange(desc(GMSC_DIFF)) %>%
+    annotate_player_team(mySeasonDF()) %>%
     select(-TEAM) %>%
-    arrange(desc(GMSC_DIFF)) %>% 
     format_as_datatable(
       escape = FALSE, 
       page_length = 15,
