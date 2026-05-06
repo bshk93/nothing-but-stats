@@ -14,7 +14,8 @@ playoff_games <- reactive({
     left_join(x, by = c("SEASON", "ROUND", "GAME", "OPP_RAW" = "TEAM")) %>%
     mutate(SCORE = str_c(TEAM, " ", P.x, "-", P.y, " ", OPP.x)) %>%
     group_by(ROUND, TEAM, OPP_RAW) %>%
-    mutate(HOME_TEAM = if_else(str_detect(first(OPP.x), "@"), OPP_RAW, TEAM)) %>%
+    mutate(tmp_x = first(OPP.x)) %>%
+    mutate(HOME_TEAM = if_else(str_detect(tmp_x, "@"), OPP_RAW, TEAM)) %>%
     filter(TEAM == HOME_TEAM) %>%
     mutate(WINNER = case_when(WL.x == "W" ~ TEAM, TRUE ~ OPP_RAW)) %>%
     group_by(TEAM, ROUND) %>%
