@@ -208,19 +208,21 @@ output$playoff_bracket <- renderDT({
         pageLength = 100,
         scrollX = TRUE,
         dom = "t",
-        columnDefs = list(list(className = "dt-center", targets = "_all")),
-        rowCallback = JS(sprintf("
-          function(row, data, index) {
-            var colors = %s;
-            if (index < colors.length) {
-              $(row).find('td').each(function(i) {
-                if (colors[index][i] !== '') {
-                  $(this).css('background-color', colors[index][i]);
+        columnDefs = list(
+          list(className = "dt-center", targets = "_all"),
+          list(
+            targets = "_all",
+            createdCell = JS(sprintf(
+              "function(td, cellData, rowData, rowIndex, colIndex) {
+                var colors = %s;
+                if (colors[rowIndex] && colors[rowIndex][colIndex] !== '') {
+                  td.style.backgroundColor = colors[rowIndex][colIndex];
                 }
-              });
-            }
-          }
-        ", colors_json))
+              }",
+              colors_json
+            ))
+          )
+        )
       )
     )
 })
