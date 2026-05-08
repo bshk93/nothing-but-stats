@@ -633,7 +633,7 @@ get_owners <- function() {
       yr = as.integer(format(start_date, "%Y")),
       mo = as.integer(format(start_date, "%m")),
       SEASON = if_else(
-        mo >= 10,
+        mo >= 6,
         paste0(sprintf("%02d", yr %% 100), "-", sprintf("%02d", (yr + 1) %% 100)),
         paste0(sprintf("%02d", (yr - 1) %% 100), "-", sprintf("%02d", yr %% 100))
       )
