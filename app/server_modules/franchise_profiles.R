@@ -60,8 +60,21 @@ output$franchise_history_yoy <- renderDT({
       
       mutate(PCT = round(W / (W + L), 3)) %>%
       
-      left_join(get_owners() %>% filter(TEAM == input$team_history) %>% select(-TEAM)) %>%
-      fill(OWNER) %>%
+      left_join({
+        owner_periods <- read_csv(file.path(DATA_DIR, "owners.csv"), show_col_types = FALSE) %>%
+          mutate(start_date = mdy(start_date), TEAM = toupper(team)) %>%
+          filter(TEAM == input$team_history) %>%
+          arrange(start_date) %>%
+          mutate(end_date = coalesce(lead(start_date) - days(1), as.Date("9999-12-31")))
+        x %>%
+          distinct(SEASON, DATE) %>%
+          mutate(OWNER = map_chr(DATE, function(d) {
+            m <- owner_periods %>% filter(start_date <= d, end_date >= d)
+            if (nrow(m) > 0) m$owner[1] else NA_character_
+          })) %>%
+          group_by(SEASON) %>%
+          summarize(OWNER = paste(unique(na.omit(OWNER)), collapse = " - "))
+      }) %>%
       
       left_join(x_leaders)
     
