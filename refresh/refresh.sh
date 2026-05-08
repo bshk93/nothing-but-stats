@@ -6,8 +6,8 @@ set -o pipefail
 trap 'echo "Error occurred at $(date). Exiting!" | tee -a "$LOG_FILE"; exit 1' ERR
 trap 'echo "Script exited at $(date)" | tee -a "$LOG_FILE"' EXIT
 
-REFRESH_DIR="$HOME/nothing-but-stats/refresh"
-PREPROCESS_SCRIPT="$HOME/nothing-but-stats/refresh/job.R"
+REFRESH_DIR="$HOME/projects/nothing-but-stats/refresh"
+PREPROCESS_SCRIPT="$HOME/projects/nothing-but-stats/refresh/job.R"
 SERVICE_NAME="shiny-release.service" 
 LOG_FILE="/var/log/refresh.log"
 
@@ -48,7 +48,7 @@ echo "Running preprocessing script..."
 Rscript "$PREPROCESS_SCRIPT" "$SEASON" "$PLAYOFF_DATE" "$DROP_DATE"
 
 # copy public CSVs from DATA_DIR to /var/www/stats.nbn.today/files/
-NBS_DATA_DIR="${NBS_DATA_DIR:-/home/skim/nbs-data}"
+NBS_DATA_DIR="${NBS_DATA_DIR:-/var/lib/nothing-but-stats}"
 find "$NBS_DATA_DIR" -maxdepth 1 -name "*.csv" -exec cp {} /var/www/stats.nbn.today/files/ \;
 
 # check for git status updates

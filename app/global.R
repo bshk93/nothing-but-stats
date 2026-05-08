@@ -27,7 +27,7 @@ library(shinycssloaders)
 # Source utility functions ----
 walk(list.files("R/", full.names = T), source)
 
-DATA_DIR <- Sys.getenv("NBS_DATA_DIR", "/home/skim/nbs-data")
+DATA_DIR <- Sys.getenv("NBS_DATA_DIR", "/var/lib/nothing-but-stats")
 
 # Load data files ----
 dfs <- read_rds(file.path(DATA_DIR, 'dfs.rds'))

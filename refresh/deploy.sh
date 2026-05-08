@@ -5,7 +5,7 @@ set -o pipefail
 trap 'echo "Error occurred at $(date). Exiting!" | tee -a "$LOG_FILE"; exit 1' ERR
 trap 'echo "Script exited at $(date)" | tee -a "$LOG_FILE"' EXIT
 
-REFRESH_DIR="$HOME/nothing-but-stats/refresh"
+REFRESH_DIR="$HOME/projects/nothing-but-stats/refresh"
 SERVICE_NAME="shiny-release.service"
 LOG_FILE="/var/log/refresh.log"
 
