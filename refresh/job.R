@@ -10,9 +10,10 @@ playoff_date <- ifelse(length(args) >= 2, args[2], "")
 drop_date <- ifelse(length(args) >= 3, args[3], "")
 
 # Set-Up ----
-setwd("~/nothing-but-stats")
+setwd("~/projects/nothing-but-stats")
 source("refresh/refresh-utils.R")
 source("refresh/preprocess-utils.R")
+source("app/R/metadata.R")
 
 DATA_DIR <- Sys.getenv("NBS_DATA_DIR", "/home/skim/nbs-data")
 
@@ -176,6 +177,73 @@ for (season in seasons) {
 
 write_rds(standings_list, file.path(DATA_DIR, 'standings.rds'), compress = "xz")
 write_rds(team_stats_list, file.path(DATA_DIR, 'team_stats.rds'), compress = "xz")
+inform(" * DONE")
+
+inform("Building owner_stats.csv....")
+
+ownership <- get_owners()
+
+reg_wl <- map_dfr(standings_list, ~ select(.x, TEAM, W, L), .id = "SEASON")
+
+playoff_wl <- dfs_playoffs %>%
+  distinct(SEASON, TEAM, DATE, WL) %>%
+  mutate(SEASON = str_remove(SEASON, " Playoffs")) %>%
+  group_by(SEASON, TEAM) %>%
+  summarize(playoff_w = sum(WL == "W"), playoff_l = sum(WL == "L"), .groups = "drop")
+
+champions <- get_champion_list() %>%
+  mutate(SEASON = str_remove(SEASON, " Playoffs"), champion = TRUE)
+
+runners_up <- get_runners_up() %>%
+  mutate(SEASON = str_remove(SEASON, " Playoffs")) %>%
+  pivot_longer(c(RUNNER_UP, EAST_RUNNER_UP, WEST_RUNNER_UP), values_to = "TEAM") %>%
+  select(SEASON, TEAM) %>%
+  distinct() %>%
+  mutate(runner_up_flag = TRUE)
+
+playoff_appearances <- get_playoff_seeds() %>%
+  mutate(SEASON = str_remove(SEASON, " Playoffs")) %>%
+  select(SEASON, TEAM) %>%
+  distinct() %>%
+  mutate(made_playoffs = TRUE)
+
+owner_stats <- ownership %>%
+  left_join(reg_wl,              by = c("SEASON", "TEAM")) %>%
+  left_join(playoff_wl,          by = c("SEASON", "TEAM")) %>%
+  left_join(champions,           by = c("SEASON", "TEAM")) %>%
+  left_join(runners_up,          by = c("SEASON", "TEAM")) %>%
+  left_join(playoff_appearances, by = c("SEASON", "TEAM")) %>%
+  replace_na(list(
+    W = 0L, L = 0L,
+    playoff_w = 0L, playoff_l = 0L,
+    champion = FALSE, runner_up_flag = FALSE, made_playoffs = FALSE
+  )) %>%
+  group_by(OWNER) %>%
+  summarize(
+    teams               = str_c(unique(TEAM), collapse = ", "),
+    seasons             = n_distinct(SEASON),
+    reg_w               = sum(W),
+    reg_l               = sum(L),
+    reg_pct             = round(reg_w / (reg_w + reg_l), 3),
+    playoff_w           = sum(playoff_w),
+    playoff_l           = sum(playoff_l),
+    playoff_pct         = if_else(
+                            playoff_w + playoff_l > 0,
+                            round(playoff_w / (playoff_w + playoff_l), 3),
+                            NA_real_
+                          ),
+    total_w             = reg_w + playoff_w,
+    total_l             = reg_l + playoff_l,
+    total_pct           = round(total_w / (total_w + total_l), 3),
+    playoff_appearances = sum(made_playoffs),
+    championships       = sum(champion),
+    runner_up           = sum(runner_up_flag),
+    .groups = "drop"
+  ) %>%
+  rename(owner = OWNER) %>%
+  arrange(desc(total_pct), desc(total_w))
+
+write_csv(owner_stats, file.path(DATA_DIR, "owner_stats.csv"))
 inform(" * DONE")
 
 # start_time <- Sys.time()
