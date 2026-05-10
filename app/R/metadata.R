@@ -626,19 +626,37 @@ get_playoff_seeds <- function() {
 
 get_owners <- function() {
   data_dir <- Sys.getenv("NBS_DATA_DIR", "/home/skim/nbs-data")
+
+  season_year <- function(d) {
+    yr <- as.integer(format(d, "%Y"))
+    mo <- as.integer(format(d, "%m"))
+    yr - as.integer(mo < 6L)
+  }
+
+  fmt_season <- function(sy) {
+    paste0(sprintf("%02d", sy %% 100L), "-", sprintf("%02d", (sy + 1L) %% 100L))
+  }
+
   read_csv(file.path(data_dir, "owners.csv"), show_col_types = FALSE) %>%
     mutate(
       start_date = mdy(start_date),
-      TEAM = toupper(team),
-      yr = as.integer(format(start_date, "%Y")),
-      mo = as.integer(format(start_date, "%m")),
-      SEASON = if_else(
-        mo >= 6,
-        paste0(sprintf("%02d", yr %% 100), "-", sprintf("%02d", (yr + 1) %% 100)),
-        paste0(sprintf("%02d", (yr - 1) %% 100), "-", sprintf("%02d", yr %% 100))
+      TEAM = toupper(team)
+    ) %>%
+    arrange(TEAM, start_date) %>%
+    group_by(TEAM) %>%
+    mutate(
+      end_date = if_else(
+        row_number() < n(),
+        lead(start_date) - days(1),
+        as.Date(Sys.Date())
       )
     ) %>%
-    select(SEASON, TEAM, OWNER = owner)
+    ungroup() %>%
+    rowwise() %>%
+    mutate(SEASON = list(fmt_season(season_year(start_date):season_year(end_date)))) %>%
+    unnest(SEASON) %>%
+    select(SEASON, TEAM, OWNER = owner) %>%
+    distinct()
 }
 
 
