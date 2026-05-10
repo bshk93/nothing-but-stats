@@ -225,10 +225,17 @@ season_meta <- get_owners() %>%
   left_join(
     get_runners_up() %>%
       mutate(SEASON = str_remove(SEASON, " Playoffs")) %>%
-      pivot_longer(c(RUNNER_UP, EAST_RUNNER_UP, WEST_RUNNER_UP), values_to = "TEAM") %>%
+      select(SEASON, TEAM = RUNNER_UP) %>%
+      mutate(finals_ru_flag = TRUE),
+    by = c("SEASON", "TEAM")
+  ) %>%
+  left_join(
+    get_runners_up() %>%
+      mutate(SEASON = str_remove(SEASON, " Playoffs")) %>%
+      pivot_longer(c(EAST_RUNNER_UP, WEST_RUNNER_UP), values_to = "TEAM") %>%
       select(SEASON, TEAM) %>%
       distinct() %>%
-      mutate(runner_up_flag = TRUE),
+      mutate(conf_ru_flag = TRUE),
     by = c("SEASON", "TEAM")
   ) %>%
   left_join(
@@ -239,13 +246,14 @@ season_meta <- get_owners() %>%
       mutate(made_playoffs = TRUE),
     by = c("SEASON", "TEAM")
   ) %>%
-  replace_na(list(champion = FALSE, runner_up_flag = FALSE, made_playoffs = FALSE)) %>%
+  replace_na(list(champion = FALSE, finals_ru_flag = FALSE, conf_ru_flag = FALSE, made_playoffs = FALSE)) %>%
   group_by(OWNER) %>%
   summarize(
     seasons             = n_distinct(SEASON),
     playoff_appearances = sum(made_playoffs),
     championships       = sum(champion),
-    runner_up           = sum(runner_up_flag),
+    finals_runner_up    = sum(finals_ru_flag),
+    conf_runner_up      = sum(conf_ru_flag),
     .groups = "drop"
   )
 
@@ -261,7 +269,7 @@ owner_stats <- wl_stats %>%
     total_pct   = round(total_w / (total_w + total_l), 3)
   ) %>%
   select(owner, teams, seasons, reg_w, reg_l, reg_pct, playoff_w, playoff_l, playoff_pct,
-         total_w, total_l, total_pct, playoff_appearances, championships, runner_up) %>%
+         total_w, total_l, total_pct, playoff_appearances, championships, finals_runner_up, conf_runner_up) %>%
   arrange(desc(total_pct), desc(total_w))
 
 write_csv(owner_stats, file.path(DATA_DIR, "owner_stats.csv"))
