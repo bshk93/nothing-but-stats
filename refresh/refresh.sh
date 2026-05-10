@@ -44,11 +44,12 @@ cd "$REFRESH_DIR" || { echo "Failed to navigate to $REFRESH_DIR"; exit 1; }
 echo "Pulling latest changes from remote..."
 git pull
 
+export NBS_DATA_DIR="${NBS_DATA_DIR:-/var/lib/nothing-but-stats}"
+
 echo "Running preprocessing script..."
 Rscript "$PREPROCESS_SCRIPT" "$SEASON" "$PLAYOFF_DATE" "$DROP_DATE"
 
 # copy public CSVs from DATA_DIR to /var/www/stats.nbn.today/files/
-NBS_DATA_DIR="${NBS_DATA_DIR:-/var/lib/nothing-but-stats}"
 find "$NBS_DATA_DIR" -maxdepth 1 -name "*.csv" -exec cp {} /var/www/stats.nbn.today/files/ \;
 
 # check for git status updates
