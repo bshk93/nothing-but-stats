@@ -152,7 +152,8 @@ write_rds(get_newsfeed(dfs), file.path(DATA_DIR, 'news.rds'), compress = "xz")
 
 write_rds(dfs_playoffs, file.path(DATA_DIR, 'dfs_playoffs.rds'), compress = "xz")
 
-write_rds(calculate_team_offense_defense(dfs), file.path(DATA_DIR, 'team_ratings.rds'), compress = "xz")
+team_ratings <- calculate_team_offense_defense(dfs)
+write_rds(team_ratings, file.path(DATA_DIR, 'team_ratings.rds'), compress = "xz")
 
 # Pre-compute my_ranks for performance
 inform("Calculating player ranks....")
@@ -199,6 +200,30 @@ game_data <- dfs_all %>%
   filter(!is.na(WL)) %>%
   distinct(TEAM, DATE, WL, gametype) %>%
   mutate(DATE = as.Date(DATE))
+
+team_game_counts <- dfs %>%
+  mutate(OPP_RAW = str_replace(OPP, "@", "")) %>%
+  distinct(SEASON, TEAM, OPP_RAW, DATE) %>%
+  group_by(TEAM, SEASON) %>%
+  summarize(n_games = n(), .groups = "drop")
+
+owner_ratings <- team_ratings %>%
+  left_join(team_game_counts, by = c("TEAM", "SEASON")) %>%
+  mutate(
+    year2 = as.integer(paste0("20", str_extract(SEASON, "\\d{2}$"))),
+    midpoint_date = as.Date(paste0(year2, "-01-01"))
+  ) %>%
+  inner_join(
+    owner_data %>% select(owner, TEAM, start_date, end_date),
+    by = "TEAM"
+  ) %>%
+  filter(midpoint_date >= start_date & midpoint_date <= end_date) %>%
+  group_by(owner) %>%
+  summarize(
+    off_rtg = round(weighted.mean(OFF_RTG, n_games), 2),
+    def_rtg = round(weighted.mean(DEF_RTG, n_games), 2),
+    .groups = "drop"
+  )
 
 wl_stats <- owner_data %>%
   group_by(owner) %>%
@@ -317,6 +342,7 @@ owner_stats <- wl_stats %>%
   left_join(playoff_depth,    by = "OWNER") %>%
   left_join(best_reg_season,  by = c("OWNER" = "owner")) %>%
   left_join(worst_reg_season, by = c("OWNER" = "owner")) %>%
+  left_join(owner_ratings,    by = c("OWNER" = "owner")) %>%
   rename(owner = OWNER) %>%
   mutate(
     total_w     = reg_w + playoff_w,
@@ -329,7 +355,8 @@ owner_stats <- wl_stats %>%
   select(owner, teams, seasons, best_reg_season, best_reg_pct, worst_reg_season, worst_reg_pct,
          reg_w, reg_l, reg_pct, playoff_w, playoff_l, playoff_pct,
          total_w, total_l, total_pct, playoff_appearances,
-         po_r2, po_conf_finals, po_finals, championships) %>%
+         po_r2, po_conf_finals, po_finals, championships,
+         off_rtg, def_rtg) %>%
   arrange(desc(total_pct), desc(total_w))
 
 write_csv(owner_stats, file.path(DATA_DIR, "owner_stats.csv"))
