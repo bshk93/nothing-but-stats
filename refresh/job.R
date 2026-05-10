@@ -1,13 +1,14 @@
-# args <- c("", "", "")
+# args <- c("refresh", "", "", "")
 
 args <- commandArgs(trailingOnly = TRUE)
-if (length(args) != 3) {
-  rlang::abort("Four arguments to `refresh` are required.")
+if (length(args) != 4) {
+  rlang::abort("Four arguments required: mode, season, playoffs_from, through")
 }
 
-season <- ifelse(length(args) >= 1, args[1], "")
-playoff_date <- ifelse(length(args) >= 2, args[2], "")
-drop_date <- ifelse(length(args) >= 3, args[3], "")
+mode          <- args[1]  # pull | build | refresh
+season        <- args[2]  # e.g. "25-26" or ""
+playoffs_from <- args[3]  # e.g. "2026-04-15" or ""
+through       <- args[4]  # e.g. "2026-05-10" or ""
 
 # Set-Up ----
 setwd("~/projects/nothing-but-stats")
@@ -17,107 +18,129 @@ source("app/R/metadata.R")
 
 DATA_DIR <- Sys.getenv("NBS_DATA_DIR", "/home/skim/nbs-data")
 
-today <- Sys.Date()
+today        <- Sys.Date()
 current_year <- as.numeric(format(today, "%Y"))
-cutoff_date <- as.Date(paste0(current_year, "-09-30"))
+cutoff_date  <- as.Date(paste0(current_year, "-09-30"))
 
-# default for season
+# Default season
 if (season == "") {
-  if (today <= cutoff_date) {
-    season <- paste0(substr(current_year - 1, 3, 4), "-", substr(current_year, 3, 4))
+  season <- if (today <= cutoff_date) {
+    paste0(substr(current_year - 1, 3, 4), "-", substr(current_year, 3, 4))
   } else {
-    season <- paste0(substr(current_year, 3, 4), "-", substr(current_year + 1, 3, 4))
+    paste0(substr(current_year, 3, 4), "-", substr(current_year + 1, 3, 4))
+  }
+}
+season_code   <- str_extract(season, "\\d{2}-\\d{2}")
+season_suffix <- str_extract(season, "\\d{2}$")
+
+# Default through date
+if (through == "") {
+  through <- today
+  inform(glue("Through date defaulted to today ({today})."))
+}
+
+# Pull Phase ----
+if (mode %in% c("pull", "refresh")) {
+  inform("\nPulling data from sheets....")
+  delete_before_date <- cutoff_date
+  if (today < cutoff_date) {
+    delete_before_date <- ymd(str_c(c(
+      year(cutoff_date) - 1,
+      month(cutoff_date),
+      day(cutoff_date)
+    ), collapse = "-"))
+  }
+
+  allstats <- get_allstats(delete_before = delete_before_date) %>%
+    check_allstats()
+  inform(" * DONE")
+
+  if (nrow(allstats$errors$games %>% filter(DATE <= through)) > 0) {
+    abort(c(
+      "Found errors in the Sheets data.",
+      str_c(
+        allstats$errors$games$TEAM,
+        " on ",
+        allstats$errors$games$DATE,
+        " bc of: ",
+        allstats$errors$games$REASON
+      )
+    ))
+  }
+
+  allstats$data <- allstats$data %>% filter(DATE <= through)
+  inform("No errors detected in Sheets data. Printing number of games detected in last 5 days.")
+  errchk <- allstats$data %>%
+    distinct(DATE, TEAM, OPP) %>%
+    group_by(DATE) %>%
+    mutate(n_sides = n()) %>%
+    ungroup() %>%
+    arrange(DATE)
+
+  print(
+    errchk %>% filter(DATE %in% tail(sort(unique(DATE)), 5)),
+    n = 999
+  )
+
+  if (nrow(errchk %>% filter(n_sides %% 2 == 1)) > 0) {
+    abort("Missing games detected (uneven number of sides on a day).")
+  }
+
+  inform("Building allstats....")
+  built_allstats <- build_allstats(allstats$data)
+
+  current_reg_raw <- if (playoffs_from == "") {
+    inform("No playoffs_from provided, assuming no playoff data.")
+    built_allstats
+  } else {
+    inform(glue("Splitting at {playoffs_from} for playoff data."))
+    built_allstats %>% filter(DATE < as.Date(playoffs_from))
+  }
+
+  current_playoff_raw <- if (playoffs_from != "") {
+    built_allstats %>% filter(DATE >= as.Date(playoffs_from)) %>% add_playoff_info()
+  } else {
+    NULL
+  }
+
+  current_reg_raw %>%
+    mutate(gametype = "REG") %>%
+    write_csv(file.path(DATA_DIR, glue("allstats-{season_code}.csv")))
+
+  if (!is.null(current_playoff_raw) && nrow(current_playoff_raw) > 0) {
+    inform("Some of these are playoff stats. Exporting.")
+    current_playoff_raw %>%
+      mutate(gametype = "PLAYOFF") %>%
+      write_csv(file.path(DATA_DIR, glue("allstats-playoffs-{season_suffix}.csv")))
+  }
+
+  if (mode == "pull") {
+    inform("Pull complete.")
+    quit(status = 0)
   }
 }
 
-# default for drop date
-if (drop_date == "") {
-  drop_date <- today
-  inform(glue("Drop after date defaulted to today ({today})."))
+# Build Phase ----
+if (mode == "build") {
+  reg_csv <- file.path(DATA_DIR, glue("allstats-{season_code}.csv"))
+  if (!file.exists(reg_csv)) {
+    abort(glue("Regular season CSV not found: {reg_csv}. Run 'nbs pull' first."))
+  }
+  inform(glue("Loading current season from {reg_csv}"))
+  current_reg_raw <- data.table::fread(reg_csv) %>%
+    tibble() %>%
+    mutate(DATE = as.Date(DATE))
+
+  playoff_csv <- file.path(DATA_DIR, glue("allstats-playoffs-{season_suffix}.csv"))
+  current_playoff_raw <- if (file.exists(playoff_csv)) {
+    inform(glue("Loading playoff data from {playoff_csv}"))
+    data.table::fread(playoff_csv) %>% tibble() %>% mutate(DATE = as.Date(DATE))
+  } else {
+    NULL
+  }
 }
 
-# Pull Data from Sheets ----
-inform("\nPulling data from sheets....")
-delete_before_date <- cutoff_date
-if (today < cutoff_date) {
-  delete_before_date <- ymd(str_c(c(
-    year(cutoff_date) - 1,
-    month(cutoff_date),
-    day(cutoff_date)
-  ), collapse = "-"))
-}
-
-allstats <- get_allstats(delete_before = delete_before_date) %>% 
-  check_allstats()
-inform(" * DONE")
-
-if (nrow(allstats$errors$games %>% filter(DATE <= drop_date)) > 0) {
-  abort(c(
-    "Found errors in the Sheets data.",
-    str_c(
-      allstats$errors$games$TEAM,
-      " on ",
-      allstats$errors$games$DATE,
-      " bc of: ",
-      allstats$errors$games$REASON
-    )
-  ))
-}
-
-allstats$data <- allstats$data %>% filter(DATE <= drop_date)
-inform("No errors detected in Sheets data. Printing number of games detected in last 5 days.")
-errchk <- allstats$data %>% 
-  distinct(DATE, TEAM, OPP) %>% 
-  group_by(DATE) %>% 
-  mutate(n_sides = n()) %>% 
-  ungroup() %>% 
-  arrange(DATE)
-
-print(
-  errchk %>% 
-    filter(DATE %in% tail(sort(unique(DATE)), 5)),
-  n = 999
-)
-
-if (nrow(errchk %>% filter(n_sides %% 2 == 1)) > 0) {
-  abort("Missing games detected (uneven number of sides on a day).")
-}
-
-
-inform("Building allstats....")
-built_allstats <- build_allstats(allstats$data)
-season_code <- str_extract(season, "\\d{2}-\\d{2}")
-
-# Slice into regular season and playoff portions
-current_reg_raw <- if (playoff_date == "") {
-  inform("No playoff_date provided, assuming no playoff data.")
-  built_allstats
-} else {
-  inform(glue("A playoff_date was provided, using {playoff_date} as cutoff to check for playoff stats."))
-  built_allstats %>% filter(DATE < as.Date(playoff_date))
-}
-
-current_playoff_raw <- if (playoff_date != "") {
-  built_allstats %>% filter(DATE >= as.Date(playoff_date)) %>% add_playoff_info()
-} else {
-  NULL
-}
-
-# Write CSVs for archiving and future historical loads
-current_reg_raw %>%
-  mutate(gametype = "REG") %>%
-  write_csv(file.path(DATA_DIR, glue("allstats-{season_code}.csv")))
-
-if (!is.null(current_playoff_raw) && nrow(current_playoff_raw) > 0) {
-  inform("Some of these are playoff stats. Exporting.")
-  season_suffix <- str_extract(season, "\\d{2}$")
-  current_playoff_raw %>%
-    mutate(gametype = "PLAYOFF") %>%
-    write_csv(file.path(DATA_DIR, glue("allstats-playoffs-{season_suffix}.csv")))
-}
-
-# Post-processing: load historical seasons from disk, inject current season from memory
-# (avoids re-reading the CSV we just wrote)
+# Post-processing: load historical seasons from disk, inject current season from memory ----
 hist_reg <- load_allstats() %>%
   discard(~ any(.x$SEASON == season, na.rm = TRUE))
 
@@ -155,14 +178,12 @@ write_rds(dfs_playoffs, file.path(DATA_DIR, 'dfs_playoffs.rds'), compress = "xz"
 team_ratings <- calculate_team_offense_defense(dfs)
 write_rds(team_ratings, file.path(DATA_DIR, 'team_ratings.rds'), compress = "xz")
 
-# Pre-compute my_ranks for performance
 inform("Calculating player ranks....")
 source("app/R/utils.R")
 my_ranks <- get_ranks(dfs)
 write_rds(my_ranks, file.path(DATA_DIR, 'my_ranks.rds'), compress = "xz")
 inform(" * DONE")
 
-# Pre-compute standings and team stats for all seasons
 inform("Pre-computing standings and team stats for all seasons....")
 seasons <- sort(unique(dfs$SEASON))
 standings_list <- list()
@@ -171,7 +192,7 @@ team_stats_list <- list()
 for (season in seasons) {
   inform(glue("  Computing for season {season}..."))
   season_df <- dfs %>% filter(SEASON == season)
-  
+
   standings_list[[season]] <- compute_standings(season_df)
   team_stats_list[[season]] <- compute_team_stats(season_df)
 }
@@ -242,7 +263,6 @@ wl_stats <- owner_data %>%
   }) %>%
   ungroup()
 
-# Best / worst regular season per owner
 reg_season_wl <- owner_data %>%
   group_by(owner) %>%
   group_modify(~ {
@@ -278,7 +298,6 @@ worst_reg_season <- reg_season_wl %>%
   transmute(owner, worst_reg_season = paste0(w, "-", l), worst_reg_pct = pct) %>%
   ungroup()
 
-# Season count and playoff appearances
 season_meta <- get_owners() %>%
   left_join(
     get_playoff_seeds() %>%
@@ -296,9 +315,6 @@ season_meta <- get_owners() %>%
     .groups = "drop"
   )
 
-# Playoff depth via team win totals (completed seasons only)
-# Win thresholds: >=4 = R2, >=8 = conf finals, >=12 = finals
-# Championships come directly from get_champion_list() to avoid dependency on exact win-count format
 completed_seasons <- get_champion_list() %>%
   mutate(SEASON = str_remove(SEASON, " Playoffs")) %>%
   pull(SEASON)
@@ -369,23 +385,14 @@ owner_stats <- wl_stats %>%
 write_csv(owner_stats, file.path(DATA_DIR, "owner_stats.csv"))
 inform(" * DONE")
 
-# start_time <- Sys.time()
-# inform("Parsing roster log....")
-# 
-# read_delim("app/data/roster-log.txt", delim = ";FARTS;", col_names = c("ts", "text")) %>% 
-#   transmute(DATE = as_date(ts), TEXT = toupper(text))
-# 
-# inform(glue(" * DONE [{round(Sys.time() - start_time, 1)}s]"))
-
 start_time <- Sys.time()
 inform("Calculating league stats....")
-# game highs
+
 dfs_all %>%
   filter(pmax(P, R, A, S, B) >= 5) %>%
   select(PLAYER, SEASON, DATE, OPP, P, R, A, S, B, FGM, FGA, `3PM`, `3PA`, TO, PF) %>%
   write_rds(file.path(DATA_DIR, "game_high_player.rds"), compress = "xz")
 
-# season highs
 dfs_all %>%
   group_by(PLAYER, SEASON) %>%
   summarize(across(
@@ -395,7 +402,6 @@ dfs_all %>%
   ), .groups = "drop") %>%
   write_rds(file.path(DATA_DIR, "season_high_player.rds"), compress = "xz")
 
-# team game highs
 dfs_all %>%
   group_by(TEAM, SEASON, DATE, OPP) %>%
   mutate(DIFF = (TEAM_PTS - OPP_TEAM_PTS) / n()) %>%
@@ -406,7 +412,6 @@ dfs_all %>%
   ), .groups = "drop") %>%
   write_rds(file.path(DATA_DIR, "game_high_team.rds"), compress = "xz")
 
-# team season highs
 x <- dfs_all %>%
   distinct(TEAM, SEASON, TEAM_PTS, OPP_TEAM_PTS, DATE) %>%
   mutate(
@@ -438,14 +443,12 @@ dfs_all %>%
   select(-TEAM_PTS, -OPP_TEAM_PTS) %>%
   write_rds(file.path(DATA_DIR, "season_high_team.rds"), compress = "xz")
 
-# win/loss streaks
 get_win_streaks(dfs_all) %>%
   select(-streak_group) %>%
   filter(streak >= 10) %>%
   arrange(desc(streak)) %>%
   write_rds(file.path(DATA_DIR, "wl_streaks.rds"), compress = "xz")
 
-# Franchise cumulative point differential (for franchise_profiles tab)
 inform("Pre-computing franchise cumulative point differential....")
 cum_diff_games <- dfs_all %>%
   mutate(OPP_RAW = str_replace(OPP, "@", "")) %>%
@@ -466,7 +469,6 @@ cum_diff_games %>%
   write_rds(file.path(DATA_DIR, "cum_diff.rds"), compress = "xz")
 inform(" * DONE")
 
-# Top 3 performers per playoff game per team (for head_to_head tab)
 inform("Pre-computing playoff top performers....")
 dfs_playoffs %>%
   group_by(SEASON, ROUND, GAME, DATE, TEAM, PLAYER) %>%
@@ -478,90 +480,10 @@ dfs_playoffs %>%
   write_rds(file.path(DATA_DIR, "playoff_top_performers.rds"), compress = "xz")
 inform(" * DONE")
 
-# # worst seasons (at least 40 games)
-# dfs %>%
-#   select(PLAYER, SEASON, TEAM, M, P, R, OR, DR, A, S, B, TO, GMSC, FGM, FGA, `3PM`, `3PA`, FTM, FTA, PF, WL) %>%
-#   group_by(PLAYER, SEASON) %>%
-#   summarize(
-#     G = n(),
-#     TEAMS = str_c(unique(TEAM), collapse = ", "),
-#     foul_outs = sum(PF == 6),
-#     win_pct = round(sum(WL == "W")/n(), 3),
-#     across(-c(TEAM, TEAMS, foul_outs, WL, win_pct), sum),
-#     .groups = "drop"
-#   ) %>%
-#   filter(M > 1500) %>% 
-#   mutate(
-#     fg_missed = FGA - FGM,
-#     ft_missed = FTA - FTM,
-#     pts_missed = 2 * (fg_missed) + (ft_missed),
-#     turnovers = TO,
-#     possessions_wasted = FGA - FGM + TO - OR - S,
-#     GMSC_per_min = GMSC / M
-#   ) %>%
-#   select(
-#     PLAYER, SEASON, TEAMS, G, MP = M,
-#     win_pct,
-#     GMSC_per_min,
-#     fg_missed,
-#     ft_missed,
-#     pts_missed,
-#     turnovers,
-#     possessions_wasted,
-#     foul_outs
-#   ) %>%
-#   mutate(
-#     pts_missed_per_min = pts_missed / MP,
-#     possessions_wasted_per_min = possessions_wasted / MP,
-#     foul_outs_per_min = foul_outs / MP
-#   )
+inform("Updating standings.csv....")
 
-
-
-inform(glue(" * DONE [{round(Sys.time() - start_time, 1)}s]"))
-
-# if (toupper(skip_achievements) %in% c("TRUE", "T")) {
-#   inform("Skipping achievements.")
-# } else {
-#   start_time <- Sys.time()
-#   inform("Calculating achievements....")
-#   
-#   ach_metadata <- read_csv("app/data/metadata-achievements.csv", show_col_types = FALSE)
-# 
-#   ach_game <- dfs %>%
-#     nest_by(PLAYER) %>%
-#     mutate(ach = list(get_achievements_game(
-#       data,
-#       ach_metadata
-#     ))) %>%
-#     select(-data) %>%
-#     unnest(ach)
-# 
-#   write_rds(ach_game, 'app/data/ach_game.rds')
-# 
-#   ach_season <- dfs %>%
-#     nest_by(PLAYER) %>%
-#     mutate(ach = list(get_achievements_season(
-#       data,
-#       dfs,
-#       PLAYER,
-#       ach_metadata
-#     ))) %>%
-#     select(-data) %>%
-#     unnest(ach) %>%
-#     ungroup()
-# 
-#   write_rds(ach_season, 'app/data/ach_season.rds')
-#   
-#   inform(glue(" * DONE [{round(Sys.time() - start_time, 1)}s]"))
-# }
-
-
-# Update files in /var/www/stats.nbn.today/files/
-inform("Updating /files/...")
-  
-x <- dfs %>% 
-  filter(SEASON == max(SEASON)) %>% 
+x <- dfs %>%
+  filter(SEASON == max(SEASON)) %>%
   group_by(DATE, TEAM, OPP) %>%
   summarize(TEAM_PTS = sum(P), .groups = 'drop') %>%
   ungroup() %>%
@@ -569,8 +491,7 @@ x <- dfs %>%
 
 games <- x %>%
   left_join(
-    x %>%
-      select(DATE, OPP = TEAM, OPP_PTS = TEAM_PTS),
+    x %>% select(DATE, OPP = TEAM, OPP_PTS = TEAM_PTS),
     by = c("DATE", "OPP")
   ) %>%
   mutate(
@@ -625,20 +546,20 @@ standings <- standings %>%
   mutate(DIV_WINNER = if_else(is.na(DIV_WINNER), FALSE, DIV_WINNER))
 
 resolve_nba_ties <- function(df, h2h) {
-  
+
   if (nrow(df) == 1) return(df)
-  
+
   teams <- df$TEAM
-  
+
   h2h_tied <- h2h %>%
     filter(TEAM %in% teams, OPP %in% teams) %>%
     group_by(TEAM) %>%
     summarize(H2H_PCT = mean(PCT, na.rm = TRUE), .groups = "drop")
-  
+
   df2 <- df %>%
     left_join(h2h_tied, by = "TEAM") %>%
     mutate(H2H_PCT = replace_na(H2H_PCT, 0))
-  
+
   ordering <- df2 %>%
     arrange(
       desc(H2H_PCT),
@@ -647,10 +568,9 @@ resolve_nba_ties <- function(df, h2h) {
       desc(CONF_PCT),
       desc(DIFF)
     )
-  
-  # recursive elimination
+
   top <- ordering[1, ]
-  
+
   tied <- ordering %>%
     filter(
       H2H_PCT == top$H2H_PCT,
@@ -659,7 +579,7 @@ resolve_nba_ties <- function(df, h2h) {
       CONF_PCT == top$CONF_PCT,
       DIFF == top$DIFF
     )
-  
+
   result <-
     if (nrow(tied) == nrow(ordering)) {
       ordering
@@ -672,8 +592,7 @@ resolve_nba_ties <- function(df, h2h) {
         )
       )
     }
-  
-  # 🔑 CRITICAL: drop H2H_PCT before returning
+
   result %>% select(-H2H_PCT)
 }
 
@@ -700,50 +619,7 @@ final_standings %>%
   ) %>%
   write_csv(file.path(DATA_DIR, "standings.csv"))
 
-# x %>%
-#   left_join(
-#     x %>%
-#       select(DATE, OPP = TEAM, OPP_PTS = TEAM_PTS),
-#     by = c('DATE', 'OPP')
-#   ) %>%
-#   group_by(TEAM) %>%
-#   summarize(
-#     W = sum(TEAM_PTS > OPP_PTS),
-#     L = sum(TEAM_PTS < OPP_PTS),
-#     PPG = mean(TEAM_PTS),
-#     OPPG = mean(OPP_PTS),
-#     .groups = 'drop'
-#   ) %>%
-#   mutate(PCT = round(W / (W+L), 3),
-#          DIFF = round(PPG - OPPG, 1),
-#          PPG = round(PPG, 1),
-#          OPPG = round(OPPG, 1),
-#          CONF = get_conference(TEAM)) %>%
-#   group_by(CONF) %>%
-#   mutate(GB = (max(W - L) - (W - L))/2) %>%
-#   arrange(CONF, GB) %>%
-#   mutate(SEED = str_c(CONF, "-", row_number())) %>%
-#   ungroup() %>%
-#   select(SEED, TEAM, GB, W, L, PCT, PPG, OPPG, DIFF) %>% 
-#   write_csv("files/standings.csv")
-
 dfs_all %>%
   write_csv(file.path(DATA_DIR, "allstats.csv"))
 
-
-
-# con = dbConnect(
-#   Postgres(),
-#   host = "localhost",
-#   port = 5432,
-#   dbname = "nbn",
-#   user = "postgres",
-#   password = "mylittl3Farter"
-# )
-
-# For obs that exist, update values
-
-# Build and pre-process 
-
-
-# Update SQL database
+inform(glue(" * DONE [{round(Sys.time() - start_time, 1)}s]"))
