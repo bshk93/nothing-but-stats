@@ -217,27 +217,44 @@ wl_stats <- owner_data %>%
   }) %>%
   ungroup()
 
+# Best / worst regular season per owner
+reg_season_wl <- owner_data %>%
+  group_by(owner) %>%
+  group_modify(~ {
+    periods <- .x
+    game_data %>%
+      filter(gametype == "REG") %>%
+      inner_join(periods %>% select(TEAM, start_date, end_date), by = "TEAM") %>%
+      filter(DATE >= start_date & DATE <= end_date) %>%
+      mutate(
+        yr     = as.integer(format(DATE, "%Y")),
+        mo     = as.integer(format(DATE, "%m")),
+        season = if_else(mo >= 6L,
+          paste0(sprintf("%02d", yr %% 100L), "-", sprintf("%02d", (yr + 1L) %% 100L)),
+          paste0(sprintf("%02d", (yr - 1L) %% 100L), "-", sprintf("%02d", yr %% 100L))
+        )
+      ) %>%
+      group_by(season) %>%
+      summarize(w = sum(WL == "W"), l = sum(WL == "L"), .groups = "drop") %>%
+      filter(w + l > 0L)
+  }) %>%
+  ungroup() %>%
+  mutate(pct = w / (w + l))
+
+best_reg_season <- reg_season_wl %>%
+  group_by(owner) %>%
+  slice_max(pct, n = 1, with_ties = FALSE) %>%
+  transmute(owner, best_reg_season = paste0(w, "-", l), best_reg_pct = pct) %>%
+  ungroup()
+
+worst_reg_season <- reg_season_wl %>%
+  group_by(owner) %>%
+  slice_min(pct, n = 1, with_ties = FALSE) %>%
+  transmute(owner, worst_reg_season = paste0(w, "-", l), worst_reg_pct = pct) %>%
+  ungroup()
+
+# Season count and playoff appearances
 season_meta <- get_owners() %>%
-  left_join(
-    get_champion_list() %>% mutate(SEASON = str_remove(SEASON, " Playoffs"), champion = TRUE),
-    by = c("SEASON", "TEAM")
-  ) %>%
-  left_join(
-    get_runners_up() %>%
-      mutate(SEASON = str_remove(SEASON, " Playoffs")) %>%
-      select(SEASON, TEAM = RUNNER_UP) %>%
-      mutate(finals_ru_flag = TRUE),
-    by = c("SEASON", "TEAM")
-  ) %>%
-  left_join(
-    get_runners_up() %>%
-      mutate(SEASON = str_remove(SEASON, " Playoffs")) %>%
-      pivot_longer(c(EAST_RUNNER_UP, WEST_RUNNER_UP), values_to = "TEAM") %>%
-      select(SEASON, TEAM) %>%
-      distinct() %>%
-      mutate(conf_ru_flag = TRUE),
-    by = c("SEASON", "TEAM")
-  ) %>%
   left_join(
     get_playoff_seeds() %>%
       mutate(SEASON = str_remove(SEASON, " Playoffs")) %>%
@@ -246,30 +263,73 @@ season_meta <- get_owners() %>%
       mutate(made_playoffs = TRUE),
     by = c("SEASON", "TEAM")
   ) %>%
-  replace_na(list(champion = FALSE, finals_ru_flag = FALSE, conf_ru_flag = FALSE, made_playoffs = FALSE)) %>%
+  replace_na(list(made_playoffs = FALSE)) %>%
   group_by(OWNER) %>%
   summarize(
     seasons             = n_distinct(SEASON),
     playoff_appearances = sum(made_playoffs),
-    championships       = sum(champion),
-    finals_runner_up    = sum(finals_ru_flag),
-    conf_runner_up      = sum(conf_ru_flag),
+    .groups = "drop"
+  )
+
+# Playoff depth via team win totals (completed seasons only, best-of-7 throughout)
+# Wins thresholds: >=4 = R2, >=8 = conf finals, >=12 = finals, ==16 = champion
+completed_seasons <- get_champion_list() %>%
+  mutate(SEASON = str_remove(SEASON, " Playoffs")) %>%
+  pull(SEASON)
+
+team_playoff_wins <- game_data %>%
+  filter(gametype == "PLAYOFF") %>%
+  mutate(
+    yr     = as.integer(format(DATE, "%Y")),
+    mo     = as.integer(format(DATE, "%m")),
+    season = if_else(mo >= 6L,
+      paste0(sprintf("%02d", yr %% 100L), "-", sprintf("%02d", (yr + 1L) %% 100L)),
+      paste0(sprintf("%02d", (yr - 1L) %% 100L), "-", sprintf("%02d", yr %% 100L))
+    )
+  ) %>%
+  filter(season %in% completed_seasons) %>%
+  group_by(TEAM, season) %>%
+  summarize(po_wins = sum(WL == "W"), .groups = "drop")
+
+playoff_depth <- get_owners() %>%
+  rename(season = SEASON) %>%
+  filter(season %in% completed_seasons) %>%
+  inner_join(
+    get_playoff_seeds() %>%
+      mutate(season = str_remove(SEASON, " Playoffs")) %>%
+      select(season, TEAM),
+    by = c("season", "TEAM")
+  ) %>%
+  left_join(team_playoff_wins, by = c("TEAM", "season")) %>%
+  mutate(po_wins = replace_na(po_wins, 0L)) %>%
+  group_by(OWNER) %>%
+  summarize(
+    po_r2          = sum(po_wins >= 4L),
+    po_conf_finals = sum(po_wins >= 8L),
+    po_finals      = sum(po_wins >= 12L),
+    championships  = sum(po_wins == 16L),
     .groups = "drop"
   )
 
 owner_stats <- wl_stats %>%
   rename(OWNER = owner) %>%
-  left_join(season_meta, by = "OWNER") %>%
+  left_join(season_meta,      by = "OWNER") %>%
+  left_join(playoff_depth,    by = "OWNER") %>%
+  left_join(best_reg_season,  by = c("OWNER" = "owner")) %>%
+  left_join(worst_reg_season, by = c("OWNER" = "owner")) %>%
   rename(owner = OWNER) %>%
   mutate(
     total_w     = reg_w + playoff_w,
     total_l     = reg_l + playoff_l,
     reg_pct     = round(reg_w / (reg_w + reg_l), 3),
     playoff_pct = if_else(playoff_w + playoff_l > 0, round(playoff_w / (playoff_w + playoff_l), 3), NA_real_),
-    total_pct   = round(total_w / (total_w + total_l), 3)
+    total_pct   = round(total_w / (total_w + total_l), 3),
+    across(c(po_r2, po_conf_finals, po_finals, championships), ~ replace_na(.x, 0L))
   ) %>%
-  select(owner, teams, seasons, reg_w, reg_l, reg_pct, playoff_w, playoff_l, playoff_pct,
-         total_w, total_l, total_pct, playoff_appearances, championships, finals_runner_up, conf_runner_up) %>%
+  select(owner, teams, seasons, best_reg_season, best_reg_pct, worst_reg_season, worst_reg_pct,
+         reg_w, reg_l, reg_pct, playoff_w, playoff_l, playoff_pct,
+         total_w, total_l, total_pct, playoff_appearances,
+         po_r2, po_conf_finals, po_finals, championships) %>%
   arrange(desc(total_pct), desc(total_w))
 
 write_csv(owner_stats, file.path(DATA_DIR, "owner_stats.csv"))
