@@ -219,7 +219,7 @@ owner_data <- read_csv(file.path(DATA_DIR, "owners.csv"), show_col_types = FALSE
 
 game_data <- dfs_all %>%
   filter(!is.na(WL)) %>%
-  distinct(TEAM, DATE, WL, gametype) %>%
+  distinct(TEAM, DATE, SEASON, WL, gametype) %>%
   mutate(DATE = as.Date(DATE))
 
 team_game_counts <- dfs %>%
@@ -325,14 +325,7 @@ champion_teams <- get_champion_list() %>%
 
 team_playoff_wins <- game_data %>%
   filter(gametype == "PLAYOFF") %>%
-  mutate(
-    yr     = as.integer(format(DATE, "%Y")),
-    mo     = as.integer(format(DATE, "%m")),
-    season = if_else(mo >= 6L,
-      paste0(sprintf("%02d", yr %% 100L), "-", sprintf("%02d", (yr + 1L) %% 100L)),
-      paste0(sprintf("%02d", (yr - 1L) %% 100L), "-", sprintf("%02d", yr %% 100L))
-    )
-  ) %>%
+  mutate(season = str_remove(SEASON, " Playoffs")) %>%
   filter(season %in% completed_seasons) %>%
   group_by(TEAM, season) %>%
   summarize(po_wins = sum(WL == "W"), .groups = "drop")
