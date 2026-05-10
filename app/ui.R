@@ -81,9 +81,9 @@ sidebar <- dashboardSidebar(
     ),
     menuItem(
       "NBN Wall Street",
-      tabName = "tab_ws", 
+      tabName = "tab_ws",
       icon = icon("dollar-sign")
-    ),
+    )
   )
 )
 
@@ -573,8 +573,7 @@ body <- dashboardBody(
       ),
       plotlyOutput("wallstreet"),
       plotlyOutput("ws_div")
-    ),
-    
+    )
   )
 )
 
