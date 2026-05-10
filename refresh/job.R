@@ -296,11 +296,16 @@ season_meta <- get_owners() %>%
     .groups = "drop"
   )
 
-# Playoff depth via team win totals (completed seasons only, best-of-7 throughout)
-# Wins thresholds: >=4 = R2, >=8 = conf finals, >=12 = finals, ==16 = champion
+# Playoff depth via team win totals (completed seasons only)
+# Win thresholds: >=4 = R2, >=8 = conf finals, >=12 = finals
+# Championships come directly from get_champion_list() to avoid dependency on exact win-count format
 completed_seasons <- get_champion_list() %>%
   mutate(SEASON = str_remove(SEASON, " Playoffs")) %>%
   pull(SEASON)
+
+champion_teams <- get_champion_list() %>%
+  mutate(season = str_remove(SEASON, " Playoffs")) %>%
+  select(season, TEAM)
 
 team_playoff_wins <- game_data %>%
   filter(gametype == "PLAYOFF") %>%
@@ -327,12 +332,14 @@ playoff_depth <- get_owners() %>%
   ) %>%
   left_join(team_playoff_wins, by = c("TEAM", "season")) %>%
   mutate(po_wins = replace_na(po_wins, 0L)) %>%
+  left_join(champion_teams %>% mutate(is_champion = TRUE), by = c("TEAM", "season")) %>%
+  mutate(is_champion = replace_na(is_champion, FALSE)) %>%
   group_by(OWNER) %>%
   summarize(
     po_r2          = sum(po_wins >= 4L),
     po_conf_finals = sum(po_wins >= 8L),
     po_finals      = sum(po_wins >= 12L),
-    championships  = sum(po_wins == 16L),
+    championships  = sum(is_champion),
     .groups = "drop"
   )
 
