@@ -615,4 +615,132 @@ final_standings %>%
 dfs_all %>%
   write_csv(file.path(DATA_DIR, "allstats.csv"))
 
+inform("Writing career stat totals CSVs....")
+career_totals <- dfs %>%
+  group_by(PLAYER) %>%
+  summarize(
+    P     = sum(P,     na.rm = TRUE),
+    R     = sum(R,     na.rm = TRUE),
+    A     = sum(A,     na.rm = TRUE),
+    S     = sum(S,     na.rm = TRUE),
+    B     = sum(B,     na.rm = TRUE),
+    `3PM` = sum(`3PM`, na.rm = TRUE),
+    .groups = "drop"
+  )
+
+list(
+  "totals-p"   = "P",
+  "totals-r"   = "R",
+  "totals-a"   = "A",
+  "totals-s"   = "S",
+  "totals-b"   = "B",
+  "totals-3pm" = "3PM"
+) %>%
+  iwalk(function(col, name) {
+    career_totals %>%
+      arrange(desc(.data[[col]])) %>%
+      slice_head(n = 250) %>%
+      mutate(RANK = row_number()) %>%
+      select(RANK, PLAYER, all_of(col)) %>%
+      write_csv(file.path(DATA_DIR, glue("{name}.csv")))
+  })
+inform(" * DONE")
+
+inform("Writing game high CSVs....")
+game_highs_base <- dfs_all %>%
+  select(DATE, SEASON, PLAYER, TEAM, OPP, gametype, P, R, A, S, B, `3PM`)
+
+list(
+  "game-highs-p"   = "P",
+  "game-highs-r"   = "R",
+  "game-highs-a"   = "A",
+  "game-highs-s"   = "S",
+  "game-highs-b"   = "B",
+  "game-highs-3pm" = "3PM"
+) %>%
+  iwalk(function(col, name) {
+    game_highs_base %>%
+      arrange(desc(.data[[col]]), DATE) %>%
+      slice_head(n = 20) %>%
+      mutate(RANK = row_number()) %>%
+      select(RANK, DATE, SEASON, PLAYER, TEAM, OPP, gametype, P, R, A, S, B, `3PM`) %>%
+      write_csv(file.path(DATA_DIR, glue("{name}.csv")))
+  })
+inform(" * DONE")
+
+inform("Writing hof.csv....")
+hof_csv <- dfs_all %>%
+  mutate(
+    G = 1,
+    GMSC_WGT_WL = case_when(WL == "W" ~ 1.25, TRUE ~ 0.75),
+    GMSC_WGT_GAMETYPE = case_when(
+      ROUND == 1 ~ 2, ROUND == 2 ~ 4, ROUND == 3 ~ 8, ROUND == 4 ~ 16, TRUE ~ 1
+    )
+  ) %>%
+  group_by(SEASON, TEAM, ROUND) %>%
+  mutate(GMSC_WGT_ROUNDLEN = case_when(
+    GMSC_WGT_GAMETYPE == 1 ~ 1, TRUE ~ 5.5 / n_distinct(DATE)
+  )) %>%
+  ungroup() %>%
+  mutate(GMSC_WEIGHTED = GMSC * GMSC_WGT_WL * GMSC_WGT_GAMETYPE * GMSC_WGT_ROUNDLEN) %>%
+  group_by(PLAYER) %>%
+  summarize_at(vars(c("G", "M", "P", "R", "A", "S", "B", "GMSC_WEIGHTED")), sum) %>%
+
+  left_join(
+    get_champions(dfs_playoffs) %>%
+      group_by(PLAYER) %>% summarize(RINGS = n_distinct(SEASON), .groups = "drop"),
+    by = "PLAYER"
+  ) %>%
+  left_join(
+    dfs_playoffs %>%
+      group_by(PLAYER) %>% summarize(PLAYOFF_APPS = n_distinct(SEASON), .groups = "drop"),
+    by = "PLAYER"
+  ) %>%
+  left_join(
+    dfs %>%
+      distinct(PLAYER, SEASON) %>%
+      mutate(ACTIVE = as.integer(SEASON == max(SEASON))) %>%
+      group_by(PLAYER) %>% summarize(ACTIVE = max(ACTIVE), .groups = "drop"),
+    by = "PLAYER"
+  ) %>%
+  left_join(
+    dfs %>%
+      distinct(PLAYER, TEAM) %>%
+      group_by(PLAYER) %>%
+      summarize(TEAMS = str_c(sort(TEAM), collapse = ","), .groups = "drop"),
+    by = "PLAYER"
+  ) %>%
+  left_join(
+    get_allnbn1() %>% group_by(PLAYER) %>% summarize(ALL_NBN_1 = n(), .groups = "drop"),
+    by = "PLAYER"
+  ) %>%
+  left_join(
+    get_allnbn2() %>% group_by(PLAYER) %>% summarize(ALL_NBN_2 = n(), .groups = "drop"),
+    by = "PLAYER"
+  ) %>%
+  left_join(
+    get_allnbn3() %>% group_by(PLAYER) %>% summarize(ALL_NBN_3 = n(), .groups = "drop"),
+    by = "PLAYER"
+  ) %>%
+  left_join(
+    get_allstars() %>% group_by(PLAYER) %>% summarize(ALLSTARS = n(), .groups = "drop"),
+    by = "PLAYER"
+  ) %>%
+  mutate(
+    HOF_POINTS   = round(GMSC_WEIGHTED / 100, 1),
+    RINGS        = replace_na(RINGS, 0L),
+    PLAYOFF_APPS = replace_na(PLAYOFF_APPS, 0L),
+    ALLSTARS     = replace_na(ALLSTARS, 0L),
+    ALL_NBN_1    = replace_na(ALL_NBN_1, 0L),
+    ALL_NBN_2    = replace_na(ALL_NBN_2, 0L),
+    ALL_NBN_3    = replace_na(ALL_NBN_3, 0L)
+  ) %>%
+  arrange(desc(HOF_POINTS)) %>%
+  slice_head(n = 250) %>%
+  select(PLAYER, TEAMS, HOF_POINTS, RINGS, PLAYOFF_APPS, ALLSTARS,
+         ALL_NBN_1, ALL_NBN_2, ALL_NBN_3, G, M, P, R, A, S, B, ACTIVE)
+
+write_csv(hof_csv, file.path(DATA_DIR, "hof.csv"))
+inform(" * DONE")
+
 inform(glue(" * DONE [{round(Sys.time() - start_time, 1)}s]"))
