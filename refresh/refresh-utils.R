@@ -344,9 +344,13 @@ write_league_history <- function(dfs, team_ratings, out_dir) {
       .groups = "drop"
     )
 
-  history_df <- get_champion_list() %>%
-    mutate(SEASON = str_remove(SEASON, " Playoffs")) %>%
-    select(SEASON, CHAMPION = TEAM) %>%
+  history_df <- tibble(SEASON = sort(unique(dfs$SEASON))) %>%
+    left_join(
+      get_champion_list() %>%
+        mutate(SEASON = str_remove(SEASON, " Playoffs")) %>%
+        select(SEASON, CHAMPION = TEAM),
+      by = "SEASON"
+    ) %>%
     left_join(
       get_runners_up() %>%
         mutate(SEASON = str_remove(SEASON, " Playoffs")) %>%
