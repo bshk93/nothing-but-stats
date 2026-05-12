@@ -483,12 +483,251 @@ calculate_team_offense_defense <- function(dfs) {
       DIFF_DEF = OPP_CUM_PPG - OPP_P
     )
   
-  z2 %>% 
-    group_by(TEAM, SEASON) %>% 
+  z2 %>%
+    group_by(TEAM, SEASON) %>%
     summarize(
       OFF_RTG = mean(DIFF_OFF),
       DEF_RTG = mean(DIFF_DEF),
       TOT_RTG = OFF_RTG + DEF_RTG
     )
-  
+
+}
+
+ROSTER_SHEET_ID <- "14Pwrjk4S9cgB1f2Q16S3YgfoHre8gUxjjXde8k5Nn_0"
+
+# Classify a Google Sheets background RGB triplet into a contract type string.
+# Returns NA_character_ for white/unset cells, decorative red headers, or unknowns.
+classify_bg_color <- function(r, g, b) {
+  if (is.null(r) || is.null(g) || is.null(b)) return(NA_character_)
+  r <- as.numeric(r); g <- as.numeric(g); b <- as.numeric(b)
+  if (is.na(r) || is.na(g) || is.na(b)) return(NA_character_)
+  if (r > 0.95 && g > 0.95 && b > 0.95) return(NA_character_)  # white = no fill
+  refs <- list(
+    UFA        = c(1.00, 0.85, 0.40),
+    RFA        = c(0.96, 0.70, 0.42),
+    PLAYER_OPT = c(0.58, 0.77, 0.49),
+    TEAM_OPT   = c(0.44, 0.66, 0.86),
+    NON_GTD    = c(0.72, 0.72, 0.72)
+  )
+  dists <- map_dbl(refs, ~ sum((c(r, g, b) - .x)^2))
+  if (min(dists) > 0.10) return(NA_character_)
+  names(which.min(dists))
+}
+
+# Fetch cell background colors for salary columns (F:K) for one team sheet via
+# the Sheets API v4.  Returns a named list: player_name -> chr vector of length 6
+# (one per salary column), each element a classify_bg_color() result or NA.
+get_cap_hold_flags <- function(spreadsheet_id, sheet_name, api_key) {
+  url <- paste0(
+    "https://sheets.googleapis.com/v4/spreadsheets/", spreadsheet_id,
+    "?ranges=", sheet_name, "!A1:K100",
+    "&fields=sheets.data.rowData.values(formattedValue,userEnteredFormat.backgroundColor)",
+    "&key=", api_key
+  )
+  resp <- tryCatch(httr::GET(url), error = function(e) NULL)
+  if (is.null(resp) || httr::status_code(resp) != 200) {
+    if (!is.null(resp))
+      warn(glue("Sheets API {httr::status_code(resp)} for {sheet_name}"))
+    return(NULL)
+  }
+  parsed   <- httr::content(resp, as = "parsed", type = "application/json")
+  row_data <- tryCatch(parsed$sheets[[1]]$data[[1]]$rowData, error = function(e) NULL)
+  if (is.null(row_data)) return(NULL)
+
+  result <- list()
+  for (rw in row_data) {
+    vals <- rw$values
+    if (is.null(vals) || length(vals) < 6) next
+    nm <- tryCatch(vals[[1]]$formattedValue, error = function(e) NULL)
+    if (is.null(nm) || trimws(nm) == "") next
+    colors <- map_chr(6:11, function(ci) {
+      if (ci > length(vals)) return(NA_character_)
+      bg <- tryCatch(vals[[ci]]$userEnteredFormat$backgroundColor, error = function(e) NULL)
+      if (is.null(bg)) return(NA_character_)
+      classify_bg_color(bg$red, bg$green, bg$blue)
+    })
+    if (any(!is.na(colors))) result[[trimws(nm)]] <- colors
+  }
+  result
+}
+
+write_roster_picks <- function(season, teams, output_dir) {
+  yr_end    <- as.integer(str_extract(season, "\\d{2}$"))
+  yr_labels <- map_chr(0:5, ~ sprintf("%02d-%02d", (yr_end - 1 + .x) %% 100, (yr_end + .x) %% 100))
+  api_key   <- Sys.getenv("SHEETS_API_KEY", unset = "")
+
+  for (team in teams) {
+    url <- glue(
+      "https://docs.google.com/spreadsheets/d/{ROSTER_SHEET_ID}",
+      "/gviz/tq?tqx=out:csv&sheet={team}"
+    )
+
+    raw <- tryCatch(
+      read_csv(url, col_names = FALSE, show_col_types = FALSE, name_repair = "minimal"),
+      error = function(e) { warn(glue("Roster fetch failed for {team}: {e$message}")); NULL }
+    )
+    if (is.null(raw)) next
+
+    while (ncol(raw) < 11) raw[[paste0("pad", ncol(raw) + 1)]] <- NA_character_
+
+    cap_hold_map <- if (nchar(api_key) > 0)
+      get_cap_hold_flags(ROSTER_SHEET_ID, team, api_key)
+    else
+      list()
+
+    col1 <- function(i) { v <- as.character(raw[[1]][i]); if (is.na(v)) "" else v }
+
+    # ── ROSTER ──────────────────────────────────────────────────────────────
+    roster_type <- NA_character_
+    roster_rows <- list()
+
+    for (i in seq_len(nrow(raw))) {
+      v <- col1(i)
+      if (v == "Salary Cap Breakdown Totals") break
+      if (v == "Two-Way Contracts") { roster_type <- "two-way"; next }
+      if (v == "Dead Cap Figures")  { roster_type <- "dead";    next }
+      v3 <- { x <- as.character(raw[[3]][i]); if (is.na(x)) "" else x }
+      if (v == "Players" || (is.na(roster_type) && v3 == "Position")) {
+        roster_type <- "player"
+        next
+      }
+      if (is.na(roster_type) || v == "" || v3 == "Position") next
+
+      salaries <- map_chr(6:11, ~ {
+        val <- as.character(raw[[.x]][i])
+        if (is.na(val)) "" else val
+      })
+
+      cap_holds_str <- {
+        clrs <- cap_hold_map[[v]]
+        if (!is.null(clrs)) {
+          pairs <- map2_chr(yr_labels, clrs, function(yr, col) {
+            if (is.na(col)) NA_character_ else paste0(yr, ":", col)
+          })
+          paste(na.omit(pairs), collapse = ",")
+        } else ""
+      }
+
+      roster_rows[[length(roster_rows) + 1]] <- tibble(
+        PLAYER    = v,
+        POS       = { p <- as.character(raw[[3]][i]); if (is.na(p)) "" else p },
+        AGE       = { a <- as.character(raw[[4]][i]); if (is.na(a)) "" else a },
+        OVR       = { o <- as.character(raw[[5]][i]); if (is.na(o)) "" else o },
+        TYPE      = roster_type,
+        CAP_HOLDS = cap_holds_str,
+        !!!setNames(as.list(salaries), yr_labels)
+      )
+    }
+
+    write_csv(bind_rows(roster_rows), file.path(output_dir, glue("{tolower(team)}-roster.csv")))
+
+    # ── PICKS ────────────────────────────────────────────────────────────────
+    picks_start <- which(map_chr(seq_len(nrow(raw)), col1) == "Draft Picks")
+
+    if (length(picks_start) == 0) {
+      write_csv(
+        tibble(YEAR = character(), ROUND = character(), TEAM = character(), TYPE = character()),
+        file.path(output_dir, glue("{tolower(team)}-picks.csv"))
+      )
+      next
+    }
+
+    picks_rows  <- list()
+    picks_type  <- NA_character_
+    current_yr  <- NA_character_
+
+    for (i in (picks_start[1] + 1):nrow(raw)) {
+      v    <- col1(i)
+      rnd  <- { r <- as.character(raw[[2]][i]); if (is.na(r)) "" else r }
+      othr <- { o <- as.character(raw[[4]][i]); if (is.na(o)) "" else o }
+
+      if (v == "Original Draft Picks") { picks_type <- "own";      next }
+      if (v == "Acquired Draft Picks") { picks_type <- "acquired";  next }
+      if (v == "Year" || is.na(picks_type)) next
+      if (rnd == "") next
+
+      if (v != "") current_yr <- v
+
+      picks_rows[[length(picks_rows) + 1]] <- tibble(
+        YEAR  = if (is.na(current_yr)) "" else current_yr,
+        ROUND = rnd,
+        TEAM  = if (othr == "") "Own" else othr,
+        TYPE  = picks_type
+      )
+    }
+
+    write_csv(bind_rows(picks_rows), file.path(output_dir, glue("{tolower(team)}-picks.csv")))
+  }
+}
+
+write_h2h_matrix <- function(dfs, dfs_playoffs, output_dir) {
+  teams <- sort(unique(dfs$TEAM))
+
+  get_game_level <- function(df) {
+    df %>%
+      mutate(OPP_CLEAN = str_replace(OPP, "@", "")) %>%
+      distinct(SEASON, DATE, TEAM, OPP_CLEAN, WL) %>%
+      filter(!is.na(WL), !is.na(OPP_CLEAN), OPP_CLEAN != "")
+  }
+
+  get_counts <- function(games) {
+    games %>%
+      group_by(TEAM, OPP_CLEAN) %>%
+      summarise(W = sum(WL == "W"), L = sum(WL == "L"), .groups = "drop")
+  }
+
+  build_matrix <- function(counts) {
+    expand.grid(TEAM = teams, OPP_RAW = teams, stringsAsFactors = FALSE) %>%
+      filter(TEAM != OPP_RAW) %>%
+      left_join(counts, by = c("TEAM", "OPP_RAW" = "OPP_CLEAN")) %>%
+      mutate(
+        W = coalesce(W, 0L), L = coalesce(L, 0L),
+        RECORD = paste0(W, "-", L)
+      ) %>%
+      select(TEAM, OPP_RAW, RECORD) %>%
+      pivot_wider(names_from = OPP_RAW, values_from = RECORD, values_fill = "") %>%
+      arrange(TEAM) %>%
+      select(TEAM, all_of(teams))
+  }
+
+  dfs_all <- bind_rows(dfs, dfs_playoffs)
+  write_csv(build_matrix(get_counts(get_game_level(dfs_all))),
+            file.path(output_dir, "h2h-alltime.csv"))
+  write_csv(build_matrix(get_counts(get_game_level(dfs_playoffs))),
+            file.path(output_dir, "h2h-playoffs.csv"))
+}
+
+write_owner_h2h_matrix <- function(dfs, dfs_playoffs, owner_data, output_dir) {
+  teams <- sort(unique(dfs$TEAM))
+  owners <- sort(unique(owner_data$owner))
+
+  games <- bind_rows(dfs, dfs_playoffs) %>%
+    mutate(OPP_CLEAN = str_replace(OPP, "@", ""), DATE = as.Date(DATE)) %>%
+    distinct(DATE, TEAM, OPP_CLEAN, WL) %>%
+    filter(!is.na(WL), !is.na(OPP_CLEAN), OPP_CLEAN != "")
+
+  owner_game_counts <- owner_data %>%
+    group_by(owner) %>%
+    group_modify(~ {
+      periods <- .x
+      games %>%
+        inner_join(periods %>% select(TEAM, start_date, end_date), by = "TEAM") %>%
+        filter(DATE >= start_date & DATE <= end_date) %>%
+        group_by(OPP_CLEAN) %>%
+        summarise(W = sum(WL == "W"), L = sum(WL == "L"), .groups = "drop")
+    }) %>%
+    ungroup()
+
+  expand.grid(owner = owners, OPP_CLEAN = teams, stringsAsFactors = FALSE) %>%
+    left_join(owner_game_counts, by = c("owner", "OPP_CLEAN")) %>%
+    mutate(
+      W = coalesce(W, 0L), L = coalesce(L, 0L),
+      RECORD = paste0(W, "-", L)
+    ) %>%
+    select(owner, OPP_CLEAN, RECORD) %>%
+    pivot_wider(names_from = OPP_CLEAN, values_from = RECORD, values_fill = "") %>%
+    arrange(owner) %>%
+    rename(OWNER = owner) %>%
+    select(OWNER, all_of(teams)) %>%
+    write_csv(file.path(output_dir, "h2h-owners.csv"))
 }

@@ -253,12 +253,14 @@ wl_stats <- owner_data %>%
     owner_games <- game_data %>%
       inner_join(owner_periods %>% select(TEAM, start_date, end_date), by = "TEAM") %>%
       filter(DATE >= start_date & DATE <= end_date)
+    po_games <- owner_games$SEASON[owner_games$gametype == "PLAYOFF"]
     tibble(
-      teams     = str_c(sort(unique(owner_games$TEAM)), collapse = ", "),
-      reg_w     = sum(owner_games$WL == "W" & owner_games$gametype == "REG",     na.rm = TRUE),
-      reg_l     = sum(owner_games$WL == "L" & owner_games$gametype == "REG",     na.rm = TRUE),
-      playoff_w = sum(owner_games$WL == "W" & owner_games$gametype == "PLAYOFF", na.rm = TRUE),
-      playoff_l = sum(owner_games$WL == "L" & owner_games$gametype == "PLAYOFF", na.rm = TRUE)
+      teams               = str_c(sort(unique(owner_games$TEAM)), collapse = ", "),
+      reg_w               = sum(owner_games$WL == "W" & owner_games$gametype == "REG",     na.rm = TRUE),
+      reg_l               = sum(owner_games$WL == "L" & owner_games$gametype == "REG",     na.rm = TRUE),
+      playoff_w           = sum(owner_games$WL == "W" & owner_games$gametype == "PLAYOFF", na.rm = TRUE),
+      playoff_l           = sum(owner_games$WL == "L" & owner_games$gametype == "PLAYOFF", na.rm = TRUE),
+      playoff_appearances = n_distinct(str_remove(po_games, " Playoffs"))
     )
   }) %>%
   ungroup()
@@ -310,8 +312,7 @@ season_meta <- get_owners() %>%
   replace_na(list(made_playoffs = FALSE)) %>%
   group_by(OWNER) %>%
   summarize(
-    seasons             = n_distinct(SEASON),
-    playoff_appearances = sum(made_playoffs),
+    seasons = n_distinct(SEASON),
     .groups = "drop"
   )
 
@@ -621,6 +622,15 @@ inform(" * DONE")
 
 inform("Writing per-team profile CSVs....")
 write_team_profiles(dfs, dfs_playoffs, standings_list, team_ratings, DATA_DIR)
+inform(" * DONE")
+
+inform("Writing roster and picks CSVs....")
+write_roster_picks(season, sort(unique(dfs$TEAM)), DATA_DIR)
+inform(" * DONE")
+
+inform("Writing head-to-head matrix CSVs....")
+write_h2h_matrix(dfs, dfs_playoffs, DATA_DIR)
+write_owner_h2h_matrix(dfs, dfs_playoffs, owner_data, DATA_DIR)
 inform(" * DONE")
 
 inform("Writing career stat totals CSVs....")
