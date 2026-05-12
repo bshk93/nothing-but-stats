@@ -313,7 +313,37 @@ get_division <- function(team) {
   )
 }
 
-write_league_history <- function(out_dir) {
+write_league_history <- function(dfs, team_ratings, out_dir) {
+  season_totals <- dfs %>%
+    group_by(SEASON, PLAYER) %>%
+    summarize(
+      P     = sum(P,     na.rm = TRUE),
+      R     = sum(R,     na.rm = TRUE),
+      A     = sum(A,     na.rm = TRUE),
+      S     = sum(S,     na.rm = TRUE),
+      B     = sum(B,     na.rm = TRUE),
+      `3PM` = sum(`3PM`, na.rm = TRUE),
+      .groups = "drop"
+    )
+
+  stat_leader <- function(stat) {
+    season_totals %>%
+      group_by(SEASON) %>%
+      slice_max(.data[[stat]], n = 1, with_ties = FALSE) %>%
+      ungroup() %>%
+      transmute(SEASON, val = paste0(PLAYER, " (", .data[[stat]], ")"))
+  }
+
+  rating_leaders <- team_ratings %>%
+    ungroup() %>%
+    group_by(SEASON) %>%
+    summarize(
+      BEST_OFF     = paste0(TEAM[which.max(OFF_RTG)], " (", sprintf("%+.2f", max(OFF_RTG)), ")"),
+      BEST_DEF     = paste0(TEAM[which.max(DEF_RTG)], " (", sprintf("%+.2f", max(DEF_RTG)), ")"),
+      BEST_OVERALL = paste0(TEAM[which.max(TOT_RTG)], " (", sprintf("%+.2f", max(TOT_RTG)), ")"),
+      .groups = "drop"
+    )
+
   history_df <- get_champion_list() %>%
     mutate(SEASON = str_remove(SEASON, " Playoffs")) %>%
     select(SEASON, CHAMPION = TEAM) %>%
@@ -334,6 +364,13 @@ write_league_history <- function(out_dir) {
         select(SEASON, COTY),
       by = "SEASON"
     ) %>%
+    left_join(stat_leader("P")   %>% rename(PTS_LEADER = val), by = "SEASON") %>%
+    left_join(stat_leader("R")   %>% rename(REB_LEADER = val), by = "SEASON") %>%
+    left_join(stat_leader("A")   %>% rename(AST_LEADER = val), by = "SEASON") %>%
+    left_join(stat_leader("S")   %>% rename(STL_LEADER = val), by = "SEASON") %>%
+    left_join(stat_leader("B")   %>% rename(BLK_LEADER = val), by = "SEASON") %>%
+    left_join(stat_leader("3PM") %>% rename(TPM_LEADER = val), by = "SEASON") %>%
+    left_join(rating_leaders, by = "SEASON") %>%
     arrange(SEASON)
 
   write_csv(history_df, file.path(out_dir, "league-history.csv"))
