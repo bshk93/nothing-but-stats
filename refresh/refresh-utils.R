@@ -313,6 +313,32 @@ get_division <- function(team) {
   )
 }
 
+write_league_history <- function(out_dir) {
+  history_df <- get_champion_list() %>%
+    mutate(SEASON = str_remove(SEASON, " Playoffs")) %>%
+    select(SEASON, CHAMPION = TEAM) %>%
+    left_join(
+      get_runners_up() %>%
+        mutate(SEASON = str_remove(SEASON, " Playoffs")) %>%
+        select(SEASON, RUNNER_UP, EAST_RUNNER_UP, WEST_RUNNER_UP),
+      by = "SEASON"
+    ) %>%
+    left_join(get_mvp()  %>% select(SEASON, MVP  = PLAYER), by = "SEASON") %>%
+    left_join(get_dpoy() %>% select(SEASON, DPOY = PLAYER), by = "SEASON") %>%
+    left_join(get_roy()  %>% select(SEASON, ROTY = PLAYER), by = "SEASON") %>%
+    left_join(get_mip()  %>% select(SEASON, MIP  = PLAYER), by = "SEASON") %>%
+    left_join(get_foty() %>% select(SEASON, FOTY = TEAM),   by = "SEASON") %>%
+    left_join(
+      get_coty() %>%
+        mutate(COTY = paste0(str_extract(AWARD, "(?<=\\().*(?=\\))"), " (", TEAM, ")")) %>%
+        select(SEASON, COTY),
+      by = "SEASON"
+    ) %>%
+    arrange(SEASON)
+
+  write_csv(history_df, file.path(out_dir, "league-history.csv"))
+}
+
 write_team_profiles <- function(dfs, dfs_playoffs, standings_list, team_ratings, out_dir) {
   teams <- sort(unique(dfs$TEAM))
 

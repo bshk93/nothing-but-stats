@@ -615,6 +615,10 @@ final_standings %>%
 dfs_all %>%
   write_csv(file.path(DATA_DIR, "allstats.csv"))
 
+inform("Writing league history CSV....")
+write_league_history(DATA_DIR)
+inform(" * DONE")
+
 inform("Writing per-team profile CSVs....")
 write_team_profiles(dfs, dfs_playoffs, standings_list, team_ratings, DATA_DIR)
 inform(" * DONE")
