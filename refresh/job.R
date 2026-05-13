@@ -802,6 +802,7 @@ hof_csv <- dfs_all %>%
   slice_head(n = 250) %>%
   select(PLAYER, TEAMS, HOF_POINTS, RINGS, PLAYOFF_APPS, ALLSTARS,
          ALL_NBN_1, ALL_NBN_2, ALL_NBN_3, MVP, DPOY, ALL_DEF,
+         SIX_MOY, ROY, MIP,
          G, M, P, R, A, S, B, ACTIVE)
 
 write_csv(hof_csv, file.path(DATA_DIR, "hof.csv"))
