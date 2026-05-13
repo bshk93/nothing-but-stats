@@ -12,11 +12,6 @@ sidebar <- dashboardSidebar(
       icon = icon("code-fork")
     ),
     menuItem(
-      "Hall of Fame & League History",
-      tabName = "tab_awards",
-      icon = icon("award")
-    ),
-    menuItem(
       "League Stats & Records",
       tabName = "tab_records", 
       icon = icon("ranking-star")#,
@@ -414,27 +409,6 @@ body <- dashboardBody(
         c("ALL-TIME", "25-26", "24-25", "23-24", "22-23", "21-22", "20-21")
       ),
       withSpinner(plotOutput("stat_race_plot"))
-    ),
-    
-    ## Hall of Fame + Awards ----
-    tabItem(
-      tabName = "tab_awards",
-      
-      h2('League Champions'),
-      DTOutput('league_champs'),
-      
-      h2('Season Awards History'),
-      DTOutput('season_awards_history'),
-      
-      h2('Front Office Awards'),
-      DTOutput('front_office_awards'),
-      
-      h2('All-NBN Teams'),
-      DTOutput('all_nbn'),
-      
-      h2('NBN Hall-of-Fame Points'),
-      p("HOF points are calculated using GMSC, wins, and playoff performance."),
-      DTOutput('hof_points')
     ),
     
     ## Head to Head ----
