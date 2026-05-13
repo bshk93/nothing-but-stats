@@ -744,19 +744,65 @@ hof_csv <- dfs_all %>%
     get_allstars() %>% group_by(PLAYER) %>% summarize(ALLSTARS = n(), .groups = "drop"),
     by = "PLAYER"
   ) %>%
+  left_join(
+    get_mvp() %>% group_by(PLAYER) %>% summarize(MVP = n(), .groups = "drop"),
+    by = "PLAYER"
+  ) %>%
+  left_join(
+    get_dpoy() %>% group_by(PLAYER) %>% summarize(DPOY = n(), .groups = "drop"),
+    by = "PLAYER"
+  ) %>%
+  left_join(
+    get_alldef() %>% group_by(PLAYER) %>% summarize(ALL_DEF = n(), .groups = "drop"),
+    by = "PLAYER"
+  ) %>%
+  left_join(
+    get_6moy() %>% group_by(PLAYER) %>% summarize(SIX_MOY = n(), .groups = "drop"),
+    by = "PLAYER"
+  ) %>%
+  left_join(
+    get_roy() %>% group_by(PLAYER) %>% summarize(ROY = n(), .groups = "drop"),
+    by = "PLAYER"
+  ) %>%
+  left_join(
+    get_mip() %>% group_by(PLAYER) %>% summarize(MIP = n(), .groups = "drop"),
+    by = "PLAYER"
+  ) %>%
   mutate(
-    HOF_POINTS   = round(GMSC_WEIGHTED / 100, 1),
     RINGS        = replace_na(RINGS, 0L),
     PLAYOFF_APPS = replace_na(PLAYOFF_APPS, 0L),
     ALLSTARS     = replace_na(ALLSTARS, 0L),
     ALL_NBN_1    = replace_na(ALL_NBN_1, 0L),
     ALL_NBN_2    = replace_na(ALL_NBN_2, 0L),
-    ALL_NBN_3    = replace_na(ALL_NBN_3, 0L)
+    ALL_NBN_3    = replace_na(ALL_NBN_3, 0L),
+    MVP          = replace_na(MVP, 0L),
+    DPOY         = replace_na(DPOY, 0L),
+    ALL_DEF      = replace_na(ALL_DEF, 0L),
+    SIX_MOY      = replace_na(SIX_MOY, 0L),
+    ROY          = replace_na(ROY, 0L),
+    MIP          = replace_na(MIP, 0L),
+    HOF_POINTS   = round(
+      GMSC_WEIGHTED / 100 +
+        RINGS        * 10 +
+        PLAYOFF_APPS *  1 +
+        MVP          *  8 +
+        DPOY         *  5 +
+        ALLSTARS     *  3 +
+        ALL_NBN_1    *  4 +
+        ALL_NBN_2    *  3 +
+        ALL_NBN_3    *  2 +
+        ALL_DEF      *  2 +
+        SIX_MOY      *  3 +
+        ROY          *  3 +
+        MIP          *  2,
+      1
+    )
   ) %>%
   arrange(desc(HOF_POINTS)) %>%
   slice_head(n = 250) %>%
   select(PLAYER, TEAMS, HOF_POINTS, RINGS, PLAYOFF_APPS, ALLSTARS,
-         ALL_NBN_1, ALL_NBN_2, ALL_NBN_3, G, M, P, R, A, S, B, ACTIVE)
+         ALL_NBN_1, ALL_NBN_2, ALL_NBN_3, MVP, DPOY, ALL_DEF,
+         G, M, P, R, A, S, B, ACTIVE)
 
 write_csv(hof_csv, file.path(DATA_DIR, "hof.csv"))
 inform(" * DONE")
