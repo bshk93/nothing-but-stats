@@ -236,9 +236,8 @@ owner_ratings <- team_ratings %>%
   ) %>%
   inner_join(
     owner_data %>% select(owner, TEAM, start_date, end_date),
-    by = "TEAM"
+    by = join_by(TEAM, midpoint_date >= start_date, midpoint_date <= end_date)
   ) %>%
-  filter(midpoint_date >= start_date & midpoint_date <= end_date) %>%
   group_by(owner) %>%
   summarize(
     off_rtg = round(weighted.mean(OFF_RTG, n_games), 2),
@@ -631,6 +630,43 @@ inform(" * DONE")
 inform("Writing head-to-head matrix CSVs....")
 write_h2h_matrix(dfs, dfs_playoffs, DATA_DIR)
 write_owner_h2h_matrix(dfs, dfs_playoffs, owner_data, DATA_DIR)
+inform(" * DONE")
+
+inform("Writing player seasons CSV....")
+player_seasons <- dfs %>%
+  group_by(PLAYER, SEASON, TEAM) %>%
+  summarize(
+    G         = n(),
+    MIN       = sum(M,     na.rm = TRUE),
+    PTS       = sum(P,     na.rm = TRUE),
+    REB       = sum(R,     na.rm = TRUE),
+    AST       = sum(A,     na.rm = TRUE),
+    STL       = sum(S,     na.rm = TRUE),
+    BLK       = sum(B,     na.rm = TRUE),
+    TOV       = sum(TO,    na.rm = TRUE),
+    PF        = sum(PF,    na.rm = TRUE),
+    FGM       = sum(FGM,   na.rm = TRUE),
+    FGA       = sum(FGA,   na.rm = TRUE),
+    `3PM`     = sum(`3PM`, na.rm = TRUE),
+    `3PA`     = sum(`3PA`, na.rm = TRUE),
+    FTM       = sum(FTM,   na.rm = TRUE),
+    FTA       = sum(FTA,   na.rm = TRUE),
+    GMSC      = sum(GMSC,  na.rm = TRUE),
+    HIGH_P    = max(P,     na.rm = TRUE),
+    HIGH_R    = max(R,     na.rm = TRUE),
+    HIGH_A    = max(A,     na.rm = TRUE),
+    HIGH_S    = max(S,     na.rm = TRUE),
+    HIGH_B    = max(B,     na.rm = TRUE),
+    HIGH_3PM  = max(`3PM`, na.rm = TRUE),
+    HIGH_GMSC = max(GMSC,  na.rm = TRUE),
+    .groups = "drop"
+  ) %>%
+  mutate(
+    PLAYER = tools::toTitleCase(tolower(PLAYER)),
+    SLUG   = gsub("[^a-z0-9-]", "", gsub(" ", "-", gsub(", ", "-", tolower(PLAYER))))
+  ) %>%
+  arrange(PLAYER, SEASON, TEAM)
+write_csv(player_seasons, file.path(DATA_DIR, "player_seasons.csv"))
 inform(" * DONE")
 
 inform("Writing career stat totals CSVs....")
