@@ -659,13 +659,14 @@ player_seasons <- dfs %>%
     HIGH_B    = max(B,     na.rm = TRUE),
     HIGH_3PM  = max(`3PM`, na.rm = TRUE),
     HIGH_GMSC = max(GMSC,  na.rm = TRUE),
+    LAST_DATE = max(as.Date(DATE), na.rm = TRUE),
     .groups = "drop"
   ) %>%
   mutate(
     PLAYER = tools::toTitleCase(tolower(PLAYER)),
     SLUG   = gsub("[^a-z0-9-]", "", gsub(" ", "-", gsub(", ", "-", tolower(PLAYER))))
   ) %>%
-  arrange(PLAYER, SEASON, TEAM)
+  arrange(PLAYER, SEASON, LAST_DATE)
 write_csv(player_seasons, file.path(DATA_DIR, "player_seasons.csv"))
 inform(" * DONE")
 
