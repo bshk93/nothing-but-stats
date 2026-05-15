@@ -633,6 +633,13 @@ write_owner_h2h_matrix(dfs, dfs_playoffs, owner_data, DATA_DIR)
 inform(" * DONE")
 
 inform("Writing player seasons CSV....")
+bio_photos <- read_csv(file.path(DATA_DIR, "player-bio-database.csv"),
+                       skip = 1, show_col_types = FALSE, name_repair = "minimal") %>%
+  select(NAME_KEY = 1, PHOTO_URL = `Img URL`) %>%
+  mutate(NAME_KEY = toupper(NAME_KEY)) %>%
+  filter(!is.na(PHOTO_URL), PHOTO_URL != "") %>%
+  distinct(NAME_KEY, .keep_all = TRUE)
+
 player_seasons <- dfs %>%
   group_by(PLAYER, SEASON, TEAM) %>%
   summarize(
@@ -662,6 +669,7 @@ player_seasons <- dfs %>%
     LAST_DATE = max(as.Date(DATE), na.rm = TRUE),
     .groups = "drop"
   ) %>%
+  left_join(bio_photos, by = c("PLAYER" = "NAME_KEY")) %>%
   mutate(
     PLAYER = tools::toTitleCase(tolower(PLAYER)),
     SLUG   = gsub("[^a-z0-9-]", "", gsub(" ", "-", gsub(", ", "-", tolower(PLAYER))))
