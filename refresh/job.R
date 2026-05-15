@@ -654,11 +654,6 @@ player_seasons <- dfs %>%
     PF        = sum(PF,    na.rm = TRUE),
     FGM       = sum(FGM,   na.rm = TRUE),
     FGA       = sum(FGA,   na.rm = TRUE),
-    `3PM`     = sum(`3PM`, na.rm = TRUE),
-    `3PA`     = sum(`3PA`, na.rm = TRUE),
-    FTM       = sum(FTM,   na.rm = TRUE),
-    FTA       = sum(FTA,   na.rm = TRUE),
-    GMSC      = sum(GMSC,  na.rm = TRUE),
     HIGH_P    = max(P,     na.rm = TRUE),
     HIGH_R    = max(R,     na.rm = TRUE),
     HIGH_A    = max(A,     na.rm = TRUE),
@@ -666,6 +661,11 @@ player_seasons <- dfs %>%
     HIGH_B    = max(B,     na.rm = TRUE),
     HIGH_3PM  = max(`3PM`, na.rm = TRUE),
     HIGH_GMSC = max(GMSC,  na.rm = TRUE),
+    `3PM`     = sum(`3PM`, na.rm = TRUE),
+    `3PA`     = sum(`3PA`, na.rm = TRUE),
+    FTM       = sum(FTM,   na.rm = TRUE),
+    FTA       = sum(FTA,   na.rm = TRUE),
+    GMSC      = sum(GMSC,  na.rm = TRUE),
     LAST_DATE = max(as.Date(DATE), na.rm = TRUE),
     .groups = "drop"
   ) %>%
