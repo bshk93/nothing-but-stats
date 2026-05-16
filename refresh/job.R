@@ -678,6 +678,45 @@ player_seasons <- dfs %>%
 write_csv(player_seasons, file.path(DATA_DIR, "player_seasons.csv"))
 inform(" * DONE")
 
+inform("Writing player seasons playoffs CSV....")
+player_seasons_playoffs <- dfs_playoffs %>%
+  group_by(PLAYER, SEASON, TEAM) %>%
+  summarize(
+    G         = n(),
+    MIN       = sum(M,     na.rm = TRUE),
+    PTS       = sum(P,     na.rm = TRUE),
+    REB       = sum(R,     na.rm = TRUE),
+    AST       = sum(A,     na.rm = TRUE),
+    STL       = sum(S,     na.rm = TRUE),
+    BLK       = sum(B,     na.rm = TRUE),
+    TOV       = sum(TO,    na.rm = TRUE),
+    PF        = sum(PF,    na.rm = TRUE),
+    FGM       = sum(FGM,   na.rm = TRUE),
+    FGA       = sum(FGA,   na.rm = TRUE),
+    HIGH_P    = max(P,     na.rm = TRUE),
+    HIGH_R    = max(R,     na.rm = TRUE),
+    HIGH_A    = max(A,     na.rm = TRUE),
+    HIGH_S    = max(S,     na.rm = TRUE),
+    HIGH_B    = max(B,     na.rm = TRUE),
+    HIGH_3PM  = max(`3PM`, na.rm = TRUE),
+    HIGH_GMSC = max(GMSC,  na.rm = TRUE),
+    `3PM`     = sum(`3PM`, na.rm = TRUE),
+    `3PA`     = sum(`3PA`, na.rm = TRUE),
+    FTM       = sum(FTM,   na.rm = TRUE),
+    FTA       = sum(FTA,   na.rm = TRUE),
+    GMSC      = sum(GMSC,  na.rm = TRUE),
+    LAST_DATE = max(as.Date(DATE), na.rm = TRUE),
+    .groups = "drop"
+  ) %>%
+  left_join(bio_photos, by = c("PLAYER" = "NAME_KEY")) %>%
+  mutate(
+    PLAYER = tools::toTitleCase(tolower(PLAYER)),
+    SLUG   = gsub("[^a-z0-9-]", "", gsub(" ", "-", gsub(", ", "-", tolower(PLAYER))))
+  ) %>%
+  arrange(PLAYER, SEASON, LAST_DATE)
+write_csv(player_seasons_playoffs, file.path(DATA_DIR, "player_seasons_playoffs.csv"))
+inform(" * DONE")
+
 inform("Writing career stat totals CSVs....")
 career_totals <- dfs %>%
   group_by(PLAYER) %>%
