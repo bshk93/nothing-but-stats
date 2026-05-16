@@ -670,7 +670,14 @@ player_seasons <- dfs %>%
     .groups = "drop"
   ) %>%
   left_join(bio_photos, by = c("PLAYER" = "NAME_KEY")) %>%
+  left_join(
+    get_champions(dfs_playoffs) %>%
+      group_by(PLAYER) %>%
+      summarize(RINGS = n_distinct(SEASON), .groups = "drop"),
+    by = "PLAYER"
+  ) %>%
   mutate(
+    RINGS  = replace_na(as.integer(RINGS), 0L),
     PLAYER = tools::toTitleCase(tolower(PLAYER)),
     SLUG   = gsub("[^a-z0-9-]", "", gsub(" ", "-", gsub(", ", "-", tolower(PLAYER))))
   ) %>%
