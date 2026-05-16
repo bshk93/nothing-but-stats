@@ -777,6 +777,33 @@ list(
   })
 inform(" * DONE")
 
+inform("Writing playoff classics CSV....")
+dfs_playoffs %>%
+  filter(WL == "W") %>%
+  group_by(PLAYER, SEASON, DATE, TEAM, OPP, ROUND, GAME) %>%
+  summarize(
+    P     = sum(P,     na.rm = TRUE),
+    R     = sum(R,     na.rm = TRUE),
+    A     = sum(A,     na.rm = TRUE),
+    S     = sum(S,     na.rm = TRUE),
+    B     = sum(B,     na.rm = TRUE),
+    `3PM` = sum(`3PM`, na.rm = TRUE),
+    FGM   = sum(FGM,   na.rm = TRUE),
+    FGA   = sum(FGA,   na.rm = TRUE),
+    GMSC  = sum(GMSC,  na.rm = TRUE),
+    .groups = "drop"
+  ) %>%
+  arrange(desc(GMSC)) %>%
+  slice_head(n = 10) %>%
+  mutate(
+    RANK   = row_number(),
+    PLAYER = tools::toTitleCase(tolower(PLAYER)),
+    OPP    = str_replace(OPP, "@", "")
+  ) %>%
+  select(RANK, SEASON, DATE, PLAYER, TEAM, OPP, ROUND, GAME, P, R, A, S, B, `3PM`, FGM, FGA, GMSC) %>%
+  write_csv(file.path(DATA_DIR, "playoff-classics.csv"))
+inform(" * DONE")
+
 inform("Writing hof.csv....")
 hof_csv <- dfs_all %>%
   mutate(
