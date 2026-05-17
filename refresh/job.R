@@ -633,11 +633,20 @@ write_owner_h2h_matrix(dfs, dfs_playoffs, owner_data, DATA_DIR)
 inform(" * DONE")
 
 inform("Writing player seasons CSV....")
-bio_photos <- read_csv(file.path(DATA_DIR, "player-bio-database.csv"),
-                       skip = 1, show_col_types = FALSE, name_repair = "minimal") %>%
-  select(NAME_KEY = 1, PHOTO_URL = `Img URL`) %>%
+bio_data <- read_csv(file.path(DATA_DIR, "player-bio-database.csv"),
+                     skip = 1, show_col_types = FALSE, name_repair = "minimal") %>%
+  select(
+    NAME_KEY   = 1,
+    PHOTO_URL  = `Img URL`,
+    DOB        = DOB,
+    COLLEGE    = COLLEGE,
+    COUNTRY    = COUNTRY,
+    NBN_DFT_YR = `NBN D YR`,
+    NBN_DFT_R  = `NBN D R`,
+    NBN_DFT_P  = `NBN D P`
+  ) %>%
   mutate(NAME_KEY = toupper(NAME_KEY)) %>%
-  filter(!is.na(PHOTO_URL), PHOTO_URL != "") %>%
+  filter(!is.na(NAME_KEY), NAME_KEY != "") %>%
   distinct(NAME_KEY, .keep_all = TRUE)
 
 player_seasons <- dfs %>%
@@ -669,7 +678,7 @@ player_seasons <- dfs %>%
     LAST_DATE = max(as.Date(DATE), na.rm = TRUE),
     .groups = "drop"
   ) %>%
-  left_join(bio_photos, by = c("PLAYER" = "NAME_KEY")) %>%
+  left_join(bio_data, by = c("PLAYER" = "NAME_KEY")) %>%
   left_join(
     get_champions(dfs_playoffs) %>%
       group_by(PLAYER) %>%
@@ -715,13 +724,28 @@ player_seasons_playoffs <- dfs_playoffs %>%
     LAST_DATE = max(as.Date(DATE), na.rm = TRUE),
     .groups = "drop"
   ) %>%
-  left_join(bio_photos, by = c("PLAYER" = "NAME_KEY")) %>%
+  left_join(bio_data, by = c("PLAYER" = "NAME_KEY")) %>%
   mutate(
     PLAYER = tools::toTitleCase(tolower(PLAYER)),
     SLUG   = gsub("[^a-z0-9-]", "", gsub(" ", "-", gsub(", ", "-", tolower(PLAYER))))
   ) %>%
   arrange(PLAYER, SEASON, LAST_DATE)
 write_csv(player_seasons_playoffs, file.path(DATA_DIR, "player_seasons_playoffs.csv"))
+inform(" * DONE")
+
+inform("Writing player awards CSV....")
+bind_rows(
+  get_all_player_awards(),
+  get_champions(dfs_playoffs) %>%
+    distinct(PLAYER, SEASON) %>%
+    mutate(AWARD = "Champion")
+) %>%
+  mutate(
+    PLAYER = tools::toTitleCase(tolower(PLAYER)),
+    SLUG   = gsub("[^a-z0-9-]", "", gsub(" ", "-", gsub(", ", "-", tolower(PLAYER))))
+  ) %>%
+  select(SLUG, PLAYER, SEASON, AWARD) %>%
+  write_csv(file.path(DATA_DIR, "player_awards.csv"))
 inform(" * DONE")
 
 inform("Writing career stat totals CSVs....")
