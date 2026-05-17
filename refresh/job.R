@@ -147,11 +147,19 @@ hist_reg <- load_allstats() %>%
 hist_playoffs <- load_allstats(playoffs = TRUE) %>%
   discard(~ any(.x$SEASON == str_c(season, " Playoffs"), na.rm = TRUE))
 
+fix_player_names <- function(df) {
+  df %>% mutate(PLAYER = recode(PLAYER,
+    "KILLIAN HAYES" = "HAYES, KILLIAN",
+    "KOBE BROWN"    = "BROWN, KOBE"
+  ))
+}
+
 dfs <- c(
   hist_reg,
   list(current_reg_raw %>% mutate(SEASON = season))
 ) %>%
   clean_allstats() %>%
+  fix_player_names() %>%
   mutate(gametype = 'REG', GAME = NA_integer_, ROUND = NA_integer_) %>%
   group_by(PLAYER) %>%
   mutate(ROOKIE = SEASON == min(SEASON)) %>%
@@ -166,6 +174,7 @@ dfs_playoffs_items <- c(
 )
 dfs_playoffs <- dfs_playoffs_items %>%
   clean_allstats() %>%
+  fix_player_names() %>%
   mutate(gametype = 'PLAYOFF', ROOKIE = NA)
 
 dfs_all <- bind_rows(dfs, dfs_playoffs)
@@ -646,6 +655,7 @@ bio_data <- read_csv(file.path(DATA_DIR, "player-bio-database.csv"),
     NBN_DFT_P  = `NBN D P`
   ) %>%
   mutate(NAME_KEY = toupper(NAME_KEY)) %>%
+  mutate(NAME_KEY = recode(NAME_KEY, "KANTER, ENES" = "FREEDOM, ENES")) %>%
   filter(!is.na(NAME_KEY), NAME_KEY != "") %>%
   distinct(NAME_KEY, .keep_all = TRUE)
 
