@@ -632,6 +632,16 @@ inform("Writing per-team profile CSVs....")
 write_team_profiles(dfs, dfs_playoffs, standings_list, team_ratings, DATA_DIR)
 inform(" * DONE")
 
+inform("Writing standings-history.csv....")
+standings_history <- map_dfr(sort(unique(dfs$TEAM)), function(team) {
+  fp <- file.path(DATA_DIR, paste0(tolower(team), "-seasons.csv"))
+  if (!file.exists(fp)) return(NULL)
+  read_csv(fp, show_col_types = FALSE) %>% mutate(TEAM = team)
+}) %>%
+  arrange(SEASON, SEED_NUM)
+write_csv(standings_history, file.path(DATA_DIR, "standings-history.csv"))
+inform(" * DONE")
+
 inform("Writing roster and picks CSVs....")
 write_roster_picks(season, sort(unique(dfs$TEAM)), DATA_DIR)
 inform(" * DONE")
