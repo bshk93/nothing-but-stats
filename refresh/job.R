@@ -668,6 +668,33 @@ if (nrow(dfs_playoffs) > 0) {
     rename(SEASON = SEASON_BASE) %>%
     arrange(SEASON, ROUND, T1_SEED_NUM)
   write_csv(playoff_series, file.path(DATA_DIR, "playoff-brackets.csv"))
+
+  playoff_margins <- dfs_playoffs %>%
+    filter(!is.na(ROUND), !is.na(OPP_TEAM), OPP_TEAM != "") %>%
+    distinct(SEASON, TEAM, OPP_TEAM, DATE, ROUND, TEAM_PTS, OPP_TEAM_PTS) %>%
+    mutate(
+      SEASON_BASE = str_remove(SEASON, " Playoffs"),
+      T1 = pmin(TEAM, OPP_TEAM),
+      T2 = pmax(TEAM, OPP_TEAM),
+      MARGIN = abs(TEAM_PTS - OPP_TEAM_PTS)
+    ) %>%
+    distinct(SEASON_BASE, ROUND, T1, T2, DATE, MARGIN) %>%
+    group_by(SEASON_BASE, ROUND, T1, T2) %>%
+    summarize(
+      GAMES      = n_distinct(DATE),
+      AVG_MARGIN = round(mean(MARGIN), 1),
+      .groups    = "drop"
+    ) %>%
+    rename(SEASON = SEASON_BASE) %>%
+    inner_join(
+      playoff_series %>%
+        select(SEASON, ROUND, T1, T2, T1_W, T2_W, WINNER,
+               T1_SEED, T1_SEED_NUM, T2_SEED, T2_SEED_NUM),
+      by = c("SEASON", "ROUND", "T1", "T2")
+    ) %>%
+    filter(pmax(T1_W, T2_W) >= 4) %>%
+    arrange(AVG_MARGIN)
+  write_csv(playoff_margins, file.path(DATA_DIR, "playoff-series-margins.csv"))
 } else {
   write_csv(
     tibble(SEASON=character(), ROUND=character(), T1=character(), T2=character(),
