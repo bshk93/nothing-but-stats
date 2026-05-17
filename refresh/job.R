@@ -642,6 +642,43 @@ standings_history <- map_dfr(sort(unique(dfs$TEAM)), function(team) {
 write_csv(standings_history, file.path(DATA_DIR, "standings-history.csv"))
 inform(" * DONE")
 
+inform("Writing playoff-brackets.csv....")
+if (nrow(dfs_playoffs) > 0) {
+  playoff_series <- dfs_playoffs %>%
+    filter(!is.na(ROUND), !is.na(OPP_TEAM), OPP_TEAM != "") %>%
+    distinct(SEASON, TEAM, OPP_TEAM, DATE, WL, ROUND) %>%
+    mutate(
+      SEASON_BASE = str_remove(SEASON, " Playoffs"),
+      T1 = pmin(TEAM, OPP_TEAM),
+      T2 = pmax(TEAM, OPP_TEAM)
+    ) %>%
+    group_by(SEASON_BASE, ROUND, T1, T2) %>%
+    summarize(
+      T1_W = n_distinct(DATE[TEAM == first(T1) & WL == "W"]),
+      T2_W = n_distinct(DATE[TEAM == first(T2) & WL == "W"]),
+      .groups = "drop"
+    ) %>%
+    mutate(WINNER = if_else(T1_W >= T2_W, T1, T2)) %>%
+    left_join(standings_history %>% select(SEASON, TEAM, SEED, SEED_NUM),
+              by = c("SEASON_BASE" = "SEASON", "T1" = "TEAM")) %>%
+    rename(T1_SEED = SEED, T1_SEED_NUM = SEED_NUM) %>%
+    left_join(standings_history %>% select(SEASON, TEAM, SEED, SEED_NUM),
+              by = c("SEASON_BASE" = "SEASON", "T2" = "TEAM")) %>%
+    rename(T2_SEED = SEED, T2_SEED_NUM = SEED_NUM) %>%
+    rename(SEASON = SEASON_BASE) %>%
+    arrange(SEASON, ROUND, T1_SEED_NUM)
+  write_csv(playoff_series, file.path(DATA_DIR, "playoff-brackets.csv"))
+} else {
+  write_csv(
+    tibble(SEASON=character(), ROUND=character(), T1=character(), T2=character(),
+           T1_W=integer(), T2_W=integer(), WINNER=character(),
+           T1_SEED=character(), T1_SEED_NUM=integer(),
+           T2_SEED=character(), T2_SEED_NUM=integer()),
+    file.path(DATA_DIR, "playoff-brackets.csv")
+  )
+}
+inform(" * DONE")
+
 inform("Writing roster and picks CSVs....")
 write_roster_picks(season, sort(unique(dfs$TEAM)), DATA_DIR)
 inform(" * DONE")
