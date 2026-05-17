@@ -735,7 +735,8 @@ player_seasons <- dfs %>%
     LAST_DATE = max(as.Date(DATE), na.rm = TRUE),
     .groups = "drop"
   ) %>%
-  left_join(bio_data, by = c("PLAYER" = "NAME_KEY")) %>%
+  full_join(bio_data, by = c("PLAYER" = "NAME_KEY")) %>%
+  filter((!is.na(NBN_DFT_YR) & NBN_DFT_YR != "") | !is.na(G)) %>%
   left_join(
     get_champions(dfs_playoffs) %>%
       group_by(PLAYER) %>%
