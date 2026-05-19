@@ -706,9 +706,8 @@ if (nrow(dfs_playoffs) > 0) {
 }
 inform(" * DONE")
 
-inform("Writing roster and picks CSVs....")
-write_roster_picks(season, sort(unique(dfs$TEAM)), DATA_DIR)
-inform(" * DONE")
+# Roster and picks CSVs are now managed via the NBN API (nbn-api.service).
+# write_roster_picks(season, sort(unique(dfs$TEAM)), DATA_DIR)
 
 inform("Writing head-to-head matrix CSVs....")
 write_h2h_matrix(dfs, dfs_playoffs, DATA_DIR)
