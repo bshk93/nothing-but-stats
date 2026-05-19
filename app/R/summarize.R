@@ -59,6 +59,7 @@ summarize_per_game <- function(df, formatting = TRUE) {
       RPG   = round(mean(R), 2),
       APG   = round(mean(A), 2),
       SPG   = round(mean(S), 2),
+      TOPG  = round(mean(TO), 2),
       BPG   = round(mean(B), 2),
       FG    = round(sum(FGM) / sum(FGA), 3),
       FGMPG = round(mean(FGM), 2),
@@ -78,8 +79,8 @@ summarize_per_game <- function(df, formatting = TRUE) {
   if (formatting) {
     x <- x %>% 
       mutate_at(
-        c('MPG', 'PPG', 'RPG', 'APG', 'SPG', 'BPG', 'FGMPG', 'FGAPG', 
-          '3PMPG', '3PAPG', 'GMSC'),
+        c('MPG', 'PPG', 'RPG', 'APG', 'SPG', 'BPG', 'TOPG', 
+          'FGMPG', 'FGAPG', '3PMPG', '3PAPG', 'GMSC'),
         format,
         n_small = 2
       ) %>% 
@@ -104,6 +105,7 @@ summarize_team_season <- function(dfs) {
       A = sum(A),
       S = sum(S),
       B = sum(B),
+      TO = sum(TO),
       FGM = sum(FGM),
       FGA = sum(FGA),
       `3PM` = sum(`3PM`),
@@ -123,6 +125,7 @@ summarize_team_season <- function(dfs) {
       A = sum(A),
       S = sum(S),
       B = sum(B),
+      TO = sum(TO),
       FGM = sum(FGM),
       FGA = sum(FGA),
       `3PM` = sum(`3PM`),

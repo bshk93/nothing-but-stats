@@ -1,0 +1,41 @@
+---
+alwaysApply: true
+---
+
+# Server Environment Constraints
+This app is being developed on a server with 4 GB of memory and 50 GB of disk space. Any operations you perform on the server or code that you write for the app should be as lean on memory consumption as possible.
+
+# Memory Efficiency Guidelines
+
+## Data Loading and Storage
+- **Pre-compute expensive calculations**: Use pre-computed RDS files (e.g., `standings_precomputed`, `team_stats_precomputed`, `my_ranks`) loaded in `global.R` rather than computing on-the-fly in reactive contexts
+- **Avoid data duplication**: Use helper functions like `get_dfs_everything()` to combine datasets on-demand rather than storing combined copies
+- **Load data once in global.R**: All data files should be loaded at app startup, not in reactive contexts
+- **Use efficient data formats**: Prefer RDS files for R objects, CSV only when necessary for external data sources
+
+## Reactive Programming Best Practices
+- **Filter early, compute late**: Apply filters to data as early as possible in reactive chains to reduce memory footprint
+- **Use `req()` appropriately**: Always use `req()` to prevent unnecessary computation when inputs are missing
+- **Avoid storing large intermediate objects**: Don't create unnecessary copies of large dataframes in reactive expressions
+- **Leverage reactive caching**: Shiny automatically caches reactive values - structure code to take advantage of this
+
+## Data Manipulation Patterns
+- **Use dplyr efficiently**: Chain operations with `%>%` to avoid intermediate object creation
+- **Filter before grouping**: Always filter data before grouping operations to reduce dataset size
+- **Select only needed columns**: Use `select()` to keep only necessary columns, especially when working with large datasets
+- **Avoid repeated joins**: If a join result is used multiple times, store it in a reactive rather than recomputing
+
+## Shiny-Specific Optimizations
+- **Modular server code**: Keep server modules in `server_modules/` directory - each module should be self-contained
+- **Use `renderDT` with options**: Configure DT tables with appropriate `pageLength` and `scrollX` options to limit rendered rows
+- **Lazy evaluation**: Structure outputs to only compute when their inputs change
+- **Avoid global reactive pollution**: Keep reactives scoped appropriately - use shared reactives in `_init.R`, feature-specific ones in modules
+
+## Performance Monitoring
+- **Time expensive operations**: Use `Sys.time()` to log computation time for debugging (see existing patterns in `season_dashboard.R`)
+- **Profile memory usage**: Be aware of operations that create large temporary objects (e.g., `bind_rows` on large datasets)
+
+## Code Organization
+- **Follow existing patterns**: Match the structure of existing server modules when creating new features
+- **Use utility functions**: Place reusable functions in `R/utils.R` rather than duplicating code
+- **Consistent formatting**: Use `format_as_datatable()` helper for consistent table formatting across the app

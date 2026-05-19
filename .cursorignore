@@ -1,0 +1,9 @@
+# Exclude data folder from Cursor indexing to reduce memory usage
+app/data/
+data/
+*.rds
+*.csv
+
+# Exclude other large directories if needed
+files/
+scratch/

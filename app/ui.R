@@ -1,22 +1,6 @@
-# Load ----
-dfs <- read_rds('data/dfs.rds')
-dfs_playoffs <- read_rds('data/dfs_playoffs.rds')
-
-player_teams <- bind_rows(dfs, dfs_playoffs) %>% 
-  arrange(PLAYER, DATE) %>% 
-  group_by(PLAYER) %>% 
-  mutate(last_played = last(TEAM)) %>% 
-  ungroup() %>% 
-  mutate(NAME = str_c(PLAYER, ' (', last_played, ')')) %>% 
-  distinct(PLAYER, NAME)
-
-named_names <- player_teams$PLAYER %>% 
-  set_names(player_teams$NAME)
-
-# Dashboard Sidebar ----
-
 sidebar <- dashboardSidebar(
-  sidebarMenu(
+  #passwordInput("password", "PREMIUM Password:"),
+  sidebarMenu(id = "tabs",
     menuItem(
       "Season Dashboard",
        tabName = "tab_dash", 
@@ -28,36 +12,36 @@ sidebar <- dashboardSidebar(
       icon = icon("code-fork")
     ),
     menuItem(
-      "Hall of Fame & League History",
-      tabName = "tab_awards",
-      icon = icon("award")
-    ),
-    menuItem(
       "League Stats & Records",
       tabName = "tab_records", 
-      icon = icon("ranking-star")
-      # badgeLabel = "Prem",
-      # badgeColor = "yellow"
+      icon = icon("ranking-star")#,
+      #badgeLabel = "Prem",
+      #badgeColor = "yellow"
     ),
     menuItem(
       "Player Profiles",
       tabName = "tab_player", 
-      icon = icon("user")
-      # badgeLabel = "Prem",
-      # badgeColor = "yellow"
+      icon = icon("user")#,
+      #badgeLabel = "Prem",
+      #badgeColor = "yellow"
     ),
     menuItem(
       "Franchise Profiles",
       tabName = "tab_franchise",
-      icon = icon("book")
-      # badgeLabel = "Prem",
-      # badgeColor = "yellow"
+      icon = icon("book")#,
+      #badgeLabel = "Prem",
+      #badgeColor = "yellow"
     ),
     menuItem(
-      "Power Rankings",
-      tabName = "tab_prs", 
-      icon = icon("arrow-trend-up")
+      "Franchise H2H",
+      tabName = "tab_head_to_head",
+      icon = icon("handshake")
     ),
+    # menuItem(
+    #   "Power Rankings",
+    #   tabName = "tab_prs", 
+    #   icon = icon("arrow-trend-up")
+    # ),
     menuItem(
       "Frivolities",
       tabName = "tab_frivolities",
@@ -68,27 +52,22 @@ sidebar <- dashboardSidebar(
       tabName = "tab_box", 
       icon = icon("table")
     ),
-    # menuItem(
-    #   "The Lab (TM)",
-    #   tabName = "tab_lab",
-    #   icon = icon("microscope")
-    # ),
-    # menuItem(
-    #   "Data Explorer",
-    #   tabName = "tab_explore", 
-    #   icon = icon("magnifying-glass-chart")
-    # ),
     menuItem(
       "Player Compare",
       tabName = "tab_compare", 
-      icon = icon("user-group")
-      # badgeLabel = "Prem",
-      # badgeColor = "yellow"
+      icon = icon("user-group")#,
+      #badgeLabel = "Prem",
+      #badgeColor = "yellow"
     ),
     menuItem(
       "Trade Machine",
       tabName = "tab_tm", 
       icon = icon("trademark")
+    ),
+    menuItem(
+      "Ballots",
+      tabName = "tab_player_selection",
+      icon = icon("list-check")
     ),
     menuItem(
       "NBN Trivia!",
@@ -97,7 +76,7 @@ sidebar <- dashboardSidebar(
     ),
     menuItem(
       "NBN Wall Street",
-      tabName = "tab_ws", 
+      tabName = "tab_ws",
       icon = icon("dollar-sign")
     )
   )
@@ -127,7 +106,67 @@ body <- dashboardBody(
       width: 100%;
       height: 100%;
     }
+    
+    .custom-banner {
+      background-color: #a3bcd6;
+      color: #2c3e50;
+      padding: 15px;
+      font-size: 16px;
+      cursor: pointer;
+      border-radius: 4px;
+      margin-bottom: 10px;
+      transition: background-color 0.3s;
+    }
+    
+    .custom-banner:hover {
+      background-color: #92adc8;
+    }
+    
+    .custom-banner-content {
+      display: none;
+      background-color: #f7f9fb;
+      color: #2c3e50;
+      padding: 12px;
+      border-left: 4px solid #6b8ca4;
+      border-radius: 0 0 4px 4px;
+      margin-top: -8px;
+      margin-bottom: 10px;
+    }
+  
+    .custom-banner-content.show {
+      display: block;
+      animation: fadeIn 0.3s ease-in-out;
+    }
+  
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+
   ")),
+  
+  tags$script(HTML("
+    $(document).on('shiny:connected', function() {
+      $('#custom-banner').on('click', function() {
+        $('#custom-banner-content').toggleClass('show');
+      });
+    });
+  ")),
+  
+  div(id = "custom-banner", class = "custom-banner", "The 2025-26 NBN Season is dedicated to the memory of KyleWTF <3"),
+  div(
+    id = "custom-banner-content", 
+    class = "custom-banner-content", 
+    HTML("
+      <p>KyleWTF was a longtime owner and member of the Board of Directors in the NBN. His passionate involvement in the league spans back to 2016.</p>
+      
+      <p>Kyle led the Oklahoma City Thunder through four season in the post-restart NBN, and played a critical role in establishing the league's security practices and laying down a foundation that will help the league thrive far into the future.</p>
+      
+      <p>Through the 2025-26 season and beyond, the NBN will remember Kyle, his love for the league and its community, and the impact he had on the NBN and all of the individuals that make up our community.</p>
+      
+      <p>RIP Kyle, and go Thunder!</p>
+    ")
+  ),
   
   tabItems(
     ## Season Dashboard ----
@@ -136,16 +175,18 @@ body <- dashboardBody(
       selectizeInput(
         'season2',
         'Choose a Season:',
-        c("24-25", "23-24", "22-23", "21-22", "20-21")
+        c("25-26", "24-25", "23-24", "22-23", "21-22", "20-21")
       ),
 
       h2("AROUND THE NBN"),
       DTOutput("newsfeed"),
 
       h2("REGULAR SEASON STANDINGS"),
+      p("Click a team to show season roster and stats."),
       DTOutput("standings"),
 
       h2("LEAGUE LEADERS"),
+      p("Click a name to see player profile."),
       DTOutput("leaders"),
 
       h2("TEAM STATS"),
@@ -156,6 +197,7 @@ body <- dashboardBody(
       DTOutput("rookie_report"),
       
       h2("MOST IMPROVED"),
+      p("Biggest GMSC increases this season compared to career average GMSC prior to this season."),
       DTOutput("most_improved"),
 
       h2("DRAFT LOTTERY PREVIEW"),
@@ -171,7 +213,55 @@ body <- dashboardBody(
       h3("All-NBN Teams"),
       DTOutput("season_allnbn")
     ),
-    
+
+    ## Trade Machine ----
+    tabItem(
+      tabName = "tab_tm",
+      h2("Trade Machine"),
+
+      fluidRow(
+        column(4, numericInput("tm_salary_cap", "Salary Cap ($)", value = 136021000, min = 0, step = 1)),
+        column(4, numericInput("tm_apron1", "First Apron ($)", value = 172346000, min = 0, step = 1)),
+        column(4, numericInput("tm_apron2", "Second Apron ($)", value = 182794000, min = 0, step = 1))
+      ),
+
+      fluidRow(
+        column(12, selectInput("tm_num_teams", "Number of teams", choices = 2:4, selected = 2))
+      ),
+
+      uiOutput("tm_team_panels"),
+
+      actionButton("tm_validate", "Validate Trade"),
+
+      uiOutput("tm_results")
+    ),
+
+    ## Player Ballots ----
+    tabItem(
+      tabName = "tab_player_selection",
+      h2("Ballots"),
+      p("This page helps you build ballots for season awards and All-Star voting."),
+      p("Click a player's name to add them to your ballot. Compare stats for chosen players side by side below."),
+
+      selectizeInput(
+        "player_selection_season",
+        "Season",
+        choices = c("25-26", "24-25", "23-24", "22-23", "21-22", "20-21"),
+        selected = "25-26"
+      ),
+
+      h3("Player Bank"),
+      p("Click a row to add that player to your list."),
+      DTOutput("player_bank"),
+
+      h3("Selected Players"),
+      p("Drag to reorder. Click ✕ to remove."),
+      uiOutput("selected_players_list"),
+
+      h3("Stats Comparison"),
+      uiOutput("selected_stats_ui")
+    ),
+
     ## Trivia ----
     tabItem(
       tabName = "tab_trivia",
@@ -184,20 +274,13 @@ body <- dashboardBody(
       #tableOutput("trivia_leaderboard")
     ),
     
-    # ## NBYen ----
-    # tabItem(
-    #   tabName = "tab_nbyen",
-    #   DTOutput("nbyen_table"),
-    #   plotlyOutput("nbyen_plot")
-    # ),
-    
     ## Playoff Archive ----
     tabItem(
       tabName = "tab_playoffs",
       selectizeInput(
         'seasonplayoffs',
         'Choose a Season:',
-        c("24-25", "23-24", "22-23", "21-22", "20-21")
+        c("25-26", "24-25", "23-24", "22-23", "21-22", "20-21")
       ),
       DTOutput("playoff_bracket"),
       DTOutput("playoff_series")
@@ -223,10 +306,10 @@ body <- dashboardBody(
       DTOutput("records"),
       h2("ALL-TIME TOTALS AND RANKINGS"),
       DTOutput("rankings"),
-      h2("ACHIEVEMENTS (SEASON)"),
-      DTOutput("achievements_season"),
-      h2("ACHIEVEMENTS (GAME)"),
-      DTOutput("achievements_game"),
+      # h2("ACHIEVEMENTS (SEASON)"),
+      # DTOutput("achievements_season"),
+      # h2("ACHIEVEMENTS (GAME)"),
+      # DTOutput("achievements_game"),
       h2("GAME LOG"),
       DTOutput("tbl")
     ),
@@ -260,7 +343,7 @@ body <- dashboardBody(
       ),
       DTOutput("franchise_history_leaders"),
       h2("CUMULATIVE POINT DIFFERENTIAL"),
-      plotOutput("franchise_history_cum_diff")
+      withSpinner(plotOutput("franchise_history_cum_diff"))
     ),
     
     ## League Stats ----
@@ -276,12 +359,12 @@ body <- dashboardBody(
       selectizeInput(
         'season1',
         'Choose a Season:',
-        c("ALL-TIME", "24-25", "23-24", "22-23", "21-22", "20-21")
+        c("ALL-TIME", "25-26", "24-25", "23-24", "22-23", "21-22", "20-21")
       ),
       checkboxInput("reg_flag", "Include Regular Season", value = TRUE),
       checkboxInput("playoff_flag", "Include Playoffs", value = FALSE),
       checkboxInput("per_36_flag", "Per 36", value = FALSE),
-      DTOutput("franchise_records"),
+      withSpinner(DTOutput("franchise_records")),
       
       h2('Game Highs'),
       p("Includes any game in which a player recorded at least 5 points, rebounds, assists, steals, or blocks."),
@@ -302,6 +385,10 @@ body <- dashboardBody(
       p("Overall rating == Offensive rating + Defensive rating"),
       DTOutput("team_ratings"),
       
+      h2('Team Win/Loss Streaks'),
+      p("Includes streaks of 10 or more games."),
+      DTOutput("wl_streaks"),
+      
       h2('(Regular Season) Stat Race'),
       selectizeInput(
         'race_var',
@@ -313,59 +400,68 @@ body <- dashboardBody(
         'race_players',
         'Select at least two players:',
         named_names,
-        selected = c("BEAL, BRADLEY", "CURRY, STEPHEN"),
+        selected = c("BEAL, BRADLEY", "DONCIC, LUKA"),
         multiple = TRUE
       ),
       selectizeInput(
         'race_season',
         'Choose a Season:',
-        c("ALL-TIME", "24-25", "23-24", "22-23", "21-22", "20-21")
+        c("ALL-TIME", "25-26", "24-25", "23-24", "22-23", "21-22", "20-21")
       ),
-      plotOutput("stat_race_plot")
+      withSpinner(plotOutput("stat_race_plot"))
     ),
     
-    ## Hall of Fame + Awards ----
+    ## Head to Head ----
     tabItem(
-      tabName = "tab_awards",
-      
-      h2('NBN Hall-of-Fame Points'),
-      p("HOF points are calculated using GMSC, wins, and playoff performance."),
-      DTOutput('hof_points'),
-      p("Players with at least 100 HOF points:"),
-      plotlyOutput('hof_plot_bar'),
-      
-      h2('League Champions'),
-      DTOutput('league_champs'),
-      
-      h2('Season Awards History'),
-      DTOutput('season_awards_history'),
-      
-      h2('Front Office Awards'),
-      DTOutput('front_office_awards'),
-      
-      h2('All-NBN Teams'),
-      DTOutput('all_nbn')
+      tabName = "tab_head_to_head",
+      h2("Head to Head"),
+      fluidRow(
+        column(6,
+               selectizeInput(
+                 'h2h_team1',
+                 'Team 1:',
+                 allteams,
+                 selected = NULL,
+                 multiple = FALSE
+               )
+        ),
+        column(6,
+               selectizeInput(
+                 'h2h_team2',
+                 'Team 2:',
+                 allteams,
+                 selected = NULL,
+                 multiple = FALSE
+               )
+        )
+      ),
+      h3("All-Time Record"),
+      DTOutput("h2h_alltime"),
+      h3("Playoff Series Record"),
+      DTOutput("h2h_playoff_series"),
+      h3("Playoff Series Details"),
+      withSpinner(uiOutput("h2h_playoff_details"))
     ),
     
-    ## Power Rankings ----
-    tabItem(
-      tabName = "tab_prs",
-      selectizeInput(
-        'pr_season',
-        'Choose a Season',
-        c("24-25", "23-24", "22-23", "21-22", "20-21")
-      ),
-      # selectizeInput(
-      #   'pr_teams',
-      #   'Select at least one team:',
-      #   allteams,
-      #   selected = FALSE,
-      #   multiple = TRUE
-      # ),
-      # plotOutput("power_rankings", width = "130%"),
-      
-      reactableOutput("power_rankings_table")
-    ),
+    # ## Power Rankings ----
+    # tabItem(
+    #   tabName = "tab_prs",
+    #   selectizeInput(
+    #     'pr_season',
+    #     'Choose a Season',
+    #     c("25-26", "24-25", "23-24", "22-23", "21-22", "20-21")
+    #   ),
+    #   # selectizeInput(
+    #   #   'pr_teams',
+    #   #   'Select at least one team:',
+    #   #   allteams,
+    #   #   selected = FALSE,
+    #   #   multiple = TRUE
+    #   # ),
+    #   # plotOutput("power_rankings", width = "130%"),
+    #   
+    #   reactableOutput("power_rankings_table")
+    # ),
     
     ## Frivolities ----
     tabItem(
@@ -374,7 +470,11 @@ body <- dashboardBody(
       p("Values represent how many of the minutes played in season N went to players who were on the team in season N-1."),
       plotlyOutput("stability"),
       h2("Who They Played For"),
-      DTOutput("most_teams")
+      DTOutput("most_teams"),
+      h2("Playoff Risers and Sinkers"),
+      p("Career differences in GMSC per minute between regular season and postseason."),
+      p("Only includes: games where the player logged at least 5 minutes; players who have been the playoffs at least 3 times; and seasons in which the player made the postseason."),
+      DTOutput("playoff_risers")
     ),
     
     ## Box Scores ----
@@ -405,7 +505,8 @@ body <- dashboardBody(
         'playercomp_season',
         'Choose Season:',
         c('CAREER', 
-          '24-25',
+          '25-26', '25-26 Playoffs',
+          '24-25', '24-25 Playoffs', 
           '23-24', '23-24 Playoffs',
           '22-23', '22-23 Playoffs',
           '21-22', '21-22 Playoffs',
@@ -415,109 +516,16 @@ body <- dashboardBody(
       DTOutput('player_compare')
     ),
     
-    ## Trade Machine ----
-    tabItem(
-      tabName = "tab_tm",
-      h2("Cap Details"),
-      
-      currencyInput("tm_cap", "Salary Cap", value = 136021000, format = 'dollar'),
-      currencyInput("tm_apron_1", "Apron 1", value = 172346000, format = 'dollar'),
-      currencyInput("tm_apron_2", "Apron 2", value = 182794000, format = 'dollar'),
-      
-      h2("Players"),
-      
-      p("Provide information for up to 4 teams here. In the player box, format your text like:"),
-      p("PLAYER;SALARY;TEAM_TO"),
-      p("where SALARY is a number (no dollar sign) and TEAM_TO is where the player is being traded to. One player should be listed on each line."),
-      
-      fluidRow(
-        
-        column(3,
-               h3("Team 1"),
-               selectizeInput(
-                 'tm_team_1',
-                 'TEAM',
-                 c('TEAM', allteams),
-                 selected = 'SAS',
-                 multiple = FALSE
-               ),
-               textAreaInput("tm_players_1", "Player;Salary;[team to]", "Doncic;30000000;UTA"),
-               currencyInput("tm_guaranteed_1", "Guaranteed Salary", 
-                             value = 150000000, format = 'dollar'),
-               selectizeInput("tm_capped_1", "Hard Cap",
-                              c('None', 'Apron 1', 'Apron 2'))),
-        
-        column(3,
-               h3("Team 2"),
-               selectizeInput(
-                 'tm_team_2',
-                 'TEAM',
-                 c('TEAM', allteams),
-                 selected = 'UTA',
-                 multiple = FALSE
-               ),
-               textAreaInput("tm_players_2", "Player;Salary;[team to]", "Mitchell;20000000;SAS\nIsaac;10000000;SAS"),
-               currencyInput("tm_guaranteed_2", "Guaranteed Salary", 
-                             value = 137000000, format = 'dollar'),
-               selectizeInput("tm_capped_2", "Hard Cap",
-                              c('None', 'Apron 1', 'Apron 2'))),
-        
-        column(3,
-               h3("Team 3"),
-               selectizeInput(
-                 'tm_team_3',
-                 'TEAM',
-                 c('TEAM', allteams),
-                 multiple = FALSE
-               ),
-               textAreaInput("tm_players_3", "Player;Salary;[team to]"),
-               currencyInput("tm_guaranteed_3", "Guaranteed Salary", 
-                             value = 0, format = 'dollar'),
-               selectizeInput("tm_capped_3", "Hard Cap",
-                              c('None', 'Apron 1', 'Apron 2'))),
-        
-        column(3,
-               h3("Team 4"),
-               selectizeInput(
-                 'tm_team_4',
-                 'TEAM',
-                 c('TEAM', allteams),
-                 multiple = FALSE
-               ),
-               textAreaInput("tm_players_4", "Player;Salary;[team to]"),
-               currencyInput("tm_guaranteed_4", "Guaranteed Salary", 
-                             value = 0, format = 'dollar'),
-               selectizeInput("tm_capped_4", "Hard Cap",
-                              c('None', 'Apron 1', 'Apron 2'))),
-        
-      ),
-      
-      actionButton("tm_calculate", "Check Validity"),
-      
-      DTOutput('tm_output'),
-      
-      h2("Notes"),
-      
-      p("This trade machine is IN BETA. This means it's not quite ready for people to use blindly."),
-      
-      p("The CBA rules that are implemented in this trade machine are as follows:"),
-      p(" 1. If the trade sends a team over their hard cap, it is invalid for that team."),
-      p(" 2. If the team's salary is going down or below the cap after the trade, it is valid for that team."),
-      p(" 3. If the trade sends a team over the first apron, they must take on 110% or less of their outgoing salary."),
-      p(" 4. If a team is under the first apron but over the cap after the trade, the following rules apply:"),
-      p("    a. If the outgoing is at most 7.25M, the team can take up to 2*OUTGOING + 250,000."),
-      p("    b. If the outgoing is at most 29M, the team can take up to OUTGOING + 7,5000,000."),
-      p("    c. Otherwise, the team can take up to 125% of the OUTGOING, plus 250,000."),
-      
-      p("This trade machine does not consider whether players are eligible for trading.",
-        "Please check that yourself!"),
-      
-      p("In general: always double-check and sanity check the trade machine.")
-    ),
-    
     ## NBN Wall Street ----
     tabItem(
       tabName = "tab_ws",
+      selectInput(
+        "ws_pricing_model",
+        "Pricing Model:",
+        choices = names(PRICING_MODELS),
+        selected = "SOS Point Differential"
+      ),
+      uiOutput("ws_model_description"),
       DTOutput("ws_prices"),
       
       h2("Price Charts"),
@@ -539,69 +547,6 @@ body <- dashboardBody(
       ),
       plotlyOutput("wallstreet"),
       plotlyOutput("ws_div")
-    ),
-    
-    ## Currently Unused Pages ----
-    
-    ### Data Explorer (Unserved) ----
-    tabItem(
-      tabName = "tab_explore",
-      selectizeInput(
-        'explore_type',
-        'I want to explore:',
-        c('The highest', 'The lowest'),
-        selected = 'The highest',
-        multiple = FALSE
-      ),
-
-      selectizeInput(
-        'explore_var',
-        'Values of:',
-        c('G', 'M', 'GMSC',
-          'P', 'R', 'A', 'S', 'B', 'TO',
-          'FGM', 'FGA', #'FG_PCT',
-          '3PM', '3PA', #'3P_PCT',
-          'FTM', 'FTA', #'FT_PCT',
-          'OR', 'PF'),
-        selected = 'P',
-        multiple = FALSE
-      ),
-
-      selectizeInput(
-        'explore_level',
-        '',
-        c('in a game', 'in a season (total)', 'in a season (avg)', 'in a career (total)', 'in a career (avg)')
-      ),
-
-      DTOutput('explore_output')
-    ),
-    
-    ### The Lab ----
-    tabItem(
-      tabName = "tab_lab",
-      
-      h2("Team Stats By Season"),
-      selectizeInput(
-        'lab_team_season_var',
-        'Choose a var:',
-        c('GMSC', 'PPG', 'RPG', 'APG', 'SPG', 'BPG', 'FG', '3P', 'FT', 'TS')
-      ),
-      plotlyOutput("lab_team_season"),
-      
-      h2("Individual Stats By Season"),
-      selectizeInput(
-        'lab_player_season_var',
-        'Choose a var:',
-        c('GMSC', 'PPG', 'RPG', 'APG', 'SPG', 'BPG', 'FG', '3P', 'FT', 'TS')
-      ),
-      plotlyOutput("lab_player_season")
-    ),
-    
-    ### About ----
-    tabItem(
-      tabName = "tab_about",
-      h2("Why Premium?"),
-      htmlOutput("premiumfaq")
     )
   )
 )
@@ -613,7 +558,12 @@ dashboardPage(
       "{prettyNum(18*(nrow(dfs)+nrow(dfs_playoffs)), big.mark=',')} stats entered and counting<br/>",
       "Last updated: {max(max(dfs$DATE), max(dfs_playoffs$DATE))}"
       ))),
-    titleWidth = 250
+    titleWidth = 250,
+    tags$li(
+      class = "dropdown",
+      style = "display:flex;align-items:center;padding:0 10px;height:50px;",
+      HTML(champion_logos_html)
+    )
   ),
   
   sidebar,

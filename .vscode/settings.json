@@ -1,0 +1,41 @@
+{
+  // R Language Server settings to exclude data folder from indexing
+  // This reduces memory usage by preventing the R language server from indexing large data files
+  
+  "r.rterm.sendDelay": 0,
+  "r.rpath.linux": "/usr/lib/R/bin/R",
+  
+  // File watcher exclusions - prevents watching for changes in data files
+  "files.watcherExclude": {
+    "**/app/data/**": true,
+    "**/data/**": true,
+    "**/*.rds": true,
+    "**/*.csv": true,
+    "**/files/**": true,
+    "**/scratch/**": true
+  },
+  
+  // Search exclusions - prevents searching within data files
+  "search.exclude": {
+    "**/app/data/**": true,
+    "**/data/**": true,
+    "**/*.rds": true,
+    "**/*.csv": true,
+    "**/files/**": true,
+    "**/scratch/**": true
+  },
+  
+  // R language server specific exclusions
+  // The R Editor Support extension will respect these patterns
+  "r.lsp.args": [],
+  
+  // Additional R settings
+  "r.lsp.enabled": true,
+  "r.lsp.diagnostics": true,
+  
+  // Limit language server indexing scope
+  "files.associations": {
+    "*.rds": "plaintext",
+    "*.csv": "plaintext"
+  }
+}

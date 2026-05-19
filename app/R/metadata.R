@@ -1,14 +1,17 @@
-get_champions <- function(dfs_playoffs) {
-  x <- tribble(
+get_champion_list <- function() {
+  tribble(
     ~SEASON, ~TEAM,
     '20-21 Playoffs', 'ATL',
     '21-22 Playoffs', 'ATL',
     '22-23 Playoffs', 'PHX',
-    '23-24 Playoffs', 'CLE'
+    '23-24 Playoffs', 'CLE',
+    '24-25 Playoffs', 'PHX'
   )
-  
-  dfs_playoffs %>% 
-    inner_join(x, by = c("SEASON", "TEAM"))
+}
+
+get_champions <- function(dfs_playoffs) {
+  dfs_playoffs %>%
+    inner_join(get_champion_list(), by = c("SEASON", "TEAM"))
 }
 
 get_runners_up <- function() {
@@ -17,7 +20,8 @@ get_runners_up <- function() {
     '20-21 Playoffs', 'DAL', 'MIL', 'DEN',
     '21-22 Playoffs', 'NOP', 'WAS', 'GSW',
     '22-23 Playoffs', 'CLE', 'BKN', 'DEN',
-    '23-24 Playoffs', 'PHX', 'NYK', 'UTA'
+    '23-24 Playoffs', 'PHX', 'NYK', 'UTA',
+    '24-25 Playoffs', 'MIL', 'ATL', 'OKC'
   )
 }
 
@@ -159,7 +163,33 @@ get_allstars <- function() {
     'HALIBURTON, TYRESE', '24-25',
     'BALL, LAMELO', '24-25',
     'CUNNINGHAM, CADE', '24-25',
-    'ADEBAYO, BAM', '24-25'
+    'ADEBAYO, BAM', '24-25',
+    
+    # 2026
+    'CUNNINGHAM, CADE', '25-26',
+    'EDWARDS, ANTHONY', '25-26',
+    'JAMES, LEBRON', '25-26',
+    'WEMBANYAMA, VICTOR', '25-26',
+    'HALIBURTON, TYRESE', '25-26',
+    'ANTETOKOUNMPO, GIANNIS', '25-26',
+    'CURRY, STEPHEN', '25-26',
+    'DAVIS, ANTHONY', '25-26',
+    'JACKSON, JAREN', '25-26',
+    'WAGNER, FRANZ', '25-26',
+    'BRUNSON, JALEN', '25-26',
+    'RANDLE, JULIUS', '25-26',
+    'DONCIC, LUKA', '25-26',
+    'GILGEOUS-ALEXANDER, SHAI', '25-26',
+    'JOKIC, NIKOLA', '25-26',
+    'MITCHELL, DONOVAN', '25-26',
+    'BARNES, SCOTTIE', '25-26',
+    'EMBIID, JOEL', '25-26',
+    'BOOKER, DEVIN', '25-26',
+    'BROWN, JAYLEN', '25-26',
+    'SENGUN, ALPEREN', '25-26',
+    'MOBLEY, EVAN', '25-26',
+    'BALL, LAMELO', '25-26',
+    'HOLMGREN, CHET', '25-26'
   ) %>% 
     mutate(star = "<img src='star.png' height='20'></img>")
 }
@@ -474,6 +504,25 @@ get_playoff_seeds <- function() {
   tribble(
     ~SEASON, ~CONF, ~SEED, ~TEAM,
     
+    # 25-26
+    '25-26 Playoffs', 'EAST', 1, 'CHI',
+    '25-26 Playoffs', 'EAST', 2, 'ORL',
+    '25-26 Playoffs', 'EAST', 3, 'MIL',
+    '25-26 Playoffs', 'EAST', 4, 'TOR',
+    '25-26 Playoffs', 'EAST', 5, 'PHI',
+    '25-26 Playoffs', 'EAST', 6, 'CLE',
+    '25-26 Playoffs', 'EAST', 7, 'MIA',
+    '25-26 Playoffs', 'EAST', 8, 'NYK',
+    
+    '25-26 Playoffs', 'WEST', 1, 'PHX',
+    '25-26 Playoffs', 'WEST', 2, 'LAL',
+    '25-26 Playoffs', 'WEST', 3, 'DAL',
+    '25-26 Playoffs', 'WEST', 4, 'OKC',
+    '25-26 Playoffs', 'WEST', 5, 'SAC',
+    '25-26 Playoffs', 'WEST', 6, 'SAS',
+    '25-26 Playoffs', 'WEST', 7, 'GSW',
+    '25-26 Playoffs', 'WEST', 8, 'MEM',
+    
     # 24-25
     '24-25 Playoffs', 'EAST', 1, 'BKN',
     '24-25 Playoffs', 'EAST', 2, 'CHI',
@@ -576,165 +625,38 @@ get_playoff_seeds <- function() {
 
 
 get_owners <- function() {
-  tribble(
-    ~SEASON, ~TEAM, ~OWNER,
-    
-    '24-25', 'ATL', 'KVL',
-    '24-25', 'BOS', 'Adams17',
-    '24-25', 'BKN', 'Egghead',
-    '24-25', 'CHA', 'Imma',
-    '24-25', 'CHI', 'chitownloyalty',
-    '24-25', 'CLE', 'killerdawg7',
-    '24-25', 'DAL', 'Guy Fawkes',
-    '24-25', 'DEN', 'Darth Awn',
-    '24-25', 'DET', 'Ghost',
-    '24-25', 'GSW', 'Yerr_ItsKev - Benson',
-    '24-25', 'HOU', 'Kamal',
-    '24-25', 'IND', 'KidMonotone',
-    '24-25', 'LAC', 'Mega',
-    '24-25', 'LAL', 'AK41 - RJ',
-    '24-25', 'MEM', 'meem',
-    '24-25', 'MIA', 'Lance G Buckets',
-    '24-25', 'MIL', 'Everinski',
-    '24-25', 'MIN', 'Jonny',
-    '24-25', 'NOP', 'JDDN',
-    '24-25', 'NYK', 'cheppywire',
-    '24-25', 'OKC', 'Rodney McDoom',
-    '24-25', 'ORL', 'hkd',
-    '24-25', 'PHI', 'Kman',
-    '24-25', 'PHX', 'chuck',
-    '24-25', 'POR', 'FlashThompson11',
-    '24-25', 'SAC', 'That1gal',
-    '24-25', 'SAS', 'bryn',
-    '24-25', 'TOR', 'Not Chris',
-    '24-25', 'UTA', 'Schu',
-    '24-25', 'WAS', 'Avatar',
-    
-    '23-24', 'ATL', 'KVL',
-    '23-24', 'BOS', 'Adams17',
-    '23-24', 'BKN', 'Egghead',
-    '23-24', 'CHA', 'fella - Imma',
-    '23-24', 'CHI', 'chitownloyalty',
-    '23-24', 'CLE', 'killerdawg7',
-    '23-24', 'DAL', 'Guy Fawkes',
-    '23-24', 'DEN', 'Darth Awn',
-    '23-24', 'DET', 'CF - Ghost',
-    '23-24', 'GSW', 'Yerr_ItsKev',
-    '23-24', 'HOU', 'Kamal',
-    '23-24', 'IND', 'KidMonotone',
-    '23-24', 'LAC', 'Mega',
-    '23-24', 'LAL', 'AK41',
-    '23-24', 'MEM', 'meem',
-    '23-24', 'MIA', 'HeatCulture',
-    '23-24', 'MIL', 'Everinski',
-    '23-24', 'MIN', 'Jonny',
-    '23-24', 'NOP', 'JDDN',
-    '23-24', 'NYK', 'cheppywire',
-    '23-24', 'OKC', 'KyleWTF - Rodney McDoom',
-    '23-24', 'ORL', 'hkd',
-    '23-24', 'PHI', 'Kman',
-    '23-24', 'PHX', 'chuck',
-    '23-24', 'POR', 'FlashThompson11',
-    '23-24', 'SAC', 'That1gal',
-    '23-24', 'SAS', 'bryn',
-    '23-24', 'TOR', 'Not Chris',
-    '23-24', 'UTA', 'Schu',
-    '23-24', 'WAS', 'djgmoneyfef',
-    
-    '22-23', 'ATL', 'nelson',
-    '22-23', 'BOS', 'Adams17',
-    '22-23', 'BKN', 'Egghead',
-    '22-23', 'CHA', 'fella',
-    '22-23', 'CHI', 'chitownloyalty',
-    '22-23', 'CLE', 'killerdawg7',
-    '22-23', 'DAL', 'Guy Fawkes',
-    '22-23', 'DEN', 'Darth Awn',
-    '22-23', 'DET', 'CF',
-    '22-23', 'GSW', 'Yerr_ItsKev',
-    '22-23', 'HOU', 'Kamal',
-    '22-23', 'IND', 'KidMonotone',
-    '22-23', 'LAC', 'Mega',
-    '22-23', 'LAL', 'AK41',
-    '22-23', 'MEM', 'meem',
-    '22-23', 'MIA', 'HeatCulture',
-    '22-23', 'MIL', 'Everinski',
-    '22-23', 'MIN', 'Jonny',
-    '22-23', 'NOP', 'Avatar',
-    '22-23', 'NYK', 'cheppywire',
-    '22-23', 'OKC', 'KyleWTF',
-    '22-23', 'ORL', 'hkd',
-    '22-23', 'PHI', 'Kman',
-    '22-23', 'PHX', 'chuck',
-    '22-23', 'POR', 'FlashThompson11',
-    '22-23', 'SAC', 'That1gal',
-    '22-23', 'SAS', 'bryn',
-    '22-23', 'TOR', 'Not Chris',
-    '22-23', 'UTA', 'Schu',
-    '22-23', 'WAS', 'djgmoneyfef',
-    
-    '21-22', 'ATL', 'nelson',
-    '21-22', 'BOS', 'Adams17',
-    '21-22', 'BKN', 'Egghead',
-    '21-22', 'CHA', 'fella',
-    '21-22', 'CHI', 'chitownloyalty',
-    '21-22', 'CLE', 'killerdawg7',
-    '21-22', 'DAL', 'Guy Fawkes',
-    '21-22', 'DEN', 'Darth Awn',
-    '21-22', 'DET', 'CF',
-    '21-22', 'GSW', 'Yerr_ItsKev',
-    '21-22', 'HOU', 'Kamal',
-    '21-22', 'IND', 'KidMonotone',
-    '21-22', 'LAC', 'Mega',
-    '21-22', 'LAL', 'AK41',
-    '21-22', 'MEM', 'meem',
-    '21-22', 'MIA', 'HeatCulture',
-    '21-22', 'MIL', 'Everinski',
-    '21-22', 'MIN', 'Jonny',
-    '21-22', 'NOP', 'Avatar',
-    '21-22', 'NYK', 'cheppywire',
-    '21-22', 'OKC', 'KyleWTF',
-    '21-22', 'ORL', 'AJGoh',
-    '21-22', 'PHI', 'Kman',
-    '21-22', 'PHX', 'chuck',
-    '21-22', 'POR', 'FlashThompson11',
-    '21-22', 'SAC', 'That1gal',
-    '21-22', 'SAS', 'bryn',
-    '21-22', 'TOR', 'Benson - Not Chris',
-    '21-22', 'UTA', 'Schu',
-    '21-22', 'WAS', 'djgmoneyfef',
-    
-    '20-21', 'ATL', 'nelson',
-    '20-21', 'BOS', 'bjbren',
-    '20-21', 'BKN', 'Egghead',
-    '20-21', 'CHA', 'fella',
-    '20-21', 'CHI', 'chitownloyalty',
-    '20-21', 'CLE', 'killerdawg7',
-    '20-21', 'DAL', 'Guy Fawkes',
-    '20-21', 'DEN', 'Darth Awn',
-    '20-21', 'DET', 'CF',
-    '20-21', 'GSW', 'Yerr_ItsKev',
-    '20-21', 'HOU', 'Kamal',
-    '20-21', 'IND', 'KidMonotone',
-    '20-21', 'LAC', 'rjsnellings - Mega',
-    '20-21', 'LAL', 'Coco',
-    '20-21', 'MEM', 'meem',
-    '20-21', 'MIA', 'HeatCulture',
-    '20-21', 'MIL', 'Everinski',
-    '20-21', 'MIN', 'Jonny',
-    '20-21', 'NOP', 'Avatar',
-    '20-21', 'NYK', 'cheppywire',
-    '20-21', 'OKC', 'KyleWTF',
-    '20-21', 'ORL', 'AJGoh',
-    '20-21', 'PHI', 'Kman',
-    '20-21', 'PHX', 'chuck',
-    '20-21', 'POR', 'FlashThompson11',
-    '20-21', 'SAC', 'That1gal',
-    '20-21', 'SAS', 'bryn',
-    '20-21', 'TOR', 'odehs',
-    '20-21', 'UTA', 'OlePhil - Schu',
-    '20-21', 'WAS', 'djgmoneyfef'
-    
-  )
+  data_dir <- Sys.getenv("NBS_DATA_DIR", "/home/skim/nbs-data")
+
+  season_year <- function(d) {
+    yr <- as.integer(format(d, "%Y"))
+    mo <- as.integer(format(d, "%m"))
+    yr - as.integer(mo < 6L)
+  }
+
+  fmt_season <- function(sy) {
+    paste0(sprintf("%02d", sy %% 100L), "-", sprintf("%02d", (sy + 1L) %% 100L))
+  }
+
+  read_csv(file.path(data_dir, "owners.csv"), show_col_types = FALSE) %>%
+    mutate(
+      start_date = mdy(start_date),
+      TEAM = toupper(team)
+    ) %>%
+    arrange(TEAM, start_date) %>%
+    group_by(TEAM) %>%
+    mutate(
+      end_date = if_else(
+        row_number() < n(),
+        lead(start_date) - days(1),
+        as.Date(Sys.Date())
+      )
+    ) %>%
+    ungroup() %>%
+    rowwise() %>%
+    mutate(SEASON = list(fmt_season(season_year(start_date):season_year(end_date)))) %>%
+    unnest(SEASON) %>%
+    select(SEASON, TEAM, OWNER = owner) %>%
+    distinct()
 }
 
 
@@ -746,5 +668,24 @@ get_retired_jerseys <- function() {
     'HOU', 'HARDEN, JAMES', '2024-02-09', 13,
     'SAC', 'POKUSEVSKI, ALEKSEJ', '2024-02-10', 17
   )
-  
+
+}
+
+# Consolidated helper — returns all individual player awards with AWARD label.
+# Pass player to filter; omit for the full league-wide table.
+get_all_player_awards <- function(player = NULL) {
+  x <- bind_rows(
+    get_allstars()  %>% select(PLAYER, SEASON) %>% mutate(AWARD = "All-Star"),
+    get_mvp()       %>% select(PLAYER, SEASON) %>% mutate(AWARD = "Most Valuable Player"),
+    get_dpoy()      %>% select(PLAYER, SEASON) %>% mutate(AWARD = "Defensive Player of the Year"),
+    get_6moy()      %>% select(PLAYER, SEASON) %>% mutate(AWARD = "Sixth Man of the Year"),
+    get_roy()       %>% select(PLAYER, SEASON) %>% mutate(AWARD = "Rookie of the Year"),
+    get_mip()       %>% select(PLAYER, SEASON) %>% mutate(AWARD = "Most Improved Player"),
+    get_allnbn1()   %>% select(PLAYER, SEASON) %>% mutate(AWARD = "All-NBN First Team"),
+    get_allnbn2()   %>% select(PLAYER, SEASON) %>% mutate(AWARD = "All-NBN Second Team"),
+    get_allnbn3()   %>% select(PLAYER, SEASON) %>% mutate(AWARD = "All-NBN Third Team"),
+    get_alldef()    %>% select(PLAYER, SEASON) %>% mutate(AWARD = "All-Defense"),
+    get_allrookie() %>% select(PLAYER, SEASON) %>% mutate(AWARD = "All-Rookie")
+  )
+  if (!is.null(player)) x %>% filter(PLAYER == player) else x
 }

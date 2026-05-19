@@ -1,24 +1,3 @@
-library(shiny)
-library(ggplot2)
-library(dplyr)
-library(tidyr)
-library(purrr)
-library(readr)
-library(stringr)
-library(lubridate)
-library(rlang)
-library(glue)
-library(DT)
-library(zoo)
-library(data.table)
-library(ggimage)
-library(plotly)
-library(reactable)
-library(shinyWidgets)
-library(bslib)
-library(shinydashboard)
-
-
 get_ranks <- function(dfs) {
   dfs %>% 
     group_by(PLAYER, SEASON) %>% 
@@ -30,12 +9,14 @@ get_ranks <- function(dfs) {
       A = sum(A),
       S = sum(S),
       B = sum(B),
+      TO = sum(TO),
       MPG = sum(M)/G,
       PPG = sum(P)/G,
       RPG = sum(R)/G,
       APG = sum(A)/G,
       SPG = sum(S)/G,
       BPG = sum(B)/G,
+      TOPG = sum(TO)/G,
       `3PM` = sum(`3PM`),
       FGPCT = sum(FGM)/sum(FGA),
       `3PPCT` = sum(`3PM`)/sum(`3PA`),
@@ -53,6 +34,7 @@ get_ranks <- function(dfs) {
       A_RANK = rank(desc(A), ties.method = "min"),
       S_RANK = rank(desc(S), ties.method = "min"),
       B_RANK = rank(desc(B), ties.method = "min"),
+      TO_RANK = rank(desc(TO), ties.method = "min"),
       `3PM_RANK` = rank(desc(`3PM`), ties.method = "min"),
       FGPCT_RANK = rank(desc(FGPCT), ties.method = "min", na.last = "keep"),
       `3PPCT_RANK` = rank(desc(`3PPCT`), ties.method = "min", na.last = "keep"),
@@ -63,6 +45,7 @@ get_ranks <- function(dfs) {
       APG_RANK = rank(desc(APG), ties.method = "min"),
       SPG_RANK = rank(desc(SPG), ties.method = "min"),
       BPG_RANK = rank(desc(BPG), ties.method = "min"),
+      TOPG_RANK = rank(desc(TOPG), ties.method = "min"),
       GMSC_RANK = rank(desc(GMSC), ties.method = "min")
     ) %>% 
     ungroup()
@@ -145,6 +128,17 @@ get_conference <- function(team) {
   )
 }
 
+get_division <- function(team) {
+  case_when(
+    team %in% c("NYK", "TOR", "BOS", "PHI", "BKN") ~ "Atlantic",
+    team %in% c("DET", "CLE", "MIL", "CHI", "IND") ~ "Central",
+    team %in% c("ORL", "ATL", "MIA", "CHA", "WAS") ~ "Southeast",
+    team %in% c("OKC", "DEN", "MIN", "UTA", "POR") ~ "Northwest",
+    team %in% c("LAL", "PHX", "GSW", "SAC", "LAC") ~ "Pacific",
+    team %in% c("SAS", "HOU", "MEM", "DAL", "NOP") ~ "Southwest"
+  )
+}
+
 get_last_played_for <- function(player, dfs) {
   
   dfs %>% 
@@ -183,4 +177,200 @@ get_logo <- function(
         ".png'",
         attr_str,
         "></img>")
+}
+
+# Pre-computed standings and team stats functions ----
+compute_standings <- function(season_df) {
+  # season_df should be filtered to a single season
+  x <- season_df %>%
+    group_by(DATE, TEAM, OPP) %>%
+    summarize(TEAM_PTS = sum(P), .groups = 'drop') %>%
+    ungroup() %>%
+    mutate(OPP = str_replace(OPP, "@", ""))
+  
+  games <- x %>%
+    join_opponent_scores() %>%
+    mutate(
+      WIN  = TEAM_PTS > OPP_PTS,
+      LOSS = TEAM_PTS < OPP_PTS,
+      CONF = get_conference(TEAM),
+      DIV  = get_division(TEAM),
+      OPP_CONF = get_conference(OPP),
+      OPP_DIV  = get_division(OPP)
+    )
+  
+  standings <- games %>%
+    group_by(TEAM) %>%
+    summarize(
+      W = sum(WIN),
+      L = sum(LOSS),
+      CONF = first(CONF),
+      DIV  = first(DIV),
+      CONF_W = sum(WIN & CONF == OPP_CONF),
+      CONF_L = sum(LOSS & CONF == OPP_CONF),
+      DIV_W  = sum(WIN & DIV == OPP_DIV),
+      DIV_L  = sum(LOSS & DIV == OPP_DIV),
+      PPG = mean(TEAM_PTS),
+      OPPG = mean(OPP_PTS),
+      .groups = "drop"
+    ) %>%
+    mutate(
+      PCT = W / (W + L),
+      CONF_PCT = CONF_W / (CONF_W + CONF_L),
+      DIV_PCT  = DIV_W / (DIV_W + DIV_L),
+      DIFF = PPG - OPPG
+    )
+  
+  h2h <- games %>%
+    group_by(TEAM, OPP) %>%
+    summarize(
+      W = sum(WIN),
+      L = sum(LOSS),
+      PCT = W / (W + L),
+      .groups = "drop"
+    )
+  
+  division_winners <- standings %>%
+    group_by(DIV) %>%
+    arrange(desc(PCT), desc(CONF_PCT), desc(DIFF)) %>%
+    slice(1) %>%
+    mutate(DIV_WINNER = TRUE) %>%
+    select(TEAM, DIV_WINNER)
+  
+  standings <- standings %>%
+    left_join(division_winners, by = "TEAM") %>%
+    mutate(DIV_WINNER = if_else(is.na(DIV_WINNER), FALSE, DIV_WINNER))
+  
+  resolve_nba_ties <- function(df, h2h) {
+    if (nrow(df) == 1) return(df)
+    
+    teams <- df$TEAM
+    
+    h2h_tied <- h2h %>%
+      filter(TEAM %in% teams, OPP %in% teams) %>%
+      group_by(TEAM) %>%
+      summarize(H2H_PCT = mean(PCT, na.rm = TRUE), .groups = "drop")
+    
+    df2 <- df %>%
+      left_join(h2h_tied, by = "TEAM") %>%
+      mutate(H2H_PCT = replace_na(H2H_PCT, 0))
+    
+    ordering <- df2 %>%
+      arrange(
+        desc(H2H_PCT),
+        desc(DIV_WINNER),
+        desc(DIV_PCT),
+        desc(CONF_PCT),
+        desc(DIFF)
+      )
+    
+    # recursive elimination
+    top <- ordering[1, ]
+    
+    tied <- ordering %>%
+      filter(
+        H2H_PCT == top$H2H_PCT,
+        DIV_WINNER == top$DIV_WINNER,
+        DIV_PCT == top$DIV_PCT,
+        CONF_PCT == top$CONF_PCT,
+        DIFF == top$DIFF
+      )
+    
+    result <-
+      if (nrow(tied) == nrow(ordering)) {
+        ordering
+      } else {
+        bind_rows(
+          top,
+          resolve_nba_ties(
+            ordering[-1, ] %>% select(-H2H_PCT),
+            h2h
+          )
+        )
+      }
+    
+    # 🔑 CRITICAL: drop H2H_PCT before returning
+    result %>% select(-H2H_PCT)
+  }
+  
+  final_standings <- standings %>%
+    group_by(CONF, W, L) %>%
+    group_modify(~ resolve_nba_ties(.x, h2h)) %>%
+    ungroup() %>%
+    group_by(CONF) %>%
+    arrange(CONF, desc(W), .by_group = TRUE) %>%
+    mutate(
+      GB = (max(W - L) - (W - L))/2,
+      SEED = row_number()
+    ) %>%
+    ungroup()
+  
+  final_standings %>%
+    transmute(
+      SEED = paste0(CONF, "-", SEED),
+      TEAM, GB, W, L,
+      PCT = round(PCT, 3),
+      PPG = round(PPG, 1),
+      OPPG = round(OPPG, 1),
+      DIFF = round(DIFF, 1)
+    )
+}
+
+compute_team_stats <- function(season_df) {
+  # season_df should be filtered to a single season
+  season_df %>%
+    group_by(TEAM, DATE) %>%
+    summarize(
+      P = sum(P), R = sum(R), A = sum(A), S = sum(S), B = sum(B),
+      TO = sum(TO), PF = sum(PF), `3PM` = sum(`3PM`), `3PA` = sum(`3PA`),
+      .groups = 'drop'
+    ) %>%
+    group_by(TEAM) %>%
+    summarize(
+      PPG = mean(P), RPG = mean(R), APG = mean(A), SPG = mean(S), BPG = mean(B),
+      TOPG = mean(TO), PFPG = mean(PF), `3PMPG` = mean(`3PM`), `3PAPG` = mean(`3PA`)
+    ) %>%
+    mutate_if(is.numeric, round, 2) %>%
+    mutate(`3PPCT` = round(`3PMPG`/`3PAPG`, 3))
+}
+
+# Common filter helpers ----
+filter_regular <- function(df) filter(df, !str_detect(SEASON, " Playoffs"))
+filter_playoffs <- function(df) filter(df, str_detect(SEASON, " Playoffs"))
+
+# Join a game-level df to itself to get the opposing team's score.
+# df must have columns TEAM, TEAM_PTS, and the columns named in join_by.
+# join_by must include "OPP" as the key that will be matched against TEAM.
+join_opponent_scores <- function(df, join_by = c("DATE", "OPP")) {
+  df %>%
+    left_join(
+      df %>% select(all_of(setdiff(join_by, "OPP")), OPP = TEAM, OPP_PTS = TEAM_PTS),
+      by = join_by
+    )
+}
+
+# Join the most-recent team for each player in dfs_source and append a logo to
+# the PLAYER name column.  The TEAM column is retained; callers can select(-TEAM).
+annotate_player_team <- function(df, dfs_source, height = 20) {
+  df %>%
+    left_join(get_last_played_for_2(dfs_source), by = "PLAYER") %>%
+    mutate(PLAYER = str_c(PLAYER, " ", get_logo(TEAM, height = height)))
+}
+
+# Helper function for league leaders
+leader_helper <- function(category, summary_df, dfs, min_games = 1) {
+  tmpvarname1 <- str_c(category, 'PG')
+  tmpvarname2 <- str_c('PLAYER_', category)
+  
+  x <- summary_df %>%
+    filter(G >= min_games) %>%
+    arrange_at(tmpvarname1) %>%
+    arrange(desc(row_number())) %>%
+    head(10)
+  
+  x %>%
+    annotate_player_team(dfs) %>%
+    select({{ tmpvarname2 }} := PLAYER, tmpvarname1) %>%
+    mutate(rn = row_number()) %>%
+    mutate({{ tmpvarname1 }} := round(get(tmpvarname1), 1))
 }

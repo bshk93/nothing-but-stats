@@ -398,3 +398,95 @@ build_prices <- function(dfs_everything) {
            N = row_number(),
            DATE = as_date(DATE))
 }
+
+
+build_prices_raw_margin <- function(dfs_everything) {
+  x <- dfs_everything %>%
+    mutate(OPP_RAW = str_replace(OPP, "@", "")) %>%
+    group_by(SEASON, TEAM, OPP_RAW, DATE) %>%
+    summarize(P = sum(P), .groups = "drop")
+
+  x %>%
+    inner_join(
+      x %>% select(OPP_RAW = TEAM, DATE, OPP_P = P),
+      by = c("OPP_RAW", "DATE")
+    ) %>%
+    mutate(DIFF = P - OPP_P) %>%
+    group_by(TEAM) %>%
+    arrange(TEAM, DATE) %>%
+    mutate(
+      PCT_CHG = coalesce(1 + (DIFF / 1000), 1),
+      PRICE   = round(cumprod(PCT_CHG) * 100, 2),
+      N       = row_number()
+    )
+}
+
+
+build_prices_gmsc <- function(dfs_everything) {
+  x <- dfs_everything %>%
+    mutate(OPP_RAW = str_replace(OPP, "@", "")) %>%
+    group_by(SEASON, TEAM, OPP_RAW, DATE) %>%
+    summarize(TEAM_GMSC = sum(GMSC, na.rm = TRUE), .groups = "drop")
+
+  x %>%
+    inner_join(
+      x %>% select(OPP_RAW = TEAM, DATE, OPP_GMSC = TEAM_GMSC),
+      by = c("OPP_RAW", "DATE")
+    ) %>%
+    mutate(DIFF = TEAM_GMSC - OPP_GMSC) %>%
+    group_by(TEAM) %>%
+    arrange(TEAM, DATE) %>%
+    mutate(
+      PCT_CHG = coalesce(1 + (DIFF / 1000), 1),
+      PRICE   = round(cumprod(PCT_CHG) * 100, 2),
+      N       = row_number()
+    )
+}
+
+
+PRICING_MODELS <- list(
+  "SOS Point Differential" = build_prices,
+  "Raw Point Margin"        = build_prices_raw_margin,
+  "Game Score Differential" = build_prices_gmsc
+)
+
+PRICING_MODEL_DESCRIPTIONS <- list(
+  "SOS Point Differential" = "Price compounds each game based on point differential adjusted for strength of opponent. Beating a strong team counts more than beating a weak one.",
+  "Raw Point Margin"        = "Same compounding as SOS Point Differential, but with no opponent adjustment — every game is taken at face value. More volatile; useful for comparing to the SOS model to see how much schedule strength matters.",
+  "Game Score Differential" = "Price compounds based on the difference in team Game Score (GMSC) each game. GMSC rewards efficient shooting, rebounding, and playmaking while penalizing turnovers and fouls — so a team can lose ground even on a win if their players played sloppily."
+)
+
+
+playoff_risers <- function(dfs_everything) {
+  dfs_everything %>% 
+    filter(M >= 5) %>% 
+    group_by(PLAYER, SEASON) %>% 
+    summarize(
+      G = n(),
+      GMSC_PER_MIN = sum(GMSC) / sum(M),
+      .groups = "drop"
+    ) %>% 
+    mutate(
+      PLAYOFFS = str_detect(SEASON, "Playoffs"),
+      SEASON = str_extract(SEASON, "\\d{2}-\\d{2}")
+    ) %>% 
+    pivot_wider(
+      names_from = PLAYOFFS,
+      values_from = c(G, GMSC_PER_MIN),
+      names_prefix = "PLAYOFFS_"
+    ) %>% 
+    filter(!is.na(G_PLAYOFFS_TRUE)) %>% 
+    mutate(
+      PLAYOFF_GMSCPM_DIFF = GMSC_PER_MIN_PLAYOFFS_TRUE - GMSC_PER_MIN_PLAYOFFS_FALSE
+    ) %>% 
+    group_by(PLAYER) %>% 
+    summarize(
+      AVERAGE_PLAYOFF_GMSCPM_DIFF = mean(PLAYOFF_GMSCPM_DIFF, na.rm = TRUE),
+      N_PLAYOFF_SEASONS = n(),
+      G_REGULAR = sum(G_PLAYOFFS_FALSE, na.rm = TRUE),
+      G_PLAYOFFS = sum(G_PLAYOFFS_TRUE, na.rm = TRUE)
+    ) %>% 
+    filter(N_PLAYOFF_SEASONS > 2) %>% 
+    arrange(desc(AVERAGE_PLAYOFF_GMSCPM_DIFF)) %>% 
+    mutate(AVERAGE_PLAYOFF_GMSCPM_DIFF = round(AVERAGE_PLAYOFF_GMSCPM_DIFF, 4))
+}

@@ -272,23 +272,23 @@ clean_allstats <- function(dfs) {
   dfs_bind
 }
 
-load_allstats <- function(playoffs = FALSE) {
+load_allstats <- function(playoffs = FALSE, data_dir = Sys.getenv("NBS_DATA_DIR", "/home/skim/nbs-data")) {
   ptrn <- "allstats-\\d"
   pstr <- ""
   if (playoffs) {
     ptrn <- "allstats-playoffs"
     pstr <- " Playoffs"
   }
-  
-  # Find all allstats files in R/ directory
-  list.files("app/data/", ptrn) %>% 
+
+  list.files(data_dir, ptrn) %>%
     map(function(fp) {
       tmp_season <- as.numeric(str_extract(fp, "\\d{2}\\."))
-      
-      data.table::fread(str_c('app/data/', fp)) %>% 
-        tibble() %>% 
-        mutate_if(is.numeric, as.numeric) %>% 
-        mutate(SEASON = str_c(tmp_season-1, "-", tmp_season, pstr)) %>% 
+
+      data.table::fread(file.path(data_dir, fp)) %>%
+        tibble() %>%
+        mutate_if(is.numeric, as.numeric) %>%
+        mutate(DATE = as.Date(DATE)) %>%
+        mutate(SEASON = str_c(tmp_season-1, "-", tmp_season, pstr)) %>%
         filter(!is.na(SEASON))
     })
 }
@@ -300,4 +300,169 @@ get_conference <- function(team) {
     team %in% c("HOU", "SAC", "GSW", "LAL", "DAL", "LAC", "MIN", "POR", "DEN",
                 "NOP", "PHX", "OKC", "SAS", "UTA", "MEM") ~ "West"
   )
+}
+
+get_division <- function(team) {
+  case_when(
+    team %in% c("NYK", "TOR", "BOS", "PHI", "BKN") ~ "Atlantic",
+    team %in% c("DET", "CLE", "MIL", "CHI", "IND") ~ "Central",
+    team %in% c("ORL", "ATL", "MIA", "CHA", "WAS") ~ "Southeast",
+    team %in% c("OKC", "DEN", "MIN", "UTA", "POR") ~ "Northwest",
+    team %in% c("LAL", "PHX", "GSW", "SAC", "LAC") ~ "Pacific",
+    team %in% c("SAS", "HOU", "MEM", "DAL", "NOP") ~ "Southwest"
+  )
+}
+
+write_league_history <- function(dfs, team_ratings, out_dir) {
+  season_totals <- dfs %>%
+    group_by(SEASON, PLAYER) %>%
+    summarize(
+      P     = sum(P,     na.rm = TRUE),
+      R     = sum(R,     na.rm = TRUE),
+      A     = sum(A,     na.rm = TRUE),
+      S     = sum(S,     na.rm = TRUE),
+      B     = sum(B,     na.rm = TRUE),
+      `3PM` = sum(`3PM`, na.rm = TRUE),
+      .groups = "drop"
+    )
+
+  stat_leader <- function(stat) {
+    season_totals %>%
+      group_by(SEASON) %>%
+      slice_max(.data[[stat]], n = 1, with_ties = FALSE) %>%
+      ungroup() %>%
+      transmute(SEASON, val = paste0(PLAYER, " (", .data[[stat]], ")"))
+  }
+
+  rating_leaders <- team_ratings %>%
+    ungroup() %>%
+    group_by(SEASON) %>%
+    summarize(
+      BEST_OFF     = paste0(TEAM[which.max(OFF_RTG)], " (", sprintf("%+.2f", max(OFF_RTG)), ")"),
+      BEST_DEF     = paste0(TEAM[which.max(DEF_RTG)], " (", sprintf("%+.2f", max(DEF_RTG)), ")"),
+      BEST_OVERALL = paste0(TEAM[which.max(TOT_RTG)], " (", sprintf("%+.2f", max(TOT_RTG)), ")"),
+      .groups = "drop"
+    )
+
+  history_df <- tibble(SEASON = sort(unique(dfs$SEASON))) %>%
+    left_join(
+      get_champion_list() %>%
+        mutate(SEASON = str_remove(SEASON, " Playoffs")) %>%
+        select(SEASON, CHAMPION = TEAM),
+      by = "SEASON"
+    ) %>%
+    left_join(
+      get_runners_up() %>%
+        mutate(SEASON = str_remove(SEASON, " Playoffs")) %>%
+        select(SEASON, RUNNER_UP, EAST_RUNNER_UP, WEST_RUNNER_UP),
+      by = "SEASON"
+    ) %>%
+    left_join(get_mvp()  %>% select(SEASON, MVP  = PLAYER), by = "SEASON") %>%
+    left_join(get_dpoy() %>% select(SEASON, DPOY = PLAYER), by = "SEASON") %>%
+    left_join(get_roy()  %>% select(SEASON, ROTY = PLAYER), by = "SEASON") %>%
+    left_join(get_mip()  %>% select(SEASON, MIP  = PLAYER), by = "SEASON") %>%
+    left_join(get_foty() %>% select(SEASON, FOTY = TEAM),   by = "SEASON") %>%
+    left_join(
+      get_coty() %>%
+        mutate(COTY = paste0(str_extract(AWARD, "(?<=\\().*(?=\\))"), " (", TEAM, ")")) %>%
+        select(SEASON, COTY),
+      by = "SEASON"
+    ) %>%
+    left_join(stat_leader("P")   %>% rename(PTS_LEADER = val), by = "SEASON") %>%
+    left_join(stat_leader("R")   %>% rename(REB_LEADER = val), by = "SEASON") %>%
+    left_join(stat_leader("A")   %>% rename(AST_LEADER = val), by = "SEASON") %>%
+    left_join(stat_leader("S")   %>% rename(STL_LEADER = val), by = "SEASON") %>%
+    left_join(stat_leader("B")   %>% rename(BLK_LEADER = val), by = "SEASON") %>%
+    left_join(stat_leader("3PM") %>% rename(TPM_LEADER = val), by = "SEASON") %>%
+    left_join(rating_leaders, by = "SEASON") %>%
+    arrange(SEASON)
+
+  write_csv(history_df, file.path(out_dir, "league-history.csv"))
+}
+
+write_team_profiles <- function(dfs, dfs_playoffs, standings_list, team_ratings, out_dir) {
+  teams <- sort(unique(dfs$TEAM))
+
+  po_wins <- dfs_playoffs %>%
+    distinct(SEASON, TEAM, DATE, WL) %>%
+    mutate(SEASON = str_remove(SEASON, " Playoffs")) %>%
+    group_by(SEASON, TEAM) %>%
+    summarize(PO_W = sum(WL == "W", na.rm = TRUE), .groups = "drop")
+
+  champions <- get_champion_list() %>%
+    mutate(SEASON = str_remove(SEASON, " Playoffs"))
+
+  playoff_result_table <- get_playoff_seeds() %>%
+    mutate(SEASON = str_remove(SEASON, " Playoffs")) %>%
+    select(SEASON, TEAM) %>%
+    left_join(po_wins, by = c("SEASON", "TEAM")) %>%
+    mutate(PO_W = replace_na(PO_W, 0L)) %>%
+    left_join(champions %>% mutate(IS_CHAMPION = TRUE), by = c("SEASON", "TEAM")) %>%
+    mutate(
+      IS_CHAMPION    = replace_na(IS_CHAMPION, FALSE),
+      PLAYOFF_RESULT = case_when(
+        IS_CHAMPION ~ "Champion",
+        PO_W >= 12  ~ "Runner-Up",
+        PO_W >= 8   ~ "Conf Finals",
+        PO_W >= 4   ~ "Second Round",
+        TRUE        ~ "First Round"
+      )
+    )
+
+  foty <- get_foty() %>% select(TEAM, SEASON)
+  coty <- get_coty() %>% select(TEAM, SEASON)
+
+  for (team in teams) {
+    slug <- tolower(team)
+
+    players_df <- dfs %>%
+      filter(TEAM == team) %>%
+      group_by(PLAYER) %>%
+      summarize(
+        GP       = n(),
+        GMSC_TOT = round(sum(GMSC,   na.rm = TRUE), 1),
+        GMSC_AVG = round(mean(GMSC,  na.rm = TRUE), 2),
+        PPG      = round(mean(P,     na.rm = TRUE), 1),
+        RPG      = round(mean(R,     na.rm = TRUE), 1),
+        APG      = round(mean(A,     na.rm = TRUE), 1),
+        SPG      = round(mean(S,     na.rm = TRUE), 1),
+        BPG      = round(mean(B,     na.rm = TRUE), 1),
+        `3PMPG`  = round(mean(`3PM`, na.rm = TRUE), 1),
+        SEASONS  = paste(sort(unique(SEASON)), collapse = ", "),
+        .groups  = "drop"
+      ) %>%
+      arrange(desc(GMSC_TOT)) %>%
+      slice_head(n = 100)
+
+    write_csv(players_df, file.path(out_dir, paste0(slug, "-players.csv")))
+
+    seasons_df <- map_dfr(names(standings_list), function(s) {
+      row <- standings_list[[s]] %>% filter(TEAM == team)
+      if (nrow(row) == 0) return(NULL)
+      row %>% mutate(
+        SEASON   = s,
+        SEED_NUM = as.integer(str_extract(SEED, "\\d+$"))
+      )
+    }) %>%
+      left_join(
+        team_ratings %>% ungroup() %>% filter(TEAM == team) %>% select(SEASON, OFF_RTG, DEF_RTG),
+        by = "SEASON"
+      ) %>%
+      left_join(
+        playoff_result_table %>% filter(TEAM == team) %>% select(SEASON, PLAYOFF_RESULT),
+        by = "SEASON"
+      ) %>%
+      left_join(foty %>% filter(TEAM == team) %>% transmute(SEASON, FOTY = TRUE), by = "SEASON") %>%
+      left_join(coty %>% filter(TEAM == team) %>% transmute(SEASON, COTY = TRUE), by = "SEASON") %>%
+      mutate(
+        PLAYOFF_RESULT = replace_na(PLAYOFF_RESULT, "Missed"),
+        FOTY           = replace_na(FOTY, FALSE),
+        COTY           = replace_na(COTY, FALSE)
+      ) %>%
+      select(SEASON, W, L, PCT, PPG, OPPG, DIFF, SEED, SEED_NUM,
+             OFF_RTG, DEF_RTG, PLAYOFF_RESULT, FOTY, COTY) %>%
+      arrange(SEASON)
+
+    write_csv(seasons_df, file.path(out_dir, paste0(slug, "-seasons.csv")))
+  }
 }
